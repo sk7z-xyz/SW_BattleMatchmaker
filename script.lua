@@ -18,6 +18,17 @@ g_flag_radius=300
 -- WebMapAddon
 g_has_webmap=false
 g_webmap_bindings={}
+g_tick_count=0
+g_iff_vehicles={}
+g_iff_freq={[1]=0,[2]=0,[3]=0}
+g_group_parents={}  -- {[group_id]=parent_vehicle_id}
+
+function generateIffFreqs()
+	for i=1,3 do
+		g_iff_freq[i]=math.random(10000,99999)*10+i
+	end
+	--server.announce('[IFF]','freq generated: '..g_iff_freq[1]..','..g_iff_freq[2]..','..g_iff_freq[3],-1)
+end
 
 g_ammo_supply_buttons={
 	MG_K={42,50,'mg'},
@@ -195,8 +206,8 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp			=property.slider("Vehicle HP", 100, 5000, 100, 2000),
-	vehicle_class		=property.checkbox("Vehicle class Enabled", true),
+	vehicle_hp			=property.slider("Vehicle HP", 50, 5000, 10, 50),
+	vehicle_class		=property.checkbox("Vehicle class Enabled", false),
 	max_damage			=1000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
 	ammo_mg				=-1,
@@ -205,18 +216,19 @@ g_default_savedata={
 	ammo_ha				=-1,
 	ammo_bs				=-1,
 	ammo_as				=-1,
-	game_time			=property.slider("Game time (min)", 1, 60, 1, 20),
-	order_enabled		=property.checkbox("Order Command Enabled (in battle)", false),
+	game_time			=property.slider("Game time (min)", 1, 60, 1, 15),
+	order_enabled		=property.checkbox("Order Command Enabled (in battle)", true),
 	tps_enabled			=property.checkbox("Third Person Enabled (in battle)", true),
 	nameplate_enabled	=property.checkbox("Nameplate Enabled (in battle)", true),
-	player_damage		=property.checkbox("Player Damage Enabled (in battle)", true),
+	player_damage		=property.checkbox("Player Damage Enabled (in battle)", false),
 	show_friends		=property.checkbox("Show Friends on map", true),
-	auto_standby		=property.checkbox("Auto Standby after battle", false),
-	gc_vehicle			=property.checkbox("Auto vehicle cleanup", false),
+	auto_standby		=property.checkbox("Auto Standby after battle", true),
+	gc_vehicle			=property.checkbox("Auto vehicle cleanup", true),
 	supply_vehicles		={},
 	flag_vehicles		={},
-	auto_auth			=property.checkbox("Auto Auth", false),
-	sunk_depth			=property.slider("Sunk Depth", 0, 200, 5, 0),
+	auto_auth			=property.checkbox("Auto Auth", true),
+	sunk_depth			=property.slider("Sunk Depth", 0, 200, 1, 1),
+	iff_vehicles		={},
 }
 
 g_mag_names={}
@@ -521,9 +533,70 @@ g_commands={
 			{name='team_name', type='string', require=true},
 		},
 	},
+	{
+		name='iff_create',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			createIffSender(peer_id)
+		end,
+	},
+	{
+		name='iff_delete',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			deleteIffSender(peer_id)
+		end,
+	},
+}
+
+g_iff_spawn_positions={
+	{2768,   5, -30222},
+	{-20750, 5, -30100},
+	{-18855, 5,  -5100},
+	{10745,  5,  -8500},
+}
+
+function createIffSender(peer_id)
+	deleteIffSender()
+	for _,p in ipairs(g_iff_spawn_positions) do
+		local pos=matrix.translation(p[1], p[2], p[3])
+		local vehicle_id=spawnAddonVehicle('iff_sender', pos)
+		if vehicle_id then
+			table.insert(g_iff_vehicles, vehicle_id)
+			table.insert(g_savedata.iff_vehicles, vehicle_id)
+			announce('IFF sender spawned. vehicle_id='..vehicle_id, peer_id)
+		else
+			announce('IFF sender spawn failed at '..p[1]..','..p[3], peer_id)
+		end
+	end
+end
+
+function deleteIffSender(peer_id)
+	if g_savedata.iff_vehicles and #g_savedata.iff_vehicles>0 then
+		for _,vid in ipairs(g_savedata.iff_vehicles) do
+			server.despawnVehicle(vid, true)
+			for i=#g_iff_vehicles,1,-1 do
+				if g_iff_vehicles[i]==vid then table.remove(g_iff_vehicles,i) end
+			end
+		end
+		announce('IFF senders despawned.', peer_id or -1)
+		g_savedata.iff_vehicles={}
+	else
+		if peer_id then
+			announce('IFF sender not found.', peer_id)
+		end
+	end
+end
+
+g_command_aliases={
+	j='join',
+	l='leave',
+	r='ready',
+	o='order',
 }
 
 function findCommand(command)
+	command=g_command_aliases[command] or command
 	for i,command_define in ipairs(g_commands) do
 		if command_define.name==command then
 			return command_define
@@ -610,13 +683,21 @@ function onCreate(is_world_create)
 		end
 	end
 
+	g_iff_vehicles=g_savedata.iff_vehicles
+
+	if is_world_create then
+		createIffSender(0)
+	end
+
 	clearSupplies()
 	clearFlags()
+	generateIffFreqs()
 
 	registerPopup('countdown', 0, 0.6)
 	registerPopup('game_time', -0.9, -0.9)
 
 	setSettingsToStandby()
+	
 
 	-- WebMapAddonDetectCheck
 	local addon_count = server.getAddonCount()
@@ -694,6 +775,125 @@ function onTick()
 	end
 
 	updatePopups()
+
+	-- チームビークル座標の収集（毎tick）・出力（60tickに1回）
+	local team_vehicle_positions={}
+	for peer_id,player in pairs(g_players) do
+		if player.alive and player.vehicle_id>=0 then
+			local team=player.team
+			if not team_vehicle_positions[team] then
+				team_vehicle_positions[team]={}
+			end
+			if #team_vehicle_positions[team]<10 then
+				local vehicle_trans,is_success=server.getVehiclePos(player.vehicle_id)
+				if is_success then
+					local x,h,y=matrix.position(vehicle_trans)
+					table.insert(team_vehicle_positions[team],{vehicle_id=player.vehicle_id,x=x,h=h,y=y})
+				end
+			end
+		end
+	end
+
+	-- 名前トークン送受信（毎tick）
+	for _,positions in pairs(team_vehicle_positions) do
+		for _,pos in ipairs(positions) do
+			local vid=pos.vehicle_id
+			local name_token=NAME_PAD
+			local tx=g_name_tx[vid]
+			if tx then
+				name_token=tx.tokens[tx.idx] or NAME_PAD
+				tx.idx=tx.idx+1
+			end
+			local f1,f2=encodeCoords(pos.x,pos.h,pos.y,name_token)
+			pos.f1,pos.f2=f1,f2
+			local ok,dx,dh,dy,dt=decodeCoords(f1,f2)
+			if ok then
+				pos.dx,pos.dh,pos.dy=dx,dh,dy
+				local rx=g_name_rx[vid]
+				if not rx then rx={state='idle',buf={}} g_name_rx[vid]=rx end
+				if dt==NAME_START then
+					rx.state='recv'
+					rx.buf={}
+				elseif dt==NAME_END then
+					if rx.state=='recv' then
+						g_decoded_names[vid]=table.concat(rx.buf)
+					end
+					rx.state='idle'
+				elseif dt~=NAME_PAD and rx.state=='recv' then
+					local ch=tokenToNameChar(dt)
+					if ch then rx.buf[#rx.buf+1]=ch end
+				end
+			end
+		end
+	end
+
+	-- IFF キーパッド更新（毎tick）
+	if #g_iff_vehicles>0 then
+		for _,iff_vid in ipairs(g_iff_vehicles) do
+			for team_idx,team_name in ipairs(g_default_teams) do
+				if team_idx>3 then break end
+				local base=(team_idx-1)*100
+				local positions=team_vehicle_positions[team_name] or {}
+				local count=0
+				for i=1,math.min(#positions,10) do
+					local pos=positions[i]
+					local f1,f2=pos.f1,pos.f2
+					if not f1 then
+						f1,f2=encodeCoords(pos.x,pos.h,pos.y)
+					end
+					count=count+1
+					server.setVehicleKeypad(iff_vid,tostring(base+count),f1)
+					count=count+1
+					server.setVehicleKeypad(iff_vid,tostring(base+count),f2)
+				end
+				for slot=count+1,20 do
+					server.setVehicleKeypad(iff_vid,tostring(base+slot),0)
+				end
+				server.setVehicleKeypad(iff_vid,'mm_iff_freq_'..team_idx,g_iff_freq[team_idx])
+
+			end
+		end
+	end
+	-- プレイヤービークルに周波数書込み（毎tick）
+	for _,player in pairs(g_players) do
+		if player.alive and player.vehicle_id>=0 then
+			for team_idx,team_name in ipairs(g_default_teams) do
+				if team_name==player.team and team_idx<=3 then
+					server.setVehicleKeypad(player.vehicle_id,'mm_iff_freq',g_iff_freq[team_idx])
+					break
+				end
+			end
+		end
+	end
+
+	g_tick_count=g_tick_count+1
+	if g_tick_count>=60 then
+		g_tick_count=0
+		for team,positions in pairs(team_vehicle_positions) do
+			local text='['..team..']\n'
+			for i,pos in ipairs(positions) do
+				text=text..string.format(' #%d vid=%d\n  raw  x=%.0f h=%.0f y=%.0f\n',i,pos.vehicle_id,pos.x,pos.h,pos.y)
+				if pos.dx then
+					text=text..string.format('  dec  x=%.0f h=%.0f y=%.0f\n  f1=%g f2=%g\n',pos.dx,pos.dh,pos.dy,pos.f1,pos.f2)
+				else
+					text=text..'  decode failed\n'
+				end
+				local dname=g_decoded_names[pos.vehicle_id]
+				if dname then
+					text=text..'  name='..dname..'\n'
+				end
+			end
+			--server.announce('[VehiclePos]',text,-1)
+		end
+		-- 次サイクルのTXキュー構築
+		g_name_tx={}
+		for peer_id,player in pairs(g_players) do
+			if player.alive and player.vehicle_id>=0 then
+				local tokens=buildNameTokens(player.name)
+				g_name_tx[player.vehicle_id]={tokens=tokens,idx=1}
+			end
+		end
+	end
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
@@ -827,10 +1027,38 @@ function findPeerIdByCharacterId(object_id)
 end
 
 
+function getParentID(group_id, vehicle_id)
+	return g_group_parents[group_id] or vehicle_id
+end
+
 function onVehicleDespawn(vehicle_id, peer_id)
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
 	unregisterVehicle(vehicle_id)
+	for i=#g_iff_vehicles,1,-1 do
+		if g_iff_vehicles[i]==vehicle_id then
+			table.remove(g_iff_vehicles,i)
+		end
+	end
+	if g_savedata.iff_vehicles then
+		for i=#g_savedata.iff_vehicles,1,-1 do
+			if g_savedata.iff_vehicles[i]==vehicle_id then
+				table.remove(g_savedata.iff_vehicles,i)
+			end
+		end
+	end
+end
+
+function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
+	local parent_id=getParentID(group_id, vehicle_id)
+	if not g_group_parents[group_id] then
+		g_group_parents[group_id]=parent_id
+	end
+	if vehicle_id==parent_id then
+		onPlayerSit_(peer_id, vehicle_id, '')
+	end
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
@@ -1420,6 +1648,7 @@ function startGame()
 	setPopup('countdown', false)
 	clearSupplies()
 	setSettingsToBattle()
+	generateIffFreqs()
 
 	local settings=server.getGameSettings()
 	announce('- Infinitie Electric:'..tostring(settings.infinite_batteries), -1)
@@ -1749,6 +1978,7 @@ function getAheadMatrix(peer_id, y, z)
 	return matrix.multiply(position, matrix.multiply(rotation, offset))
 end
 
+
 function spawnAddonVehicle(name, transform_matrix)
 	local addon_index, is_success = server.getAddonIndex()
 	if not is_success then return end
@@ -1857,3 +2087,90 @@ cwl={
 	87,84,85,49,55,49,85,66,86,83,91,71,91,83,51,91,91,38,38,79,38,138,91,89,91,91,61,71,54,91,
 	75,116,78,75,70,56,81,56,85
 }
+
+-- ============================================================
+--  座標エンコード / デコード (encode_position 方式)
+--  x, h, y: -128000 ~ 128000 → 0 ~ 256000 (各18bit)
+--  float1 (30bit): x(18bit)      | y_upper12(12bit)
+--  float2 (30bit): y_lower6(6bit) | h(18bit) | name_token(6bit)
+-- ============================================================
+local function _enc30(n)
+	local b=n & 0xFFFFFF
+	local hi6=(n>>24) & 63
+	local q=((hi6>>5)&1)<<7 | (hi6&31)
+	return ('f'):unpack(('I3B'):pack(b, q+66))
+end
+
+local function _dec30(x)
+	local b,a=('I3B'):unpack(('f'):pack(x))
+	if not((66<=a and a<=126) or (194<=a and a<=254)) then return false,0 end
+	local n=(a-66>>2&32 | a-66&31)<<24 | b
+	return true,n
+end
+
+function encodeCoords(x,h,y,name_token)
+	name_token=name_token or 0
+	local xe=math.max(0,math.min(256000, (x//1|0)+128000))
+	local he=math.max(0,math.min(256000, (h//1|0)+128000))
+	local ye=math.max(0,math.min(256000, (y//1|0)+128000))
+	local n1=(ye>>6)<<18 | xe
+	local n2=(ye & 63)<<24 | he<<6 | (name_token & 63)
+	return _enc30(n1),_enc30(n2)
+end
+
+function decodeCoords(f1,f2)
+	local ok1,n1=_dec30(f1)
+	local ok2,n2=_dec30(f2)
+	if not ok1 or not ok2 then return false,0,0,0,0 end
+	local xe=n1 & 262143
+	local yhi=(n1>>18) & 4095
+	local name_token=n2 & 63
+	local he=(n2>>6) & 262143
+	local ye=yhi<<6 | (n2>>24) & 63
+	return true, xe-128000, he-128000, ye-128000, name_token
+end
+
+-- ============================================================
+--  名前エンコード / デコード (6bitスロット使用)
+--  0=PAD, 1=START, 2=END
+--  3~12='0'~'9', 13~38='a'~'z', 39='_'
+--  使用可能: 0-9 a-z _  大文字は小文字変換、その他リジェクト
+-- ============================================================
+NAME_PAD   = 0
+NAME_START = 1
+NAME_END   = 2
+
+function nameCharToToken(c)
+	local b=c:byte()
+	if b>=48 and b<=57  then return b-48+3  end
+	if b>=97 and b<=122 then return b-97+13 end
+	if b==95             then return 39      end
+	return nil
+end
+
+function tokenToNameChar(t)
+	if t>=3  and t<=12 then return string.char(t-3+48)  end
+	if t>=13 and t<=38 then return string.char(t-13+97) end
+	if t==39            then return '_'                 end
+	return nil
+end
+
+function buildNameTokens(name)
+	name=name:lower()
+	local tokens={NAME_START}
+	local count=0
+	for i=1,#name do
+		if count>=10 then break end
+		local t=nameCharToToken(name:sub(i,i))
+		if t then
+			tokens[#tokens+1]=t
+			count=count+1
+		end
+	end
+	tokens[#tokens+1]=NAME_END
+	return tokens
+end
+
+g_name_tx={}
+g_name_rx={}
+g_decoded_names={}
