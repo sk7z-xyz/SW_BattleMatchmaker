@@ -19,6 +19,9 @@ g_flag_radius=300
 g_has_webmap=false
 g_webmap_bindings={}
 g_tick_count=0
+g_freq_force_timer=0
+g_ready_remind_timer=0
+g_pending_link_requests={} -- {{peer_id=number, vehicle_id=number, delay=number}, ...}
 g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
 g_group_parents={}  -- {[group_id]=parent_vehicle_id}
@@ -194,6 +197,11 @@ g_settings={
 		type='integer',
 		min=0,
 	},
+	{
+		name='Auto Link on Spawn',
+		key='auto_link_on_spawn',
+		type='boolean',
+	},
 }
 
 g_default_teams={
@@ -229,6 +237,7 @@ g_default_savedata={
 	auto_auth			=property.checkbox("Auto Auth", true),
 	sunk_depth			=property.slider("Sunk Depth", 0, 200, 1, 1),
 	iff_vehicles		={},
+	auto_link_on_spawn	=true,
 }
 
 g_mag_names={}
@@ -465,10 +474,15 @@ g_commands={
 				announce('Cannot shuffle after game start.', peer_id)
 				return
 			end
+			team_count=team_count or 2
+			if team_count < 2 or team_count > #g_default_teams then
+				announce('team_count must be between 2 and '..#g_default_teams, peer_id)
+				return
+			end
 			shuffle(team_count)
 		end,
 		args={
-			{name='team_count', type='integer', require=true, min=2, max=#g_default_teams},
+			{name='team_count', type='integer', require=false, min=2, max=#g_default_teams},
 		},
 	},
 	{
@@ -534,17 +548,43 @@ g_commands={
 		},
 	},
 	{
-		name='iff_create',
-		admin=true,
+		name='iff create',
+		desc='現在位置にIFF送信機を1機スポーンする',
+		admin=false,
+		action=function(peer_id, is_admin, is_auth)
+			createIffSenderAt(peer_id)
+		end,
+	},
+	{
+		name='iff create all',
+		desc='既存のIFF送信機を全削除し、固定4拠点に再スポーンする',
+		admin=false,
 		action=function(peer_id, is_admin, is_auth)
 			createIffSender(peer_id)
 		end,
 	},
 	{
-		name='iff_delete',
-		admin=true,
+		name='iff delete',
+		desc='最寄りのIFF送信機を1機削除する',
+		admin=false,
+		action=function(peer_id, is_admin, is_auth)
+			deleteIffSenderNearest(peer_id)
+		end,
+	},
+	{
+		name='iff delete all',
+		desc='スポーン中のIFF送信機をすべて削除する',
+		admin=false,
 		action=function(peer_id, is_admin, is_auth)
 			deleteIffSender(peer_id)
+		end,
+	},
+	{
+		name='iff list',
+		desc='スポーン中のIFF送信機の一覧と座標を表示する',
+		admin=false,
+		action=function(peer_id, is_admin, is_auth)
+			showIffList(peer_id)
 		end,
 	},
 }
@@ -556,36 +596,112 @@ g_iff_spawn_positions={
 	{10745,  5,  -8500},
 }
 
+function createIffSenderAt(peer_id)
+	local pos, is_success=server.getPlayerPos(peer_id)
+	if not is_success then
+		announce('Failed to get player position.', peer_id)
+		return
+	end
+	local vehicle_id=spawnAddonVehicle('iff_sender', pos)
+	if vehicle_id then
+		table.insert(g_savedata.iff_vehicles, vehicle_id)
+		announce('IFF sender spawned. vehicle_id='..vehicle_id, peer_id)
+	else
+		announce('IFF sender spawn failed.', peer_id)
+	end
+	showIffList(peer_id)
+end
+
 function createIffSender(peer_id)
 	deleteIffSender()
 	for _,p in ipairs(g_iff_spawn_positions) do
 		local pos=matrix.translation(p[1], p[2], p[3])
 		local vehicle_id=spawnAddonVehicle('iff_sender', pos)
 		if vehicle_id then
-			table.insert(g_iff_vehicles, vehicle_id)
 			table.insert(g_savedata.iff_vehicles, vehicle_id)
 			announce('IFF sender spawned. vehicle_id='..vehicle_id, peer_id)
 		else
 			announce('IFF sender spawn failed at '..p[1]..','..p[3], peer_id)
 		end
 	end
+	if peer_id then showIffList(peer_id) end
 end
 
 function deleteIffSender(peer_id)
 	if g_savedata.iff_vehicles and #g_savedata.iff_vehicles>0 then
+		local to_despawn={}
 		for _,vid in ipairs(g_savedata.iff_vehicles) do
+			to_despawn[vid]=true
+		end
+		g_iff_vehicles={}
+		g_savedata.iff_vehicles=g_iff_vehicles
+		for vid in pairs(to_despawn) do
 			server.despawnVehicle(vid, true)
-			for i=#g_iff_vehicles,1,-1 do
-				if g_iff_vehicles[i]==vid then table.remove(g_iff_vehicles,i) end
-			end
 		end
 		announce('IFF senders despawned.', peer_id or -1)
-		g_savedata.iff_vehicles={}
 	else
 		if peer_id then
 			announce('IFF sender not found.', peer_id)
 		end
 	end
+	if peer_id then showIffList(peer_id) end
+end
+
+function deleteIffSenderNearest(peer_id)
+	if not g_savedata.iff_vehicles or #g_savedata.iff_vehicles==0 then
+		announce('IFF sender not found.', peer_id)
+		showIffList(peer_id)
+		return
+	end
+	local player_pos, is_success=server.getPlayerPos(peer_id)
+	if not is_success then
+		announce('Failed to get player position.', peer_id)
+		return
+	end
+	local px,_,pz=matrix.position(player_pos)
+	local nearest_vid=nil
+	local nearest_dist=math.huge
+	for _,vid in ipairs(g_savedata.iff_vehicles) do
+		local vpos, ok=server.getVehiclePos(vid)
+		if ok then
+			local vx,_,vz=matrix.position(vpos)
+			local dx=px-vx
+			local dz=pz-vz
+			local dist=dx*dx+dz*dz
+			if dist<nearest_dist then
+				nearest_dist=dist
+				nearest_vid=vid
+			end
+		end
+	end
+	if nearest_vid then
+		server.despawnVehicle(nearest_vid, true)
+		for i=#g_savedata.iff_vehicles,1,-1 do
+			if g_savedata.iff_vehicles[i]==nearest_vid then table.remove(g_savedata.iff_vehicles,i) end
+		end
+		announce('IFF sender despawned. vehicle_id='..nearest_vid, peer_id)
+	else
+		announce('IFF sender not found.', peer_id)
+	end
+	showIffList(peer_id)
+end
+
+function showIffList(peer_id)
+	if not g_savedata.iff_vehicles or #g_savedata.iff_vehicles==0 then
+		announce('IFF senders: none', peer_id)
+		return
+	end
+	local text='IFF senders ('..#g_savedata.iff_vehicles..'):\n'
+	for i,vid in ipairs(g_savedata.iff_vehicles) do
+		local pos, ok=server.getVehiclePos(vid)
+		if ok then
+			local x,y,z=matrix.position(pos)
+			text=text..string.format(' #%d vid=%d x=%.0f y=%.0f z=%.0f\n', i, vid, x, y, z)
+		else
+			text=text..string.format(' #%d vid=%d (invalid)\n', i, vid)
+		end
+	end
+	announce(text, peer_id)
 end
 
 g_command_aliases={
@@ -628,7 +744,8 @@ function showHelp(peer_id, is_admin, is_auth)
 					end
 				end
 			end
-			commands_help=commands_help..'  - ?mm '..command_define.name..args..'\n'
+			local desc_str=command_define.desc and '  -- '..command_define.desc or ''
+			commands_help=commands_help..'  - ?mm '..command_define.name..args..desc_str..'\n'
 			any_commands=true
 		end
 	end
@@ -683,6 +800,11 @@ function onCreate(is_world_create)
 		end
 	end
 
+	-- 互換性維持: 旧キー `auto_sit_on_spawn` を新キー `auto_link_on_spawn` に移行
+	if g_savedata.auto_sit_on_spawn~=nil and g_savedata.auto_link_on_spawn==nil then
+		g_savedata.auto_link_on_spawn = g_savedata.auto_sit_on_spawn
+	end
+
 	g_iff_vehicles=g_savedata.iff_vehicles
 
 	if is_world_create then
@@ -719,6 +841,15 @@ function onDestroy()
 end
 
 function onTick()
+	for i=#g_pending_link_requests,1,-1 do
+		local req=g_pending_link_requests[i]
+		req.delay=req.delay-1
+		if req.delay<=0 then
+				onPlayerSit_(req.peer_id, req.vehicle_id, '')
+				table.remove(g_pending_link_requests, i)
+		end
+	end
+
 	if g_ui_reset_requested then
 		g_ui_reset_requested=false
 		renewUiIds()
@@ -776,7 +907,7 @@ function onTick()
 
 	updatePopups()
 
-	-- チームビークル座標の収集（毎tick）・出力（60tickに1回）
+	-- チームビークル座標の収集（毎tick）
 	local team_vehicle_positions={}
 	for peer_id,player in pairs(g_players) do
 		if player.alive and player.vehicle_id>=0 then
@@ -829,38 +960,86 @@ function onTick()
 
 	-- IFF キーパッド更新（毎tick）
 	if #g_iff_vehicles>0 then
+		-- 送信すべき値をまとめて計算（encodeCoords は1回のみ）
+		local iff_writes={}  -- {{key, value}, ...}
+		for team_idx,team_name in ipairs(g_default_teams) do
+			if team_idx>3 then break end
+			local base=(team_idx-1)*100
+			local positions=team_vehicle_positions[team_name] or {}
+			local count=0
+			for i=1,math.min(#positions,10) do
+				local pos=positions[i]
+				local f1,f2=pos.f1,pos.f2
+				if not f1 then
+					f1,f2=encodeCoords(pos.x,pos.h,pos.y)
+					pos.f1,pos.f2=f1,f2
+				end
+				count=count+1
+				iff_writes[tostring(base+count)]=f1
+				count=count+1
+				iff_writes[tostring(base+count)]=f2
+			end
+			for slot=count+1,20 do
+				iff_writes[tostring(base+slot)]=0
+			end
+			iff_writes['mm_iff_freq_'..team_idx]=g_iff_freq[team_idx]
+		end
+		-- 差分のみ全 IFF ビークルに書き込み
 		for _,iff_vid in ipairs(g_iff_vehicles) do
-			for team_idx,team_name in ipairs(g_default_teams) do
-				if team_idx>3 then break end
-				local base=(team_idx-1)*100
-				local positions=team_vehicle_positions[team_name] or {}
-				local count=0
-				for i=1,math.min(#positions,10) do
-					local pos=positions[i]
-					local f1,f2=pos.f1,pos.f2
-					if not f1 then
-						f1,f2=encodeCoords(pos.x,pos.h,pos.y)
-					end
-					count=count+1
-					server.setVehicleKeypad(iff_vid,tostring(base+count),f1)
-					count=count+1
-					server.setVehicleKeypad(iff_vid,tostring(base+count),f2)
+			for k,v in pairs(iff_writes) do
+				if g_iff_keypad_cache[k]~=v then
+					server.setVehicleKeypad(iff_vid,k,v)
 				end
-				for slot=count+1,20 do
-					server.setVehicleKeypad(iff_vid,tostring(base+slot),0)
-				end
-				server.setVehicleKeypad(iff_vid,'mm_iff_freq_'..team_idx,g_iff_freq[team_idx])
-
 			end
 		end
+		-- キャッシュ更新（最後に1回）
+		for k,v in pairs(iff_writes) do
+			g_iff_keypad_cache[k]=v
+		end
 	end
-	-- プレイヤービークルに周波数書込み（毎tick）
+	-- プレイヤービークルに周波数書込み（差分変化時 or 600tick毎に強制再送）
 	for _,player in pairs(g_players) do
 		if player.alive and player.vehicle_id>=0 then
 			for team_idx,team_name in ipairs(g_default_teams) do
 				if team_name==player.team and team_idx<=3 then
-					server.setVehicleKeypad(player.vehicle_id,'mm_iff_freq',g_iff_freq[team_idx])
+					local freq=g_iff_freq[team_idx]
+					local ck='player_freq_'..player.vehicle_id
+					if g_iff_keypad_cache[ck]~=freq or g_freq_force_timer==0 then
+						server.setVehicleKeypad(player.vehicle_id,'mm_iff_freq',freq)
+						g_iff_keypad_cache[ck]=freq
+					end
 					break
+				end
+			end
+		end
+	end
+	g_freq_force_timer=g_freq_force_timer+1
+	if g_freq_force_timer>=600 then g_freq_force_timer=0 end
+
+	-- ready催促（20秒ごと、ゲーム開始前のみ）
+	g_ready_remind_timer=g_ready_remind_timer+1
+	if g_ready_remind_timer>=1200 then
+		g_ready_remind_timer=0
+		if not g_in_game and not g_in_countdown then
+			-- チームごとにready率を集計
+			local team_total={}
+			local team_ready={}
+			for _,player in pairs(g_players) do
+				if player.alive and player.team then
+					team_total[player.team]=(team_total[player.team] or 0)+1
+					if player.ready then
+						team_ready[player.team]=(team_ready[player.team] or 0)+1
+					end
+				end
+			end
+			-- 未readyプレイヤーへ催促DM
+			for pid,player in pairs(g_players) do
+				if player.alive and not player.ready and player.team then
+					local total=team_total[player.team] or 0
+					local rdy=team_ready[player.team] or 0
+					if total>0 and rdy/total>=0.5 then
+						announce(player.name..' are you ready? -> "?mm ready(?mm r)"',pid)
+					end
 				end
 			end
 		end
@@ -997,9 +1176,12 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 end
 
 function onPlayerSit_(peer_id, vehicle_id, seat_name)
+	
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
+	
+	
 	if not player or not player.alive then
 		return
 	end
@@ -1031,6 +1213,14 @@ function getParentID(group_id, vehicle_id)
 	return g_group_parents[group_id] or vehicle_id
 end
 
+function enqueueVehicleLinkRequest(peer_id, vehicle_id)
+	table.insert(g_pending_link_requests, {
+		peer_id=peer_id//1|0,
+		vehicle_id=vehicle_id//1|0,
+		delay=1,
+	})
+end
+
 function onVehicleDespawn(vehicle_id, peer_id)
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
@@ -1047,6 +1237,7 @@ function onVehicleDespawn(vehicle_id, peer_id)
 			end
 		end
 	end
+	g_iff_keypad_cache={}  -- IFF台数変化時はキャッシュをクリア
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
@@ -1056,8 +1247,8 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 	if not g_group_parents[group_id] then
 		g_group_parents[group_id]=parent_id
 	end
-	if vehicle_id==parent_id then
-		onPlayerSit_(peer_id, vehicle_id, '')
+	if vehicle_id==parent_id and g_savedata.auto_link_on_spawn then
+		enqueueVehicleLinkRequest(peer_id, vehicle_id)
 	end
 end
 
@@ -1085,9 +1276,29 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, sub_
 		return
 	end
 
-	local command_define=findCommand(sub_command)
+	local args={...}
+	for i=#args,1,-1 do
+		if args[i]=='' then args[i]=nil end
+	end
+
+	-- iff 複合コマンドの解決（"iff create all" など）
+	local effective_sub=sub_command
+	local arg_offset=0
+	if sub_command=='iff' then
+		local p1=args[1] or ''
+		local p2=args[2] or ''
+		if p1~='' and p2~='' and findCommand('iff '..p1..' '..p2) then
+			effective_sub='iff '..p1..' '..p2
+			arg_offset=2
+		elseif p1~='' and findCommand('iff '..p1) then
+			effective_sub='iff '..p1
+			arg_offset=1
+		end
+	end
+
+	local command_define=findCommand(effective_sub)
 	if not command_define then
-		announce('Command "'..sub_command..'" not found.', peer_id)
+		announce('Command "'..effective_sub..'" not found.', peer_id)
 		return
 	end
 	if not checkAuth(command_define, is_admin, is_auth) then
@@ -1095,14 +1306,12 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, sub_
 		return
 	end
 
-	local args={...}
-	for i=#args,1,-1 do
-		if args[i]=='' then args[i]=nil end
-	end
-	if command_define.args and not validateArgs(command_define, args, peer_id) then
+	local cmd_args={}
+	for i=arg_offset+1,#args do cmd_args[#cmd_args+1]=args[i] end
+	if command_define.args and not validateArgs(command_define, cmd_args, peer_id) then
 		return
 	end
-	command_define.action(peer_id, is_admin, is_auth, table.unpack(args))
+	command_define.action(peer_id, is_admin, is_auth, table.unpack(cmd_args))
 end
 
 -- Player Functions --
@@ -1111,23 +1320,29 @@ function join(peer_id, team, force)
 	if g_in_game and not force then return end
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
+	local vehicle_id = -1
+	if g_players[peer_id] and g_players[peer_id].vehicle_id > 0 then
+		vehicle_id = g_players[peer_id].vehicle_id
+		server.announce('Existing vehicle_id='..tostring(vehicle_id)..' for peer_id='..peer_id, peer_id)
+	end
+	
 	local player={
 		name=name,
 		trimmed_name=trim(name),
 		team=team,
 		alive=true,
 		ready=g_in_game,
-		vehicle_id=-1,
+		vehicle_id=vehicle_id,
 		popup_name='player_status_'..(peer_id//1|0),
 	}
 	g_players[peer_id]=player
 
 	local character_id=server.getPlayerCharacterID(peer_id)
-	local vehicle_id, is_success=server.getCharacterVehicle(character_id)
+	local sit_vehicle_id, is_success=server.getCharacterVehicle(character_id)
 	if is_success then
-		local vehicle=registerVehicle(vehicle_id)
+		local vehicle=registerVehicle(sit_vehicle_id)
 		if vehicle and vehicle.alive then
-			player.vehicle_id=vehicle_id
+			player.vehicle_id=sit_vehicle_id
 			-- WebMapAddon
 			if g_has_webmap then
 				bindVehicleTeamToWebMap(vehicle_id, team)
@@ -1264,6 +1479,18 @@ function ready(peer_id)
 	end
 	if not player.ready then
 		player.ready=true
+		-- チーム内の準備完了人数をカウント
+		local team_ready_count=0
+		local team_total_count=0
+		for p_id,p in pairs(g_players) do
+			if p.team==player.team and p.alive then
+				team_total_count=team_total_count+1
+				if p.ready then
+					team_ready_count=team_ready_count+1
+				end
+			end
+		end
+		announce(player.name..' is ready! ('..team_ready_count..'/'..team_total_count..')', -1)
 		startCountdown()
 		g_player_status_dirty=true
 	end
@@ -1326,7 +1553,7 @@ function registerVehicle(vehicle_id)
 			bs=g_savedata.ammo_bs//1|0,
 			as=g_savedata.ammo_as//1|0,
 		},
-		gc_time=600,
+		gc_time=60,
 		damage_in_frame=0,
 		name=name,
 		trimmed_name=trim(name),
@@ -1463,6 +1690,7 @@ end
 
 -- WebMapAddon(Called from the Join/Shuffle/Sit event.)
 function bindVehicleTeamToWebMap(vehicle_id, team)
+	--server.announce("bindVehicleTeamToWebMap",0)
 	if g_has_webmap==false then
 		return
 	end
@@ -1481,12 +1709,13 @@ function bindVehicleTeamToWebMap(vehicle_id, team)
 	team = string.lower(team)
 	local color = TEAM_COLOR_MAP[team]
 	if not color then return end
-
 	if g_webmap_bindings[vehicle_id]==color then return end
 	g_webmap_bindings[vehicle_id]=color
 	-- ?wm ct(WebMap_ChangeTeam)command
 	local cmd = '?wm ct ' .. vehicle_id .. ' ' .. color
+	--server.announce("cmd",cmd)
 	server.command(cmd)
+	
 end
 
 -- System Functions --
@@ -2173,4 +2402,5 @@ end
 
 g_name_tx={}
 g_name_rx={}
+g_iff_keypad_cache={}  -- {[vid]={[key]=value}}
 g_decoded_names={}
