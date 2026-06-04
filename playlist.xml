@@ -1,27 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<playlist path_id="app_data/data/missions/SW_BattleMatchmaker" folder_path="data/missions/SW_BattleMatchmaker" file_store="4" name="Battle Matchmaker">
+<playlist folder_path="data/missions/SW_BattleMatchmaker" file_store="4" name="Battle Matchmaker">
 	<locations location_id_counter="2" component_id_counter="2">
 		<locations>
-			<l id="1" tile="" name="Support Vehicles" is_env_mod="true" env_mod_spawn_num="1">
+			<l id="1" name="Support Vehicles" is_env_mod="true" env_mod_spawn_num="1">
 				<components>
-					<c component_type="3" id="1" vehicle_parent_id="0" name="name=supply" display_name="" is_sea_floor_object="false" show_zone_on_map="false" zone_type="0" zone_radius="2.5" dynamic_object_type="2" loot_type="0" character_outfit_category="11" character_type="1" character_special_outfit="0" vehicle_file_name="data/missions_working/vehicle_1.xml" vehicle_file_store="4" vehicle_is_static="true" vehicle_is_no_sleep="false" vehicle_is_editable="false" vehicle_is_show_on_map="false" vehicle_is_transponder_active="false" is_fire_lit="true" is_explosion="false" explosion_magnitude="1" flare_hue="0" is_flare_lit="true" vehicle_button_name="" ice_type="0" ice_scale="1" animal_type="0">
-						<spawn_transform 00="1" 01="0" 02="0" 03="0" 10="0" 11="1" 12="0" 13="0" 20="0" 21="0" 22="1" 23="0" 30="0" 31="0" 32="0" 33="1"/>
+					<c component_type="3" id="1" name="name=supply" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_name="data/missions_working/vehicle_1.xml" vehicle_file_store="4" vehicle_is_static="true">
 						<spawn_bounds>
-							<min x="-6.625" y="-0.375" z="-0.375"/>
-							<max x="6.875" y="3.125" z="2.125"/>
+							<min x="-7.375" y="-2.125" z="-7.375"/>
+							<max x="7.375" y="0.375" z="0.375"/>
 						</spawn_bounds>
-						<vehicle_parent_transform 00="1" 01="0" 02="0" 03="0" 10="0" 11="1" 12="0" 13="0" 20="0" 21="0" 22="1" 23="0" 30="0" 31="0" 32="0" 33="1"/>
-						<spawn_local_offset x="-0.125" y="-1.375" z="-0.875"/>
+						<spawn_local_offset y="0.875" z="3.5"/>
 						<graph_links/>
 					</c>
-					<c component_type="3" id="2" vehicle_parent_id="0" name="name=flag" display_name="" is_sea_floor_object="false" show_zone_on_map="false" zone_type="0" zone_radius="2.5" dynamic_object_type="2" loot_type="0" character_outfit_category="11" character_type="1" character_special_outfit="0" vehicle_file_name="data/missions_working/vehicle_2.xml" vehicle_file_store="4" vehicle_is_static="true" vehicle_is_no_sleep="false" vehicle_is_editable="false" vehicle_is_show_on_map="false" vehicle_is_transponder_active="false" is_fire_lit="true" is_explosion="false" explosion_magnitude="1" flare_hue="0" is_flare_lit="true" vehicle_button_name="" ice_type="0" ice_scale="1" animal_type="0">
-						<spawn_transform 00="1" 01="0" 02="0" 03="0" 10="0" 11="1" 12="0" 13="0" 20="0" 21="0" 22="1" 23="0" 30="-16" 31="10" 32="0" 33="1"/>
+					<c component_type="3" id="2" name="name=flag" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_name="data/missions_working/vehicle_2.xml" vehicle_file_store="4" vehicle_is_static="true">
+						<spawn_transform 30="-16" 31="10"/>
 						<spawn_bounds>
 							<min x="-2.125" y="-0.125" z="-4.375"/>
 							<max x="2.125" y="19.625" z="2.125"/>
 						</spawn_bounds>
-						<vehicle_parent_transform 00="1" 01="0" 02="0" 03="0" 10="0" 11="1" 12="0" 13="0" 20="0" 21="0" 22="1" 23="0" 30="0" 31="0" 32="0" 33="1"/>
-						<spawn_local_offset x="-0" y="-9.75" z="1.125"/>
+						<spawn_local_offset y="-9.75" z="1.125"/>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="2" name="iff_sender" env_mod_spawn_num="1">
+				<components>
+					<c component_type="3" id="3" name="name=iff_sender" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_name="data/missions_working/vehicle_3.xml" vehicle_file_store="4" vehicle_is_static="true">
+						<spawn_bounds>
+							<min x="-0.375" y="-0.375" z="-0.625"/>
+							<max x="8.125" y="0.625" z="2.125"/>
+						</spawn_bounds>
+						<spawn_local_offset x="-3.875" y="-0.125" z="-0.75"/>
 						<graph_links/>
 					</c>
 				</components>

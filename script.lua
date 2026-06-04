@@ -14,7 +14,7 @@ g_pause=false
 g_timer=0
 g_remind_interval=3600
 g_ui_reset_requested=false
-g_flag_radius=300
+g_flag_radius=1000
 -- WebMapAddon
 g_has_webmap=false
 g_webmap_bindings={}
@@ -25,6 +25,24 @@ g_pending_link_requests={} -- {{peer_id=number, vehicle_id=number, delay=number}
 g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
 g_group_parents={}  -- {[group_id]=parent_vehicle_id}
+-- Airbase assignment state
+g_flag_assignments = { RED = nil, BLUE = nil }
+g_auto_battle_state=nil -- {phase='wait_shuffle'|'wait_teleport', timer=ticks}
+-- finishGame now accepts an optional keep_airbase argument
+-- airports: 複数の基地を設定できる構造化テーブル
+-- 各エントリ: { tile = '<tile_name>', name = '<基地名>', x = <world_x>, y = <world_z> }
+--0,0地点から50kmまでしか探索できないので、北極は無理です　それ以外ならOK
+airports = {
+	{ tile = 'mega_island_12_6', 			name = 'Oneill AirBase',   	    	x = 0, z = 0, y = 11 },
+	{ tile = 'mega_island_2_6',     		name = 'Harrison AirBase',			x = 0, z = 0, y = 15},
+	{ tile = 'island_15',					name = 'CoastGurd Outpost', 		x = 0, z = 0, y = 7},
+	{ tile = 'island_34_military',			name = 'Military Base', 			x = 0, z = 0, y = 24},
+	{ tile = 'island_33_tile_33',  			name = 'Donkk AirBase',         	x = -19100 , z = -4700, y = 10},
+	{ tile = 'island_43_multiplayer_base',  name = 'Multiplayer Island Base',	x = 0, z = 0, y = 16},
+	{ tile = 'arid_island_26_14',   		name = 'FJ Warner',          		x = 0, z = 0, y = 11 },
+	{ tile = 'arid_island_19_11',   		name = 'Clarke Airfield',          	x = 0, z = 0, y = 21 },
+	{ tile = 'arid_island_7_5',   			name = 'Ender Airfield',          	x = 0, z = 0, y = 177 },
+}
 
 function generateIffFreqs()
 	for i=1,3 do
@@ -182,6 +200,11 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Auto battle after finish',
+		key='auto_battle',
+		type='boolean',
+	},
+	{
 		name='Auto vehicle cleanup',
 		key='gc_vehicle',
 		type='boolean',
@@ -231,6 +254,7 @@ g_default_savedata={
 	player_damage		=property.checkbox("Player Damage Enabled (in battle)", false),
 	show_friends		=property.checkbox("Show Friends on map", true),
 	auto_standby		=property.checkbox("Auto Standby after battle", true),
+	auto_battle			=property.checkbox("Auto battle after finish", false),
 	gc_vehicle			=property.checkbox("Auto vehicle cleanup", true),
 	supply_vehicles		={},
 	flag_vehicles		={},
@@ -238,10 +262,308 @@ g_default_savedata={
 	sunk_depth			=property.slider("Sunk Depth", 0, 200, 1, 1),
 	iff_vehicles		={},
 	auto_link_on_spawn	=true,
+	shuffle_history		={},
+	shuffle_history_K	=4,
 }
 
 g_mag_names={}
 for i=1,10 do g_mag_names[i]='magazine_'..tostring(i) end
+
+-- Shuffle2 constants (: K=4, max_same ratio=0.4)
+local SHUFFLE_HISTORY_K = 4
+local MAX_SAME_RATIO = 0.4
+local SHUFFLE_MAX_ENUM = 200000 --
+local SHUFFLE_VIOLATION_WEIGHT = 10000 -- JS
+
+--
+local combos_cache = {}
+
+local function ncr(n,k)
+	if k < 0 or k > n then return 0 end
+	if k > n - k then k = n - k end
+	local num = 1
+	for i=1,k do
+		num = num * (n - k + i) / i
+	end
+	return math.floor(num + 0.5)
+end
+
+-- n choose k : 1..n
+local function combinations(n,k)
+	local res = {}
+	if k < 0 or k > n then return res end
+	local key = tostring(n) .. '#' .. tostring(k)
+	if combos_cache[key] then return combos_cache[key] end
+	local comb = {}
+	for i=1,k do comb[i] = i end
+	while true do
+		local ccopy = {}
+		for i=1,k do ccopy[i] = comb[i] end
+		table.insert(res, ccopy)
+		local i = k
+		while i > 0 and comb[i] == n - k + i do i = i - 1 end
+		if i == 0 then break end
+		comb[i] = comb[i] + 1
+		for j = i+1, k do comb[j] = comb[j-1] + 1 end
+	end
+	combos_cache[key] = res
+	return res
+end
+
+local function combinations_from_list(list, k)
+	local n = #list
+	local idxs = combinations(n,k)
+	local out = {}
+	for _, combo in ipairs(idxs) do
+		local row = {}
+		for _, p in ipairs(combo) do table.insert(row, list[p]) end
+		table.insert(out, row)
+	end
+	return out
+end
+
+local function assignment_count(n, teamSizes)
+	local cnt = 1
+	local rem = n
+	for i=1,#teamSizes do
+		local k = teamSizes[i]
+		local c = ncr(rem, k)
+		if c == 0 then return math.huge end
+		cnt = cnt * c
+		if cnt > SHUFFLE_MAX_ENUM then return cnt end
+		rem = rem - k
+	end
+	return cnt
+end
+
+--  (g_savedata.shuffle_history)  pairCounts
+local function build_pair_counts()
+	local counts = {}
+	local history = g_savedata.shuffle_history
+	if not history then return counts end
+	local limit = SHUFFLE_HISTORY_K
+	for i = 1, math.min(#history, limit) do
+		local round = history[i]
+		if round then
+			local teams = {}
+			for pid, team in pairs(round) do
+				teams[team] = teams[team] or {}
+				table.insert(teams[team], pid)
+			end
+			for _, members in pairs(teams) do
+				for a=1,#members-1 do
+					for b=a+1,#members do
+						local p1 = members[a] < members[b] and members[a] or members[b]
+						local p2 = members[a] < members[b] and members[b] or members[a]
+						local key = tostring(p1) .. '-' .. tostring(p2)
+						counts[key] = (counts[key] or 0) + 1
+					end
+				end
+			end
+		end
+	end
+	return counts
+end
+
+local function pair_penalty_for_set(members, pairCounts)
+	if not pairCounts then return 0 end
+	local penalty = 0
+	for i=1,#members-1 do
+		for j=i+1,#members do
+			local a = members[i]; local b = members[j]
+			local p1 = a < b and a or b
+			local p2 = a < b and b or a
+			local key = tostring(p1) .. '-' .. tostring(p2)
+			penalty = penalty + (pairCounts[key] or 0)
+		end
+	end
+	return penalty
+end
+
+--  multi-team
+local function generate_multiteam_assignments(list, teamSizes)
+	local results = {}
+	local function rec(remaining, idx, current)
+		if idx > #teamSizes then
+			-- copy current
+			local copy = {}
+			for t=1,#current do
+				copy[t] = {}
+				for i=1,#current[t] do copy[t][i] = current[t][i] end
+			end
+			table.insert(results, copy)
+			return
+		end
+		local k = teamSizes[idx]
+		local combos = combinations_from_list(remaining, k)
+		for _, chosen in ipairs(combos) do
+			local chosenSet = {}
+			for _, v in ipairs(chosen) do chosenSet[v] = true end
+			local nextRemaining = {}
+			for _, v in ipairs(remaining) do if not chosenSet[v] then table.insert(nextRemaining, v) end end
+			current[idx] = chosen
+			rec(nextRemaining, idx+1, current)
+			current[idx] = nil
+		end
+	end
+	rec(list, 1, {})
+	return results
+end
+
+local function evaluate_candidates(peer_list, prev_map, pairCounts, teamSizes, teamNames)
+	local n = #peer_list
+	local enumCnt = assignment_count(n, teamSizes)
+	if enumCnt > SHUFFLE_MAX_ENUM then
+		return nil, enumCnt
+	end
+	local candidates = {}
+	local assignments = generate_multiteam_assignments(peer_list, teamSizes)
+	for _, assignment in ipairs(assignments) do
+		local sameCounts = {}
+		local pairPenalty = 0
+		for t=1,#assignment do
+			local members = assignment[t]
+			local same = 0
+			for _, pid in ipairs(members) do
+				if prev_map and prev_map[pid] and prev_map[pid] == teamNames[t] then same = same + 1 end
+			end
+			sameCounts[t] = same
+			pairPenalty = pairPenalty + pair_penalty_for_set(members, pairCounts)
+		end
+		table.insert(candidates, {teams = assignment, sameCounts = sameCounts, pairPenalty = pairPenalty})
+	end
+	return candidates, enumCnt
+end
+
+--
+local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, teamNames, attempts)
+	attempts = attempts or 12
+	local n = #peer_list
+	if n == 0 then return nil end
+	-- precompute maxSame per team
+	local maxSame = {}
+	for i=1,#teamSizes do maxSame[i] = math.min(teamSizes[i], math.ceil(MAX_SAME_RATIO * teamSizes[i])) end
+
+	local function calc_pair_inc(pid, members)
+		local s = 0
+		for _, m in ipairs(members) do
+			local a = pid < m and pid or m
+			local b = pid < m and m or pid
+			local key = tostring(a) .. '-' .. tostring(b)
+			s = s + (pairCounts[key] or 0)
+		end
+		return s
+	end
+
+	local function score_assignment(teams)
+		local pair = 0
+		local violation = 0
+		for t=1,#teams do
+			pair = pair + pair_penalty_for_set(teams[t], pairCounts)
+			if prev_map then
+				local same = 0
+				for _, pid in ipairs(teams[t]) do if prev_map[pid] == teamNames[t] then same = same + 1 end end
+				if same > maxSame[t] then violation = violation + (same - maxSame[t]) end
+			end
+		end
+		local score = violation * SHUFFLE_VIOLATION_WEIGHT + pair
+		return score, pair, violation
+	end
+
+	local function make_initial_assignment(order)
+		local teams = {}
+		local sameCounts = {}
+		for i=1,#teamSizes do teams[i] = {}; sameCounts[i] = 0 end
+		for _, pid in ipairs(order) do
+			local bestT, bestCost = nil, math.huge
+			for t=1,#teamSizes do
+				if #teams[t] < teamSizes[t] then
+					local inc = calc_pair_inc(pid, teams[t])
+					local newSame = sameCounts[t] + (prev_map and prev_map[pid] == teamNames[t] and 1 or 0)
+					local viol = 0
+					if newSame > maxSame[t] then viol = newSame - maxSame[t] end
+					local cost = inc + viol * SHUFFLE_VIOLATION_WEIGHT + math.random() * 1e-6
+					if cost < bestCost then bestCost = cost; bestT = t end
+				end
+			end
+			if not bestT then bestT = 1 end
+			table.insert(teams[bestT], pid)
+			if prev_map and prev_map[pid] == teamNames[bestT] then sameCounts[bestT] = sameCounts[bestT] + 1 end
+		end
+		return teams
+	end
+
+	local function local_search(teams, maxIter)
+		local bestScore, bestPair, bestViol = score_assignment(teams)
+		for iter=1,maxIter do
+			-- random swap between different teams
+			local t1 = math.random(1,#teams)
+			local t2 = math.random(1,#teams)
+			if t1 == t2 or #teams[t1] == 0 or #teams[t2] == 0 then goto cont end
+			local i1 = math.random(1,#teams[t1])
+			local i2 = math.random(1,#teams[t2])
+			local p1 = teams[t1][i1]
+			local p2 = teams[t2][i2]
+
+			-- compute delta pair penalty
+			local old_pair = 0
+			for _, m in ipairs(teams[t1]) do if m ~= p1 then local a = p1 < m and p1 or m; local b = p1 < m and m or p1; old_pair = old_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
+			for _, m in ipairs(teams[t2]) do if m ~= p2 then local a = p2 < m and p2 or m; local b = p2 < m and m or p2; old_pair = old_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
+
+			local new_pair = 0
+			for _, m in ipairs(teams[t1]) do if m ~= p1 then local a = p2 < m and p2 or m; local b = p2 < m and m or p2; new_pair = new_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
+			for _, m in ipairs(teams[t2]) do if m ~= p2 then local a = p1 < m and p1 or m; local b = p1 < m and m or p1; new_pair = new_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
+
+			local deltaPair = new_pair - old_pair
+
+			-- compute violation delta
+			local violDelta = 0
+			if prev_map then
+				local oldSame1 = 0; for _,m in ipairs(teams[t1]) do if m ~= p1 and prev_map[m] == teamNames[t1] then oldSame1 = oldSame1 + 1 end end
+				local oldSame2 = 0; for _,m in ipairs(teams[t2]) do if m ~= p2 and prev_map[m] == teamNames[t2] then oldSame2 = oldSame2 + 1 end end
+				local newSame1 = oldSame1 + (prev_map[p2] == teamNames[t1] and 1 or 0)
+				local newSame2 = oldSame2 + (prev_map[p1] == teamNames[t2] and 1 or 0)
+				local oldV = math.max(0, oldSame1 - maxSame[t1]) + math.max(0, oldSame2 - maxSame[t2])
+				local newV = math.max(0, newSame1 - maxSame[t1]) + math.max(0, newSame2 - maxSame[t2])
+				violDelta = (newV - oldV) * SHUFFLE_VIOLATION_WEIGHT
+			end
+
+			local delta = deltaPair + violDelta
+			if delta < -1e-9 then
+				-- perform swap
+				teams[t1][i1] = p2
+				teams[t2][i2] = p1
+				local s,_,_ = score_assignment(teams)
+				if s < bestScore then bestScore = s end
+			end
+			::cont::
+		end
+		return teams, bestScore
+	end
+
+	local bestAssign = nil
+	local bestScore = math.huge
+	for a=1,attempts do
+		-- random order
+		local order = {}
+		for i=1,n do order[i] = peer_list[i] end
+		for i=n,2,-1 do local j = math.random(i); order[i], order[j] = order[j], order[i] end
+		local teams = make_initial_assignment(order)
+		teams, localScore = local_search(teams, 300)
+		if localScore < bestScore then bestScore = localScore; bestAssign = teams end
+	end
+
+	if not bestAssign then return nil end
+	local sameCounts = {}
+	for t=1,#bestAssign do
+		local same = 0
+		for _, pid in ipairs(bestAssign[t]) do if prev_map and prev_map[pid] == teamNames[t] then same = same + 1 end end
+		sameCounts[t] = same
+	end
+	local pairPenalty = 0
+	for t=1,#bestAssign do pairPenalty = pairPenalty + pair_penalty_for_set(bestAssign[t], pairCounts) end
+	return {teams = bestAssign, sameCounts = sameCounts, pairPenalty = pairPenalty}
+end
 
 -- Commands --
 
@@ -254,8 +576,10 @@ g_commands={
 				announce('Cannot join after game start..', peer_id)
 				return
 			end
-			if not team_name then
-				team_name=g_temporary_team
+			if team_name then
+				team_name = string.upper(team_name)
+			else
+				team_name = g_temporary_team
 			end
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			join(target_peer_id or peer_id, team_name, is_admin)
@@ -362,7 +686,8 @@ g_commands={
 			if g_in_countdown then
 				stopCountdown()
 			elseif g_in_game then
-				finishGame()
+					-- call finishGame requesting to keep airbase assignments
+					finishGame(true)
 				notify('Game Aborted', 'Game has been aborted by admin.', 6, -1)
 			end
 		end,
@@ -398,11 +723,32 @@ g_commands={
 	{
 		name='flag',
 		admin=true,
-		action=function(peer_id, is_admin, is_auth, name)
-			spawnFlag(peer_id, name:lower())
+		action=function(peer_id, is_admin, is_auth, name, x, z, y)
+			if not name or name=='' then
+				announce('Flag name required.', peer_id)
+				return
+			end
+
+			if x and z and y then
+				x = tonumber(x)
+				z = tonumber(z)
+				--yはnilも許容するが、数値なら変換する
+				if y ~= nil then
+					y = tonumber(y)
+				end
+				if x and z then
+					spawnFlagAt(peer_id, name, x, z, y )
+					return
+				end
+			end
+			-- fallback: spawn in front of player
+			spawnFlag(peer_id, name)
 		end,
 		args={
 			{name='name', type='string', require=true},
+			{name='x', type='number', require=false},
+			{name='z', type='number', require=false},
+			{name='y', type='number', require=false},
 		},
 	},
 	{
@@ -498,7 +844,7 @@ g_commands={
 			g_player_status_dirty=true
 			clearSupplies()
 			clearFlags()
-			finishGame()
+			finishGame(false)
 			announce('Reset game.', -1)
 		end,
 	},
@@ -595,6 +941,211 @@ g_iff_spawn_positions={
 	{-18855, 5,  -5100},
 	{10745,  5,  -8500},
 }
+
+-- Resolve airports coordinates from tile names.
+-- If airport.x and airport.z are 0 or nil, try to get world coordinates using server.getTileTransform.
+-- Returns number of resolved entries.
+function resolveAirports(exec_peer_id)
+ 	local resolved = 0
+ 	for i, ap in ipairs(airports) do
+ 		if ap then
+ 			local need = (not ap.x or ap.x==0) and (not ap.z or ap.z==0)
+ 			if need then
+ 				local transform = matrix.translation(0,0,0)
+				local tile_name = "data/tiles/"..tostring(ap.tile)..".xml"
+ 				local transform_matrix, is_success = server.getTileTransform(transform, tile_name)
+ 				if is_success then
+ 					local tx, ty, tz = matrix.position(transform_matrix)
+ 					ap.x = tx
+ 					ap.z = tz
+ 					resolved = resolved + 1
+ 				else
+ 					announce('Failed to resolve tile '..tostring(ap.tile), exec_peer_id)
+ 				end
+ 			end
+ 		end
+ 	end
+ 	if exec_peer_id then
+ 		announce('Airports resolved: '..tostring(resolved), exec_peer_id)
+ 	end
+ 	return resolved
+end
+
+-- Register commands for airports (resolve & list)
+table.insert(g_commands, {
+ 	name='airports_resolve',
+ 	desc='Resolve airports coordinates from tile names)',
+ 	admin=true,
+ 	action=function(peer_id, is_admin, is_auth)
+ 		resolveAirports(peer_id)
+ 	end,
+})
+
+
+table.insert(g_commands, {
+ 	name='airports_list',
+ 	desc='List airports entries',
+ 	auth=true,
+ 	action=function(peer_id, is_admin, is_auth)
+ 		local text='Airports ('..tostring(#airports)..'):\n'
+ 		for i, ap in ipairs(airports) do
+ 			text = text .. string.format(' #%d tile=%s name=%s x=%.0f z=%.0f\n', i, ap.tile or '', ap.name or '', ap.x or 0, ap.z or 0)
+ 		end
+		
+ 		announce(text, peer_id)
+ 	end,
+})
+
+	-- Commands: shuffle_airbase (alias sa) and tp
+	table.insert(g_commands, {
+		name='shuffle_airbase',
+		desc='Select two nearby airbases and assign them to RED and BLUE (arg: range)',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, range)
+			range = tonumber(range) or 20000
+			assignAirbases(peer_id, range)
+		end,
+		args={
+			{name='range', type='number', require=false},
+		},
+	})
+
+	table.insert(g_commands, {
+		name='tp',
+		desc='Teleport to your team\'s assigned flag',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			teleportPlayerToAssignedFlag(peer_id)
+		end,
+	})
+
+	-- Helper: compute 2D distance between airports (x,z)
+	local function _airbase_dist(ax, az, bx, bz)
+		local dx = (tonumber(ax) or 0) - (tonumber(bx) or 0)
+		local dz = (tonumber(az) or 0) - (tonumber(bz) or 0)
+		return math.sqrt(dx*dx + dz*dz)
+	end
+
+	-- Choose a pair of airbases: pick A randomly, then pick B randomly among those within range.
+	-- If none within range, pick the nearest other airbase.
+	function chooseAirbasePair(range)
+		range = tonumber(range) or 20000
+		if not airports or #airports < 2 then return nil end
+		local min_pair_dist = 5000
+		local max_retry = 2
+		-- find indices with valid coordinates
+		local valid_idxs = {}
+		for i, ap in ipairs(airports) do
+			if ap and ap.x and ap.z and tonumber(ap.x) and tonumber(ap.z) then
+				table.insert(valid_idxs, i)
+			end
+		end
+		if #valid_idxs < 2 then return nil end
+
+		local fallback_pair = nil
+		local fallback_dist = -1
+		for _=1,max_retry do
+			local a_idx = valid_idxs[math.random(1, #valid_idxs)]
+			local a = airports[a_idx]
+
+			-- collect candidates within range
+			local candidates = {}
+			for _, j in ipairs(valid_idxs) do
+				if j ~= a_idx then
+					local ap = airports[j]
+					local d = _airbase_dist(a.x, a.z, ap.x, ap.z)
+					if d <= range then table.insert(candidates, j) end
+				end
+			end
+
+			local b_idx = nil
+			if #candidates > 0 then
+				b_idx = candidates[math.random(1, #candidates)]
+			else
+				-- find nearest
+				local bestd = math.huge
+				for _, j in ipairs(valid_idxs) do
+					if j ~= a_idx then
+						local ap = airports[j]
+						local d = _airbase_dist(a.x, a.z, ap.x, ap.z)
+						if d < bestd then bestd = d; b_idx = j end
+					end
+				end
+			end
+
+			if b_idx then
+				local dist = _airbase_dist(airports[a_idx].x, airports[a_idx].z, airports[b_idx].x, airports[b_idx].z)
+				local pair = { a_idx = a_idx, a = airports[a_idx], b_idx = b_idx, b = airports[b_idx] }
+				if dist > fallback_dist then
+					fallback_dist = dist
+					fallback_pair = pair
+				end
+				-- if within 5km, reshuffle
+				if dist > min_pair_dist then
+					return pair
+				end
+			end
+		end
+
+		-- all retries resulted in <=5km pairs; return the farthest fallback
+		return fallback_pair
+	end
+
+	-- Assign airbases to RED/BLUE and spawn flags. This is the main function for shuffle_airbase.
+	function assignAirbases(peer_id, range)
+		local pair = chooseAirbasePair(range)
+		if not pair then
+			announce('Failed to choose airbases. Check airports configuration.', peer_id)
+			return false
+		end
+
+		-- spawn flags for teams (pass team name as requested, do NOT pass y)
+		spawnFlagAt(peer_id, "RED", pair.a.x, pair.a.z, pair.a.y,true)
+		spawnFlagAt(peer_id, "BLUE", pair.b.x, pair.b.z, pair.b.y,true)
+
+		announce('Airbases assigned: RED='..tostring(pair.a.name)..' BLUE='..tostring(pair.b.name), -1)
+		return true
+	end
+
+	-- Clear airbase assignments and remove flags (unless preserve==true)
+	function clearFlagAssignments(preserve, peer_id)
+		if preserve then return end
+		-- remove flag markers 'red' and 'blue' (use lower-case names to match spawn usage)
+		despawnFlag(peer_id or -1, 'red')
+		despawnFlag(peer_id or -1, 'blue')
+		g_flag_assignments = { RED = nil, BLUE = nil }
+	end
+
+	-- Get assigned flag for a team (team may be 'RED'/'red'/'Red')
+	function getAssignedFlagForTeam(team)
+		if not team then return nil end
+		local t = string.upper(team)
+		return g_flag_assignments[t]
+	end
+
+	-- Teleport a player to their team's assigned flag (y uses flag entry y if present, otherwise 20)
+	function teleportPlayerToAssignedFlag(peer_id)
+		local player = g_players[peer_id]
+		if not player then
+			announce('Player not found.', peer_id)
+			return false
+		end
+		local team = player.team
+		if not team then
+			announce('You are not assigned to a team.', peer_id)
+			return false
+		end
+		local assigned = getAssignedFlagForTeam(team)
+		if not assigned then
+			announce('No flag assigned for your team.', peer_id)
+			return false
+		end
+		local y = assigned.y or 20
+		local pos = matrix.translation(assigned.x or 0, y, assigned.z or 0)
+		server.setPlayerPos(peer_id, pos)
+		announce('Teleported to your team flag: '..tostring(assigned.name), peer_id)
+		return true
+	end
 
 function createIffSenderAt(peer_id)
 	local pos, is_success=server.getPlayerPos(peer_id)
@@ -709,7 +1260,22 @@ g_command_aliases={
 	l='leave',
 	r='ready',
 	o='order',
+	sh='shuffle',
+	sh2='shuffle2',
+	sa='shuffle_airbase',
 }
+
+-- shuffle2  shuffle
+table.insert(g_commands, {
+	name='shuffle2',
+	desc='Shuffle players (alternate command, alias sh2)',
+	admin=false,
+	action=function(peer_id, is_admin, is_auth, ...)
+		local args={...}
+		local team_count = tonumber(args[1]) or 2
+		shuffle2(team_count, peer_id)
+	end,
+})
 
 function findCommand(command)
 	command=g_command_aliases[command] or command
@@ -791,6 +1357,53 @@ function checkTargetPeerId(target_peer_id, peer_id, is_admin)
 	return true
 end
 
+function scheduleAutoBattle(peer_id)
+	if not g_savedata.auto_battle then
+		g_auto_battle_state=nil
+		return
+	end
+	g_auto_battle_state={phase='wait_shuffle', timer=60*30, last_countdown=nil}
+	announce('Auto battle queued: shuffle in 30 seconds.', peer_id or -1)
+end
+
+function processAutoBattle()
+	local state=g_auto_battle_state
+	if not state then return end
+	if g_in_game or g_in_countdown then return end
+
+	state.timer=state.timer-1
+	local remain_sec=math.ceil(state.timer/60)
+	if remain_sec<0 then remain_sec=0 end
+	if (remain_sec%10==0 or remain_sec<=5) and state.last_countdown~=remain_sec then
+		local phase_label = state.phase=='wait_shuffle' and 'shuffle' or 'teleport'
+		announce('Auto battle countdown ('..phase_label..'): '..tostring(remain_sec), -1)
+		state.last_countdown=remain_sec
+	end
+	if state.timer>0 then return end
+
+	if state.phase=='wait_shuffle' then
+		shuffle2(2, 0)
+		assignAirbases(0, 20000)
+		state.phase='wait_teleport'
+		state.timer=60*10
+		state.last_countdown=nil
+		announce('Auto battle queued: teleport in 10 seconds.', -1)
+		return
+	end
+
+	if state.phase=='wait_teleport' then
+		for peer_id,player in pairs(g_players) do
+			if player and player.team then
+				local assigned=getAssignedFlagForTeam(player.team)
+				if assigned then
+					teleportPlayerToAssignedFlag(peer_id)
+				end
+			end
+		end
+		g_auto_battle_state=nil
+	end
+end
+
 -- Callbacks --
 
 function onCreate(is_world_create)
@@ -819,7 +1432,7 @@ function onCreate(is_world_create)
 	registerPopup('game_time', -0.9, -0.9)
 
 	setSettingsToStandby()
-	
+
 
 	-- WebMapAddonDetectCheck
 	local addon_count = server.getAddonCount()
@@ -832,6 +1445,14 @@ function onCreate(is_world_create)
 			break
 		end
 	end
+	if not g_has_webmap then
+		announce('Webmap addon not detected. Map display on UI will not work.', 0)
+	else
+		announce('Webmap addon detected. Map display on UI is enabled.', 0)
+	end
+
+	-- OnCreate 時に airports テーブルの x,z が未設定（0）のものを解決する
+	resolveAirports()
 end
 
 function onDestroy()
@@ -845,8 +1466,8 @@ function onTick()
 		local req=g_pending_link_requests[i]
 		req.delay=req.delay-1
 		if req.delay<=0 then
-				onPlayerSit_(req.peer_id, req.vehicle_id, '')
-				table.remove(g_pending_link_requests, i)
+			onPlayerSit_(req.peer_id, req.vehicle_id, '')
+			table.remove(g_pending_link_requests, i)
 		end
 	end
 
@@ -884,7 +1505,7 @@ function onTick()
 				server.notify(-1, 'Time Reminder', time_text..' left.', 1)
 			end
 		else
-			finishGame()
+			finishGame(false)
 			notify('Game End', 'Timeup!', 9, -1)
 		end
 	end
@@ -1045,6 +1666,8 @@ function onTick()
 		end
 	end
 
+	processAutoBattle()
+
 	g_tick_count=g_tick_count+1
 	if g_tick_count>=60 then
 		g_tick_count=0
@@ -1176,12 +1799,12 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 end
 
 function onPlayerSit_(peer_id, vehicle_id, seat_name)
-	
+
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
-	
-	
+
+
 	if not player or not player.alive then
 		return
 	end
@@ -1325,7 +1948,7 @@ function join(peer_id, team, force)
 		vehicle_id = g_players[peer_id].vehicle_id
 		server.announce('Existing vehicle_id='..tostring(vehicle_id)..' for peer_id='..peer_id, peer_id)
 	end
-	
+
 	local player={
 		name=name,
 		trimmed_name=trim(name),
@@ -1419,6 +2042,142 @@ function shuffle(team_count, exec_peer_id)
 	stopCountdown()
 	g_team_status_dirty=true
 	g_player_status_dirty=true
+end
+
+function shuffle2(team_count, exec_peer_id)
+	-- Constrained shuffle with history and multi-team support
+	local peer_list = {}
+	for peer_id, player in pairs(g_players) do
+		player.ready = false
+		table.insert(peer_list, peer_id)
+	end
+	if #peer_list < 1 then
+		announce('Player not enough.', exec_peer_id)
+		return
+	end
+	table.sort(peer_list, function(a,b) return tostring(a) < tostring(b) end)
+
+	team_count = tonumber(team_count) or 2
+	if team_count < 2 then team_count = 2 end
+
+	local n = #peer_list
+	-- build team names (use g_default_teams when available)
+	local teamNames = {}
+	for i=1,team_count do teamNames[i] = g_default_teams[i] or ('TEAM'..tostring(i)) end
+	-- compute team sizes fairly
+	local base = math.floor(n / team_count)
+	local r = n % team_count
+	local teamSizes = {}
+	for i=1,team_count do teamSizes[i] = base + (i <= r and 1 or 0) end
+
+	-- prev map from latest saved history (peer_id -> teamName)
+	local prev_map = {}
+	if g_savedata.shuffle_history and #g_savedata.shuffle_history > 0 then
+		local latest = g_savedata.shuffle_history[1]
+		if latest then
+			for pid, t in pairs(latest) do prev_map[pid] = t end
+		end
+	end
+
+	local pairCounts = build_pair_counts()
+
+	--
+	local chosenCandidate = heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, teamNames, 12)
+	if not chosenCandidate then
+		announce('shuffle2: heuristic fallback failed, falling back to simple shuffle.', exec_peer_id)
+		shuffle(team_count, exec_peer_id)
+		return
+	end
+
+	local stage = 'strict'
+	local chosen = chosenCandidate
+	if not chosenCandidate then
+		-- compute maxSame per team (ceil(teamSize * 0.4))
+		local maxSame = {}
+		for i=1,#teamSizes do maxSame[i] = math.min(teamSizes[i], math.ceil(MAX_SAME_RATIO * teamSizes[i])) end
+
+		-- find valids under strict limits
+		local valids = {}
+		for _, ci in ipairs(candidates) do
+			local ok = true
+			for t=1,#maxSame do if ci.sameCounts[t] > maxSame[t] then ok = false; break end end
+			if ok then table.insert(valids, ci) end
+		end
+
+		local relaxLevel = 0
+		local maxTeamSize = 0
+		for i=1,#teamSizes do if teamSizes[i] > maxTeamSize then maxTeamSize = teamSizes[i] end end
+		while #valids == 0 and relaxLevel <= maxTeamSize do
+			relaxLevel = relaxLevel + 1
+			local ms = {}
+			for i=1,#maxSame do ms[i] = maxSame[i] + relaxLevel end
+			for _, ci in ipairs(candidates) do
+				local ok = true
+				for t=1,#ms do if ci.sameCounts[t] > ms[t] then ok = false; break end end
+				if ok then table.insert(valids, ci) end
+			end
+			if #valids > 0 then stage = 'relaxed+'..tostring(relaxLevel); break end
+		end
+
+		local function scoreOf(ci) return ci.pairPenalty end
+
+		if #valids > 0 then
+			local minScore = math.huge
+			local bests = {}
+			for _, ci in ipairs(valids) do
+				local s = scoreOf(ci)
+				if s < minScore then minScore = s; bests = {ci}
+				elseif s == minScore then table.insert(bests, ci) end
+			end
+			chosen = bests[math.random(1, #bests)]
+		else
+			stage = 'minPenalty'
+			local minScore = math.huge
+			local bests = {}
+			for _, ci in ipairs(candidates) do
+				local violation = 0
+				for t=1,#maxSame do
+					local v = ci.sameCounts[t] - maxSame[t]
+					if v > 0 then violation = violation + v end
+				end
+				local s = violation * SHUFFLE_VIOLATION_WEIGHT + scoreOf(ci)
+				if s < minScore then minScore = s; bests = {ci}
+				elseif s == minScore then table.insert(bests, ci) end
+			end
+			chosen = bests[math.random(1, #bests)]
+		end
+	else
+		stage = 'heuristic'
+	end
+
+	-- apply assignment
+	for t=1,#chosen.teams do
+		local teamName = teamNames[t]
+		for _, pid in ipairs(chosen.teams[t]) do
+			g_players[pid].team = teamName
+			announce('You joined to '..teamName..'.', pid)
+			if g_has_webmap then
+				local vehicle = findVehicle(g_players[pid].vehicle_id)
+				if vehicle and vehicle.alive then
+					bindVehicleTeamToWebMap(g_players[pid].vehicle_id, teamName)
+				end
+			end
+		end
+	end
+
+	stopCountdown()
+	g_team_status_dirty = true
+	g_player_status_dirty = true
+
+	-- save history ()
+	g_savedata.shuffle_history = g_savedata.shuffle_history or {}
+	local roundMap = {}
+	for _, pid in ipairs(peer_list) do roundMap[pid] = g_players[pid].team end
+	table.insert(g_savedata.shuffle_history, 1, roundMap)
+	while #g_savedata.shuffle_history > SHUFFLE_HISTORY_K do table.remove(g_savedata.shuffle_history) end
+
+	--全体にシャッフル完了を通知
+	announce('Teams shuffled!', -1)
 end
 
 function dismiss(team, peer_id)
@@ -1715,7 +2474,7 @@ function bindVehicleTeamToWebMap(vehicle_id, team)
 	local cmd = '?wm ct ' .. vehicle_id .. ' ' .. color
 	--server.announce("cmd",cmd)
 	server.command(cmd)
-	
+
 end
 
 -- System Functions --
@@ -1840,7 +2599,7 @@ function checkFinish()
 		any=true
 	end
 	if not any then
-		finishGame()
+		finishGame(false)
 		notify('Game End', 'No player. Game is interrupted.', 6, -1)
 		return
 	end
@@ -1854,7 +2613,7 @@ function checkFinish()
 	end
 	if alive_team_count>1 then return end
 
-	finishGame()
+	finishGame(false)
 	if alive_team_count==1 then
 		notify('Game End', 'Team '..alive_team_name..' Win!', 9, -1)
 	else
@@ -1866,6 +2625,7 @@ function startGame()
 	g_in_game=true
 	g_in_countdown=false
 	g_pause=false
+	g_auto_battle_state=nil
 	g_player_status_dirty=true
 	g_timer=g_savedata.game_time*60*60//1|0
 	g_remind_interval=g_timer//4
@@ -1887,7 +2647,7 @@ function startGame()
 	announce('- Disable Weapons:'..tostring(settings.ceasefire), -1)
 end
 
-function finishGame()
+function finishGame(keep_airbase)
 	g_in_game=false
 	g_in_countdown=false
 	g_pause=false
@@ -1911,6 +2671,14 @@ function finishGame()
 	end
 
 	setSettingsToStandby()
+
+	-- clear flag assignments unless caller requested to keep them
+	if not keep_airbase then
+		clearFlagAssignments(false)
+		scheduleAutoBattle(-1)
+	else
+		g_auto_battle_state=nil
+	end
 end
 
 function setSettingsToBattle()
@@ -2134,6 +2902,47 @@ function spawnFlag(peer_id, name)
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
 		}
+		if string.lower(name) == 'red' then
+			g_flag_assignments.RED = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
+		elseif string.lower(name) == 'blue' then
+			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
+		end
+	end
+end
+
+function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
+	if not x or not z then
+		announce('Invalid coordinates for flag spawn.', peer_id)
+		return
+	end
+	-- remove existing flag with same name
+	despawnFlag(peer_id, name)
+	--yが指定されていない場合は-100にする。これにより、地面に埋まる可能性があるが、少なくとも空中に浮かぶことはない。
+	local altitude = 0
+	if flag_under_spawn and y and y > 0 then
+		altitude = -100
+	else
+		altitude = y
+	end
+	local vehicle_matrix = matrix.translation(tonumber(x) or 0, altitude, tonumber(z) or 0)
+	local vehicle_id = spawnAddonVehicle('flag', vehicle_matrix)
+
+	if vehicle_id then
+		server.setVehicleTooltip(vehicle_id, name)
+		local ui_id = server.getMapID()
+		local r, g, b, a = getColor(name)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
+		g_savedata.flag_vehicles[name] = {
+			vehicle_id = vehicle_id,
+			ui_id = ui_id,
+		}
+		if string.lower(name) == 'red' then
+			g_flag_assignments.RED = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
+		elseif string.lower(name) == 'blue' then
+			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
+		end
+	else
+		announce('Failed to spawn flag "' .. name .. '"', peer_id)
 	end
 end
 
@@ -2240,7 +3049,7 @@ function findEmptySlot(object_id, slot)
 end
 
 function getColor(name)
-	return table.unpack(g_colors[name] or g_color_default)
+	return table.unpack(g_colors[string.lower(name)] or g_color_default)
 end
 
 g_colors={
