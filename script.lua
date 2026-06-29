@@ -237,7 +237,7 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp			=property.slider("Vehicle HP", 50, 5000, 10, 50),
+	vehicle_hp			=property.slider("Vehicle HP", 50, 7000, 10, 50),
 	vehicle_class		=property.checkbox("Vehicle class Enabled", false),
 	max_damage			=1000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
@@ -259,7 +259,7 @@ g_default_savedata={
 	supply_vehicles		={},
 	flag_vehicles		={},
 	auto_auth			=property.checkbox("Auto Auth", true),
-	sunk_depth			=property.slider("Sunk Depth", 0, 200, 1, 1),
+	sunk_depth			=property.slider("Sunk Depth", -100, 200, 1, 1),
 	iff_vehicles		={},
 	auto_link_on_spawn	=true,
 	shuffle_history		={},
@@ -576,6 +576,11 @@ g_commands={
 				announce('Cannot join after game start..', peer_id)
 				return
 			end
+			if team_name == "r" or team_name == "R" or team_name == "red" then
+				team_name = "RED"
+			elseif team_name == "b" or team_name == "B" or team_name == "blue"then
+				team_name = "BLUE"
+			end
 			if team_name then
 				team_name = string.upper(team_name)
 			else
@@ -686,8 +691,8 @@ g_commands={
 			if g_in_countdown then
 				stopCountdown()
 			elseif g_in_game then
-					-- call finishGame requesting to keep airbase assignments
-					finishGame(true)
+				-- call finishGame requesting to keep airbase assignments
+				finishGame(true)
 				notify('Game Aborted', 'Game has been aborted by admin.', 6, -1)
 			end
 		end,
@@ -727,6 +732,11 @@ g_commands={
 			if not name or name=='' then
 				announce('Flag name required.', peer_id)
 				return
+			end
+			if name == "r" or name == "R" or name == "red" then
+				name = "RED"
+			elseif name == "b" or name == "B" or name == "blue"then
+				name = "BLUE"
 			end
 
 			if x and z and y then
@@ -946,206 +956,206 @@ g_iff_spawn_positions={
 -- If airport.x and airport.z are 0 or nil, try to get world coordinates using server.getTileTransform.
 -- Returns number of resolved entries.
 function resolveAirports(exec_peer_id)
- 	local resolved = 0
- 	for i, ap in ipairs(airports) do
- 		if ap then
- 			local need = (not ap.x or ap.x==0) and (not ap.z or ap.z==0)
- 			if need then
- 				local transform = matrix.translation(0,0,0)
+	local resolved = 0
+	for i, ap in ipairs(airports) do
+		if ap then
+			local need = (not ap.x or ap.x==0) and (not ap.z or ap.z==0)
+			if need then
+				local transform = matrix.translation(0,0,0)
 				local tile_name = "data/tiles/"..tostring(ap.tile)..".xml"
- 				local transform_matrix, is_success = server.getTileTransform(transform, tile_name)
- 				if is_success then
- 					local tx, ty, tz = matrix.position(transform_matrix)
- 					ap.x = tx
- 					ap.z = tz
- 					resolved = resolved + 1
- 				else
- 					announce('Failed to resolve tile '..tostring(ap.tile), exec_peer_id)
- 				end
- 			end
- 		end
- 	end
- 	if exec_peer_id then
- 		announce('Airports resolved: '..tostring(resolved), exec_peer_id)
- 	end
- 	return resolved
+				local transform_matrix, is_success = server.getTileTransform(transform, tile_name)
+				if is_success then
+					local tx, ty, tz = matrix.position(transform_matrix)
+					ap.x = tx
+					ap.z = tz
+					resolved = resolved + 1
+				else
+					announce('Failed to resolve tile '..tostring(ap.tile), exec_peer_id)
+				end
+			end
+		end
+	end
+	if exec_peer_id then
+		announce('Airports resolved: '..tostring(resolved), exec_peer_id)
+	end
+	return resolved
 end
 
 -- Register commands for airports (resolve & list)
 table.insert(g_commands, {
- 	name='airports_resolve',
- 	desc='Resolve airports coordinates from tile names)',
- 	admin=true,
- 	action=function(peer_id, is_admin, is_auth)
- 		resolveAirports(peer_id)
- 	end,
+	name='airports_resolve',
+	desc='Resolve airports coordinates from tile names)',
+	admin=true,
+	action=function(peer_id, is_admin, is_auth)
+		resolveAirports(peer_id)
+	end,
 })
 
 
 table.insert(g_commands, {
- 	name='airports_list',
- 	desc='List airports entries',
- 	auth=true,
- 	action=function(peer_id, is_admin, is_auth)
- 		local text='Airports ('..tostring(#airports)..'):\n'
- 		for i, ap in ipairs(airports) do
- 			text = text .. string.format(' #%d tile=%s name=%s x=%.0f z=%.0f\n', i, ap.tile or '', ap.name or '', ap.x or 0, ap.z or 0)
- 		end
-		
- 		announce(text, peer_id)
- 	end,
+	name='airports_list',
+	desc='List airports entries',
+	auth=true,
+	action=function(peer_id, is_admin, is_auth)
+		local text='Airports ('..tostring(#airports)..'):\n'
+		for i, ap in ipairs(airports) do
+			text = text .. string.format(' #%d tile=%s name=%s x=%.0f z=%.0f\n', i, ap.tile or '', ap.name or '', ap.x or 0, ap.z or 0)
+		end
+
+		announce(text, peer_id)
+	end,
 })
 
-	-- Commands: shuffle_airbase (alias sa) and tp
-	table.insert(g_commands, {
-		name='shuffle_airbase',
-		desc='Select two nearby airbases and assign them to RED and BLUE (arg: range)',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, range)
-			range = tonumber(range) or 20000
-			assignAirbases(peer_id, range)
-		end,
-		args={
-			{name='range', type='number', require=false},
-		},
-	})
-
-	table.insert(g_commands, {
-		name='tp',
-		desc='Teleport to your team\'s assigned flag',
-		auth=true,
-		action=function(peer_id, is_admin, is_auth)
-			teleportPlayerToAssignedFlag(peer_id)
-		end,
-	})
-
-	-- Helper: compute 2D distance between airports (x,z)
-	local function _airbase_dist(ax, az, bx, bz)
-		local dx = (tonumber(ax) or 0) - (tonumber(bx) or 0)
-		local dz = (tonumber(az) or 0) - (tonumber(bz) or 0)
-		return math.sqrt(dx*dx + dz*dz)
-	end
-
-	-- Choose a pair of airbases: pick A randomly, then pick B randomly among those within range.
-	-- If none within range, pick the nearest other airbase.
-	function chooseAirbasePair(range)
+-- Commands: shuffle_airbase (alias sa) and tp
+table.insert(g_commands, {
+	name='shuffle_airbase',
+	desc='Select two nearby airbases and assign them to RED and BLUE (arg: range)',
+	admin=true,
+	action=function(peer_id, is_admin, is_auth, range)
 		range = tonumber(range) or 20000
-		if not airports or #airports < 2 then return nil end
-		local min_pair_dist = 5000
-		local max_retry = 2
-		-- find indices with valid coordinates
-		local valid_idxs = {}
-		for i, ap in ipairs(airports) do
-			if ap and ap.x and ap.z and tonumber(ap.x) and tonumber(ap.z) then
-				table.insert(valid_idxs, i)
+		assignAirbases(peer_id, range)
+	end,
+	args={
+		{name='range', type='number', require=false},
+	},
+})
+
+table.insert(g_commands, {
+	name='tp',
+	desc='Teleport to your team\'s assigned flag',
+	auth=true,
+	action=function(peer_id, is_admin, is_auth)
+		teleportPlayerToAssignedFlag(peer_id)
+	end,
+})
+
+-- Helper: compute 2D distance between airports (x,z)
+local function _airbase_dist(ax, az, bx, bz)
+	local dx = (tonumber(ax) or 0) - (tonumber(bx) or 0)
+	local dz = (tonumber(az) or 0) - (tonumber(bz) or 0)
+	return math.sqrt(dx*dx + dz*dz)
+end
+
+-- Choose a pair of airbases: pick A randomly, then pick B randomly among those within range.
+-- If none within range, pick the nearest other airbase.
+function chooseAirbasePair(range)
+	range = tonumber(range) or 20000
+	if not airports or #airports < 2 then return nil end
+	local min_pair_dist = 5000
+	local max_retry = 2
+	-- find indices with valid coordinates
+	local valid_idxs = {}
+	for i, ap in ipairs(airports) do
+		if ap and ap.x and ap.z and tonumber(ap.x) and tonumber(ap.z) then
+			table.insert(valid_idxs, i)
+		end
+	end
+	if #valid_idxs < 2 then return nil end
+
+	local fallback_pair = nil
+	local fallback_dist = -1
+	for _=1,max_retry do
+		local a_idx = valid_idxs[math.random(1, #valid_idxs)]
+		local a = airports[a_idx]
+
+		-- collect candidates within range
+		local candidates = {}
+		for _, j in ipairs(valid_idxs) do
+			if j ~= a_idx then
+				local ap = airports[j]
+				local d = _airbase_dist(a.x, a.z, ap.x, ap.z)
+				if d <= range then table.insert(candidates, j) end
 			end
 		end
-		if #valid_idxs < 2 then return nil end
 
-		local fallback_pair = nil
-		local fallback_dist = -1
-		for _=1,max_retry do
-			local a_idx = valid_idxs[math.random(1, #valid_idxs)]
-			local a = airports[a_idx]
-
-			-- collect candidates within range
-			local candidates = {}
+		local b_idx = nil
+		if #candidates > 0 then
+			b_idx = candidates[math.random(1, #candidates)]
+		else
+			-- find nearest
+			local bestd = math.huge
 			for _, j in ipairs(valid_idxs) do
 				if j ~= a_idx then
 					local ap = airports[j]
 					local d = _airbase_dist(a.x, a.z, ap.x, ap.z)
-					if d <= range then table.insert(candidates, j) end
-				end
-			end
-
-			local b_idx = nil
-			if #candidates > 0 then
-				b_idx = candidates[math.random(1, #candidates)]
-			else
-				-- find nearest
-				local bestd = math.huge
-				for _, j in ipairs(valid_idxs) do
-					if j ~= a_idx then
-						local ap = airports[j]
-						local d = _airbase_dist(a.x, a.z, ap.x, ap.z)
-						if d < bestd then bestd = d; b_idx = j end
-					end
-				end
-			end
-
-			if b_idx then
-				local dist = _airbase_dist(airports[a_idx].x, airports[a_idx].z, airports[b_idx].x, airports[b_idx].z)
-				local pair = { a_idx = a_idx, a = airports[a_idx], b_idx = b_idx, b = airports[b_idx] }
-				if dist > fallback_dist then
-					fallback_dist = dist
-					fallback_pair = pair
-				end
-				-- if within 5km, reshuffle
-				if dist > min_pair_dist then
-					return pair
+					if d < bestd then bestd = d; b_idx = j end
 				end
 			end
 		end
 
-		-- all retries resulted in <=5km pairs; return the farthest fallback
-		return fallback_pair
-	end
-
-	-- Assign airbases to RED/BLUE and spawn flags. This is the main function for shuffle_airbase.
-	function assignAirbases(peer_id, range)
-		local pair = chooseAirbasePair(range)
-		if not pair then
-			announce('Failed to choose airbases. Check airports configuration.', peer_id)
-			return false
+		if b_idx then
+			local dist = _airbase_dist(airports[a_idx].x, airports[a_idx].z, airports[b_idx].x, airports[b_idx].z)
+			local pair = { a_idx = a_idx, a = airports[a_idx], b_idx = b_idx, b = airports[b_idx] }
+			if dist > fallback_dist then
+				fallback_dist = dist
+				fallback_pair = pair
+			end
+			-- if within 5km, reshuffle
+			if dist > min_pair_dist then
+				return pair
+			end
 		end
-
-		-- spawn flags for teams (pass team name as requested, do NOT pass y)
-		spawnFlagAt(peer_id, "RED", pair.a.x, pair.a.z, pair.a.y,true)
-		spawnFlagAt(peer_id, "BLUE", pair.b.x, pair.b.z, pair.b.y,true)
-
-		announce('Airbases assigned: RED='..tostring(pair.a.name)..' BLUE='..tostring(pair.b.name), -1)
-		return true
 	end
 
-	-- Clear airbase assignments and remove flags (unless preserve==true)
-	function clearFlagAssignments(preserve, peer_id)
-		if preserve then return end
-		-- remove flag markers 'red' and 'blue' (use lower-case names to match spawn usage)
-		despawnFlag(peer_id or -1, 'red')
-		despawnFlag(peer_id or -1, 'blue')
-		g_flag_assignments = { RED = nil, BLUE = nil }
+	-- all retries resulted in <=5km pairs; return the farthest fallback
+	return fallback_pair
+end
+
+-- Assign airbases to RED/BLUE and spawn flags. This is the main function for shuffle_airbase.
+function assignAirbases(peer_id, range)
+	local pair = chooseAirbasePair(range)
+	if not pair then
+		announce('Failed to choose airbases. Check airports configuration.', peer_id)
+		return false
 	end
 
-	-- Get assigned flag for a team (team may be 'RED'/'red'/'Red')
-	function getAssignedFlagForTeam(team)
-		if not team then return nil end
-		local t = string.upper(team)
-		return g_flag_assignments[t]
-	end
+	-- spawn flags for teams (pass team name as requested, do NOT pass y)
+	spawnFlagAt(peer_id, "RED", pair.a.x, pair.a.z, pair.a.y,true)
+	spawnFlagAt(peer_id, "BLUE", pair.b.x, pair.b.z, pair.b.y,true)
 
-	-- Teleport a player to their team's assigned flag (y uses flag entry y if present, otherwise 20)
-	function teleportPlayerToAssignedFlag(peer_id)
-		local player = g_players[peer_id]
-		if not player then
-			announce('Player not found.', peer_id)
-			return false
-		end
-		local team = player.team
-		if not team then
-			announce('You are not assigned to a team.', peer_id)
-			return false
-		end
-		local assigned = getAssignedFlagForTeam(team)
-		if not assigned then
-			announce('No flag assigned for your team.', peer_id)
-			return false
-		end
-		local y = assigned.y or 20
-		local pos = matrix.translation(assigned.x or 0, y, assigned.z or 0)
-		server.setPlayerPos(peer_id, pos)
-		announce('Teleported to your team flag: '..tostring(assigned.name), peer_id)
-		return true
+	announce('Airbases assigned: RED='..tostring(pair.a.name)..' BLUE='..tostring(pair.b.name), -1)
+	return true
+end
+
+-- Clear airbase assignments and remove flags (unless preserve==true)
+function clearFlagAssignments(preserve, peer_id)
+	if preserve then return end
+	-- remove flag markers 'red' and 'blue' (use lower-case names to match spawn usage)
+	despawnFlag(peer_id or -1, 'red')
+	despawnFlag(peer_id or -1, 'blue')
+	g_flag_assignments = { RED = nil, BLUE = nil }
+end
+
+-- Get assigned flag for a team (team may be 'RED'/'red'/'Red')
+function getAssignedFlagForTeam(team)
+	if not team then return nil end
+	local t = string.upper(team)
+	return g_flag_assignments[t]
+end
+
+-- Teleport a player to their team's assigned flag (y uses flag entry y if present, otherwise 20)
+function teleportPlayerToAssignedFlag(peer_id)
+	local player = g_players[peer_id]
+	if not player then
+		announce('Player not found.', peer_id)
+		return false
 	end
+	local team = player.team
+	if not team then
+		announce('You are not assigned to a team.', peer_id)
+		return false
+	end
+	local assigned = getAssignedFlagForTeam(team)
+	if not assigned then
+		announce('No flag assigned for your team.', peer_id)
+		return false
+	end
+	local y = assigned.y or 20
+	local pos = matrix.translation(assigned.x or 0, y, assigned.z or 0)
+	server.setPlayerPos(peer_id, pos)
+	announce('Teleported to your team flag: '..tostring(assigned.name), peer_id)
+	return true
+end
 
 function createIffSenderAt(peer_id)
 	local pos, is_success=server.getPlayerPos(peer_id)
@@ -2645,6 +2655,13 @@ function startGame()
 	announce('- Infinitie Ammo:'..tostring(settings.infinite_ammo), -1)
 	announce('- Player Damage:'..tostring(settings.player_damage), -1)
 	announce('- Disable Weapons:'..tostring(settings.ceasefire), -1)
+
+	if g_has_webmap then
+		local cmd = '?wm max_hp ' .. tostring(g_savedata.vehicle_hp)
+		server.command(cmd)
+		cmd = "?wm max_damage " .. tostring(g_savedata.max_damage)
+		server.command(cmd)
+	end
 end
 
 function finishGame(keep_airbase)
