@@ -180,3 +180,5 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   受けたダメージをPopupで表示
 - `?mm set min_damage_popup [最低ダメージ]`<br>
   ダメージをPopup表示する最低値
+- `?mm set heavy_damage_mul [倍率]`<br>
+  BC以上のダメージを多くに計上するための係数

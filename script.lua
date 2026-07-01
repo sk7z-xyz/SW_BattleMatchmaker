@@ -236,6 +236,12 @@ g_settings={
 		type='integer',
 		min=0,
 	},
+	{
+		name='Heavy Damage Multiplier',
+		key='heavy_damage_mul',
+		type='integer',
+		min=0,
+	},
 }
 
 g_default_teams={
@@ -277,6 +283,7 @@ g_default_savedata={
 	shuffle_history_K	=4,
 	damage_popup		=property.checkbox("Damage Popup", false),
 	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 10),
+	heavy_damage_mul	=property.slider("Heavy Damage Multiplier", 1, 20, 1, 1),
 }
 
 g_mag_names={}
@@ -1900,8 +1907,13 @@ end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
 	vehicle_id=vehicle_id//1|0
-	damage_amount=damage_amount//1|0
 	if damage_amount<=0 then return end
+
+	if damage_amount>=3 and g_savedata.heavy_damage_mul>1 then
+		damage_amount=damage_amount*g_savedata.heavy_damage_mul
+	end
+
+	damage_amount=damage_amount//1|0
 
 	local vehicle=findVehicle(vehicle_id)
 	if not vehicle then return end
