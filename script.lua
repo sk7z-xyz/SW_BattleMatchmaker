@@ -230,6 +230,12 @@ g_settings={
 		key='damage_popup',
 		type='boolean',
 	},
+	{
+		name='Min Damage Popup',
+		key='min_damage_popup',
+		type='integer',
+		min=0,
+	},
 }
 
 g_default_teams={
@@ -270,6 +276,7 @@ g_default_savedata={
 	shuffle_history		={},
 	shuffle_history_K	=4,
 	damage_popup		=property.checkbox("Damage Popup", false),
+	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 10),
 }
 
 g_mag_names={}
@@ -2438,12 +2445,16 @@ function updateVehicle(vehicle)
 			if vehicle.damage_popup_time<40 then
 				vehicle.damage_popup_trans=server.getVehiclePos(vehicle_id)
 			end
-			local text=tostring(vehicle.damage_popup_value)
-			server.setPopup(-1, vehicle.damage_popup_id, text, true, text,
-				vehicle.damage_popup_trans[13],
-				vehicle.damage_popup_trans[14]+10,
-				vehicle.damage_popup_trans[15],
-				0)
+
+			if vehicle.damage_popup_value>=g_savedata.min_damage_popup then
+				local text=tostring(vehicle.damage_popup_value)
+				server.setPopup(-1, vehicle.damage_popup_id, text, true, text,
+					vehicle.damage_popup_trans[13],
+					vehicle.damage_popup_trans[14]+10,
+					vehicle.damage_popup_trans[15],
+					0)
+			end
+
 			vehicle.damage_popup_time=60
 		end
 	elseif vehicle.damage_popup_time>0 then
