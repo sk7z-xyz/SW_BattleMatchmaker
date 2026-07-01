@@ -240,7 +240,7 @@ g_settings={
 		name='Heavy Damage Multiplier',
 		key='heavy_damage_mul',
 		type='integer',
-		min=0,
+		min=1,
 	},
 }
 
