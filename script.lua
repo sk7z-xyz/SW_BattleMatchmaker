@@ -28,6 +28,7 @@ g_group_parents={}  -- {[group_id]=parent_vehicle_id}
 -- Airbase assignment state
 g_flag_assignments = { RED = nil, BLUE = nil }
 g_auto_battle_state=nil -- {phase='wait_shuffle'|'wait_teleport', timer=ticks}
+g_vehicle_owners={} -- {[vehicle_id]=peer_id}
 -- finishGame now accepts an optional keep_airbase argument
 -- airports: 複数の基地を設定できる構造化テーブル
 -- 各エントリ: { tile = '<tile_name>', name = '<基地名>', x = <world_x>, y = <world_z> }
@@ -281,7 +282,7 @@ g_default_savedata={
 	auto_link_on_spawn	=true,
 	shuffle_history		={},
 	shuffle_history_K	=4,
-	damage_popup		=property.checkbox("Damage Popup", false),
+	damage_popup		=property.checkbox("Damage Popup", true),
 	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 10),
 	heavy_damage_mul	=property.slider("Heavy Damage Multiplier", 1, 20, 1, 1),
 }
@@ -753,9 +754,11 @@ g_commands={
 				announce('Flag name required.', peer_id)
 				return
 			end
-			if name == "r" or name == "R" or name == "red" then
+			name = name:upper()
+
+			if name == "R" or name == "RE" or name == "RED" then
 				name = "RED"
-			elseif name == "b" or name == "B" or name == "blue"then
+			elseif name == "B" or name == "BL" or name == "BLU" or name == "BLUE" then
 				name = "BLUE"
 			end
 
@@ -785,7 +788,7 @@ g_commands={
 		name='delete_flag',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
-			despawnFlag(peer_id, name:lower())
+			despawnFlag(peer_id, name:upper())
 		end,
 		args={
 			{name='name', type='string', require=true},
@@ -961,6 +964,46 @@ g_commands={
 		admin=false,
 		action=function(peer_id, is_admin, is_auth)
 			showIffList(peer_id)
+		end,
+	},
+	{
+		name='sit',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			local player=g_players[peer_id]
+			if not player or not player.alive then
+				return
+				server.announce('Cannot sit because player not found or dead.', peer_id)
+			end
+			if player.vehicle_id then
+				local vehicle_seat = getVehicleSeat(player.vehicle_id)
+				if vehicle_seat then
+					local object_id,is_success = server.getPlayerCharacterID(peer_id)
+					if is_success then
+						server.setSeated(object_id, vehicle_seat.vehicle_id, vehicle_seat.voxel_position.x, vehicle_seat.voxel_position.y, vehicle_seat.voxel_position.z)
+						--座席に座ることができました
+						announce('You are now seated in the vehicle.', peer_id)
+					end
+				else
+					--ビークルが見つからないため、座ることができませんでした
+					announce('Cannot sit because vehicle not found.', peer_id)
+				end
+			else
+				--ビークルがリンクされていないため、座ることができませんでした
+				announce('Cannot sit because vehicle is not linked.', peer_id)
+			end
+		end,
+	},
+	{
+		name='give',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			object_id, is_success = server.getPlayerCharacterID(peer_id)
+			server.setCharacterItem(object_id, 2, 15, is_active, 100, 100)
+			server.setCharacterItem(object_id, 3, 6, is_active, 0, 0)
+			server.setCharacterItem(object_id, 4, 8, is_active, 0, 0)
+			server.setCharacterItem(object_id, 5, 17, is_active, 100, 100)
+			server.setCharacterItem(object_id, 6, 11, is_active, 100, 100)
 		end,
 	},
 }
@@ -1140,9 +1183,9 @@ end
 -- Clear airbase assignments and remove flags (unless preserve==true)
 function clearFlagAssignments(preserve, peer_id)
 	if preserve then return end
-	-- remove flag markers 'red' and 'blue' (use lower-case names to match spawn usage)
-	despawnFlag(peer_id or -1, 'red')
-	despawnFlag(peer_id or -1, 'blue')
+	-- remove flag markers 'RED' and 'BLUE' (use upper-case names to match spawn usage)
+	despawnFlag(peer_id or -1, 'RED')
+	despawnFlag(peer_id or -1, 'BLUE')
 	g_flag_assignments = { RED = nil, BLUE = nil }
 end
 
@@ -1492,6 +1535,8 @@ function onDestroy()
 end
 
 function onTick()
+
+	--1tick開けてから紐づけ処理
 	for i=#g_pending_link_requests,1,-1 do
 		local req=g_pending_link_requests[i]
 		req.delay=req.delay-1
@@ -1734,6 +1779,12 @@ function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	if not is_auth and g_savedata.auto_auth then
 		server.addAuth(peer_id)
 	end
+	object_id, is_success = server.getPlayerCharacterID(peer_id)
+	server.setCharacterItem(object_id, 2, 15, is_active, 100, 100)
+	server.setCharacterItem(object_id, 3, 6, is_active, 0, 0)
+	server.setCharacterItem(object_id, 4, 8, is_active, 0, 0)
+	server.setCharacterItem(object_id, 5, 17, is_active, 100, 100)
+	server.setCharacterItem(object_id, 6, 11, is_active, 100, 100)
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
@@ -1847,6 +1898,26 @@ function onPlayerSit_(peer_id, vehicle_id, seat_name)
 			bindVehicleTeamToWebMap(vehicle_id, player.team)
 		end
 	end
+	local vehicle_owner_id = vehicle and g_vehicle_owners[vehicle_id]
+	if vehicle_owner_id ~= peer_id then
+		--旗が出ているなら警告をだす
+		if getAssignedFlagForTeam("RED") or getAssignedFlagForTeam("BLUE") then
+			local pilot_user_name, is_sucess_A = server.getPlayerName(peer_id)
+			local owner_user_name, is_sucess_B = server.getPlayerName(vehicle_owner_id)
+			if vehicle_owner_id==nil then
+				if is_sucess_A then
+					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user=nil', -1)
+				else
+					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user=nil', -1)
+				end
+			elseif is_sucess_A and is_sucess_B then
+				announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user='..owner_user_name , -1)
+			else
+				announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user_id='..vehicle_owner_id, -1)
+			end
+		end
+	end
+
 	g_player_status_dirty=true
 end
 function onCharacterSit(object_id, vehicle_id, seat_name)
@@ -1891,6 +1962,7 @@ function onVehicleDespawn(vehicle_id, peer_id)
 		end
 	end
 	g_iff_keypad_cache={}  -- IFF台数変化時はキャッシュをクリア
+	g_vehicle_owners[vehicle_id]= nil
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
@@ -1903,6 +1975,7 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 	if vehicle_id==parent_id and g_savedata.auto_link_on_spawn then
 		enqueueVehicleLinkRequest(peer_id, vehicle_id)
 	end
+	g_vehicle_owners[vehicle_id] = peer_id
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
@@ -2004,6 +2077,26 @@ function join(peer_id, team, force)
 				bindVehicleTeamToWebMap(vehicle_id, team)
 			end
 		end
+
+		local vehicle_owner_id = vehicle and g_vehicle_owners[vehicle_id]
+		if vehicle_owner_id ~= peer_id then
+		--旗が出ているなら警告をだす
+			if getAssignedFlagForTeam("RED") or getAssignedFlagForTeam("BLUE") then
+				local pilot_user_name, is_sucess_A = server.getPlayerName(peer_id)
+				local owner_user_name, is_sucess_B = server.getPlayerName(vehicle_owner_id)
+				if vehicle_owner_id==nil then
+					if is_sucess_A then
+						announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user=nil', -1)
+					else
+						announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user=nil', -1)
+					end
+				elseif is_sucess_A and is_sucess_B then
+					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user='..owner_user_name , -1)
+				else
+					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user_id='..vehicle_owner_id, -1)
+				end
+			end
+		end
 	else
 		-- WebMapAddon
 		-- Currently, it does not work because player.vehicle_id = -1 is set.
@@ -2042,6 +2135,8 @@ function leave(peer_id)
 			startCountdown()
 		end
 	end
+	local cmd = '?iff_force_leave '..peer_id
+	server.command(cmd)
 end
 
 function shuffle(team_count, exec_peer_id)
@@ -2747,11 +2842,13 @@ function finishGame(keep_airbase)
 	setSettingsToStandby()
 
 	-- clear flag assignments unless caller requested to keep them
-	if not keep_airbase then
-		clearFlagAssignments(false)
-		scheduleAutoBattle(-1)
-	else
-		g_auto_battle_state=nil
+	if g_savedata.auto_battle then
+		if not keep_airbase then
+			clearFlagAssignments(false)
+			scheduleAutoBattle(-1)
+		else
+			g_auto_battle_state=nil
+		end
 	end
 end
 
@@ -2962,6 +3059,7 @@ function isSupply(vehicle_id)
 end
 
 function spawnFlag(peer_id, name)
+	name = name:upper()
 	despawnFlag(peer_id, name)
 	local vehicle_matrix=getAheadMatrix(peer_id, 9, 8)
 	local vehicle_id=spawnAddonVehicle('flag', vehicle_matrix)
@@ -2976,15 +3074,16 @@ function spawnFlag(peer_id, name)
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
 		}
-		if string.lower(name) == 'red' then
+		if name == 'RED' then
 			g_flag_assignments.RED = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
-		elseif string.lower(name) == 'blue' then
+		elseif name == 'BLUE' then
 			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
 		end
 	end
 end
 
 function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
+	name = name:upper()
 	if not x or not z then
 		announce('Invalid coordinates for flag spawn.', peer_id)
 		return
@@ -3010,9 +3109,9 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
 			vehicle_id = vehicle_id,
 			ui_id = ui_id,
 		}
-		if string.lower(name) == 'red' then
+		if name == 'RED' then
 			g_flag_assignments.RED = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
-		elseif string.lower(name) == 'blue' then
+		elseif name == 'BLUE' then
 			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
 		end
 	else
@@ -3281,6 +3380,26 @@ function buildNameTokens(name)
 	end
 	tokens[#tokens+1]=NAME_END
 	return tokens
+end
+
+function getVehicleSeat(vehicle_id)
+	local LOADED_VEHICLE_DATA, success = server.getVehicleComponents(vehicle_id)
+	if success then
+		if LOADED_VEHICLE_DATA.mass > 0 then
+			for _, seat in ipairs(LOADED_VEHICLE_DATA.components.seats) do
+				local vx, vy, vz = seat.pos.x, seat.pos.y, seat.pos.z
+				DATA, success = server.getVehicleSeat(vehicle_id, vx, vy, vz)
+				if success and (DATA.seated_peer_id == -1) then
+					local seat_info = {
+						name = seat.name,
+						vehicle_id = vehicle_id,
+						voxel_position = { x = vx, y = vy, z = vz }
+					}
+					return seat_info
+				end
+			end
+		end
+	end
 end
 
 g_name_tx={}
