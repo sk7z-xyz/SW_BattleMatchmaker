@@ -1006,6 +1006,47 @@ g_commands={
 			server.setCharacterItem(object_id, 6, 11, is_active, 100, 100)
 		end,
 	},
+	{
+		name='airports_resolve',
+		desc='Resolve airports coordinates from tile names',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			resolveAirports(peer_id)
+		end,
+	},
+	{
+		name='airports_list',
+		desc='List airports entries',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			local text='Airports ('..tostring(#airports)..'):\n'
+			for i, ap in ipairs(airports) do
+				text = text .. string.format(' #%d tile=%s name=%s x=%.0f z=%.0f\n', i, ap.tile or '', ap.name or '', ap.x or 0, ap.z or 0)
+			end
+
+			announce(text, peer_id)
+		end,
+	},
+	{
+		name='shuffle_airbase',
+		desc='Select two nearby airbases and assign them to RED and BLUE (arg: range)',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, range)
+			range = tonumber(range) or 20000
+			assignAirbases(peer_id, range)
+		end,
+		args={
+			{name='range', type='number', require=false},
+		},
+	},
+	{
+		name='tp',
+		desc='Teleport to your team\'s assigned flag',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			teleportPlayerToAssignedFlag(peer_id)
+		end,
+	},
 }
 
 g_iff_spawn_positions={
@@ -1043,54 +1084,6 @@ function resolveAirports(exec_peer_id)
 	end
 	return resolved
 end
-
--- Register commands for airports (resolve & list)
-table.insert(g_commands, {
-	name='airports_resolve',
-	desc='Resolve airports coordinates from tile names)',
-	admin=true,
-	action=function(peer_id, is_admin, is_auth)
-		resolveAirports(peer_id)
-	end,
-})
-
-
-table.insert(g_commands, {
-	name='airports_list',
-	desc='List airports entries',
-	auth=true,
-	action=function(peer_id, is_admin, is_auth)
-		local text='Airports ('..tostring(#airports)..'):\n'
-		for i, ap in ipairs(airports) do
-			text = text .. string.format(' #%d tile=%s name=%s x=%.0f z=%.0f\n', i, ap.tile or '', ap.name or '', ap.x or 0, ap.z or 0)
-		end
-
-		announce(text, peer_id)
-	end,
-})
-
--- Commands: shuffle_airbase (alias sa) and tp
-table.insert(g_commands, {
-	name='shuffle_airbase',
-	desc='Select two nearby airbases and assign them to RED and BLUE (arg: range)',
-	admin=true,
-	action=function(peer_id, is_admin, is_auth, range)
-		range = tonumber(range) or 20000
-		assignAirbases(peer_id, range)
-	end,
-	args={
-		{name='range', type='number', require=false},
-	},
-})
-
-table.insert(g_commands, {
-	name='tp',
-	desc='Teleport to your team\'s assigned flag',
-	auth=true,
-	action=function(peer_id, is_admin, is_auth)
-		teleportPlayerToAssignedFlag(peer_id)
-	end,
-})
 
 -- Helper: compute 2D distance between airports (x,z)
 local function _airbase_dist(ax, az, bx, bz)
