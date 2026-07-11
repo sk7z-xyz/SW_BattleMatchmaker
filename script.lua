@@ -243,6 +243,18 @@ g_settings={
 		type='integer',
 		min=1,
 	},
+	{
+		name='Damage Popup Max Height',
+		key='damage_popup_max_height',
+		type='integer',
+		min=0,
+	},
+	{
+		name='Damage Popup Distance',
+		key='damage_popup_distance',
+		type='integer',
+		min=0,
+	},
 }
 
 g_default_teams={
@@ -285,6 +297,9 @@ g_default_savedata={
 	damage_popup		=property.checkbox("Damage Popup", true),
 	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 10),
 	heavy_damage_mul	=property.slider("Heavy Damage Multiplier", 1, 20, 1, 1),
+	damage_popup_max_height = property.slider("Damage Popup Max Height", 0, 150, 10, 15),
+	damage_popup_distance = property.slider("Damage Popup Distance", 0, 20000, 100, 4500),
+
 }
 
 g_mag_names={}
@@ -917,6 +932,89 @@ g_commands={
 		},
 	},
 	{
+		name='SJAC',
+		desc='SJAC command placeholder',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, ...)
+			local old_vehicle_hp = g_savedata.vehicle_hp
+			local old_max_damage = g_savedata.max_damage
+			local old_sunk_depth = g_savedata.sunk_depth
+			local old_damage_popup_max_height = g_savedata.damage_popup_max_height
+			local old_nameplate_enabled = g_savedata.nameplate_enabled
+			local old_infinite_batteries = nil
+			local gs = server.getGameSettings()
+			if gs then old_infinite_batteries = gs.infinite_batteries end
+
+			g_savedata.vehicle_hp = 50
+			g_savedata.max_damage = 1000
+			g_savedata.sunk_depth = 1
+			g_savedata.damage_popup_max_height = 15
+			g_savedata.nameplate_enabled = true
+			server.setGameSetting('infinite_batteries', true)
+			local updated_vehicle_count = 0
+			for _, vehicle in ipairs(g_vehicles) do
+				if vehicle and vehicle.alive then
+					vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
+					updated_vehicle_count = updated_vehicle_count + 1
+				end
+			end
+			g_player_status_dirty=true
+			local command = "?wm ground_mode false"
+			server.command(command)
+
+			announce('SJAC Enable', -1)
+			announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
+			announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
+			announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
+			announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
+			announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
+			announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> true', peer_id)
+			announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
+		end,
+	},
+	{
+		name='SGAC',
+		desc='SGAC command placeholder',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, ...)
+			local old_vehicle_hp = g_savedata.vehicle_hp
+			local old_max_damage = g_savedata.max_damage
+			local old_sunk_depth = g_savedata.sunk_depth
+			local old_damage_popup_max_height = g_savedata.damage_popup_max_height
+			local old_nameplate_enabled = g_savedata.nameplate_enabled
+			local old_infinite_batteries = nil
+			local gs = server.getGameSettings()
+			if gs then old_infinite_batteries = gs.infinite_batteries end
+
+			g_savedata.vehicle_hp = 6000
+			g_savedata.max_damage = 3000
+			g_savedata.sunk_depth = -5
+			g_savedata.damage_popup_max_height = 15
+			g_savedata.nameplate_enabled = false
+			server.setGameSetting('infinite_batteries', false)
+			local updated_vehicle_count = 0
+			for _, vehicle in ipairs(g_vehicles) do
+				if vehicle and vehicle.alive then
+					vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
+					updated_vehicle_count = updated_vehicle_count + 1
+				end
+			end
+			g_player_status_dirty=true
+			local command = "?wm ground_mode true"
+			server.command(command)
+
+			announce('SGAC Enable', -1)
+			announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
+			announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
+			announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
+			announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
+			announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
+			announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> false', peer_id)
+			announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
+
+		end,
+	},
+	{
 		name='dismiss',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, team_name)
@@ -1005,6 +1103,7 @@ g_commands={
 			server.setCharacterItem(object_id, 5, 17, is_active, 100, 100)
 			server.setCharacterItem(object_id, 6, 11, is_active, 100, 100)
 		end,
+
 	},
 	{
 		name='airports_resolve',
@@ -1326,9 +1425,12 @@ g_command_aliases={
 	l='leave',
 	r='ready',
 	o='order',
+	s='start',
 	sh='shuffle',
 	sh2='shuffle2',
 	sa='shuffle_airbase',
+	sjac='SJAC',
+	sgac='SGAC',
 }
 
 -- shuffle2  shuffle
@@ -1458,6 +1560,11 @@ function processAutoBattle()
 	end
 
 	if state.phase=='wait_teleport' then
+		for _,vehicle in ipairs(g_vehicles) do
+			if vehicle then
+				vehicle.alive=false
+			end
+		end
 		for peer_id,player in pairs(g_players) do
 			if player and player.team then
 				local assigned=getAssignedFlagForTeam(player.team)
@@ -1523,6 +1630,7 @@ end
 
 function onDestroy()
 	clearPopups()
+	clearVehiclePopups()
 	clearSupplies()
 	clearFlags()
 end
@@ -1883,7 +1991,7 @@ function onPlayerSit_(peer_id, vehicle_id, seat_name)
 		return
 	end
 
-	local vehicle=registerVehicle(vehicle_id)
+	local vehicle=registerVehicle(vehicle_id, player)
 	if vehicle and vehicle.alive then
 		player.vehicle_id=vehicle_id
 		-- WebMapAddon
@@ -1892,24 +2000,6 @@ function onPlayerSit_(peer_id, vehicle_id, seat_name)
 		end
 	end
 	local vehicle_owner_id = vehicle and g_vehicle_owners[vehicle_id]
-	if vehicle_owner_id ~= peer_id then
-		--旗が出ているなら警告をだす
-		if getAssignedFlagForTeam("RED") or getAssignedFlagForTeam("BLUE") then
-			local pilot_user_name, is_sucess_A = server.getPlayerName(peer_id)
-			local owner_user_name, is_sucess_B = server.getPlayerName(vehicle_owner_id)
-			if vehicle_owner_id==nil then
-				if is_sucess_A then
-					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user=nil', -1)
-				else
-					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user=nil', -1)
-				end
-			elseif is_sucess_A and is_sucess_B then
-				announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user='..owner_user_name , -1)
-			else
-				announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user_id='..vehicle_owner_id, -1)
-			end
-		end
-	end
 
 	g_player_status_dirty=true
 end
@@ -2045,7 +2135,7 @@ function join(peer_id, team, force)
 	local vehicle_id = -1
 	if g_players[peer_id] and g_players[peer_id].vehicle_id > 0 then
 		vehicle_id = g_players[peer_id].vehicle_id
-		server.announce('Existing vehicle_id='..tostring(vehicle_id)..' for peer_id='..peer_id, peer_id)
+
 	end
 
 	local player={
@@ -2062,7 +2152,7 @@ function join(peer_id, team, force)
 	local character_id=server.getPlayerCharacterID(peer_id)
 	local sit_vehicle_id, is_success=server.getCharacterVehicle(character_id)
 	if is_success then
-		local vehicle=registerVehicle(sit_vehicle_id)
+		local vehicle=registerVehicle(sit_vehicle_id,player)
 		if vehicle and vehicle.alive then
 			player.vehicle_id=sit_vehicle_id
 			-- WebMapAddon
@@ -2413,9 +2503,20 @@ function findVehicle(vehicle_id)
 	end
 end
 
-function registerVehicle(vehicle_id)
+function registerVehicle(vehicle_id,player)
+	--まずは既存のプレイヤーのビークルIDを解除する
+	if player.vehicle_id and player.vehicle_id>=0 then
+		local old_vehicle = findVehicle(player.vehicle_id)
+		if old_vehicle then
+			old_vehicle.player = nil
+		end
+	end
 	local vehicle=findVehicle(vehicle_id)
-	if vehicle then return vehicle end
+	if vehicle then
+		--既に存在している場合はプレイヤーを更新する。
+		vehicle.player=player
+		return vehicle
+	end
 
 	local data,is_success=server.getVehicleData(vehicle_id)
 	if not is_success then return end
@@ -2435,12 +2536,17 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=60,
 		damage_in_frame=0,
-		damage_popup_id=server.getMapID(),
-		damage_popup_time=0,
-		damage_popup_value=0,
+		damage_popup_shake_v=0,
+		damage_popup_shake_h=0,
+		popup_id=server.getMapID(),
+		damage_popup_time_team=0,
+		damage_popup_time_other=0,
+		damage_popup_value_team=0,
+		damage_popup_value_other=0,
 		damage_popup_trans={},
 		name=name,
 		trimmed_name=trim(name),
+		player=player,--本来ならplayer_idのみを保持するべきだが、ここではplayerオブジェクトを直接保持することで、プレイヤーの情報にアクセスしやすくしている。参照渡しなので、playerオブジェクトが更新されるとvehicle.playerも更新される。
 	}
 
 	local vehicle_hp
@@ -2467,7 +2573,7 @@ function unregisterVehicle(vehicle_id)
 	local vehicle,index=findVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
-	server.removePopup(-1, vehicle.damage_popup_id)
+	server.removePopup(-1, vehicle.popup_id)
 
 	-- WebMapAddon
 	if g_has_webmap then
@@ -2536,31 +2642,92 @@ function updateVehicle(vehicle)
 		end
 
 		if g_savedata.damage_popup then
-			if vehicle.damage_popup_time<=0 then
-				vehicle.damage_popup_value=damage_in_frame
+
+			if vehicle.damage_popup_time_team<=0 then
+				vehicle.damage_popup_value_team=damage_in_frame
 			else
-				vehicle.damage_popup_value=vehicle.damage_popup_value+damage_in_frame
+				vehicle.damage_popup_value_team=vehicle.damage_popup_value_team+damage_in_frame
 			end
+			vehicle.damage_popup_time_team = 180
 
-			if vehicle.damage_popup_time<40 then
-				vehicle.damage_popup_trans=server.getVehiclePos(vehicle_id)
+			if vehicle.damage_popup_time_other<=0 then
+				vehicle.damage_popup_value_other=damage_in_frame
+			else
+				vehicle.damage_popup_value_other=vehicle.damage_popup_value_other+damage_in_frame
 			end
-
-			if vehicle.damage_popup_value>=g_savedata.min_damage_popup then
-				local text=tostring(vehicle.damage_popup_value)
-				server.setPopup(-1, vehicle.damage_popup_id, text, true, text,
-					vehicle.damage_popup_trans[13],
-					vehicle.damage_popup_trans[14]+10,
-					vehicle.damage_popup_trans[15],
-					0)
-			end
-
-			vehicle.damage_popup_time=60
+			vehicle.damage_popup_time_other = 120
 		end
-	elseif vehicle.damage_popup_time>0 then
-		vehicle.damage_popup_time=vehicle.damage_popup_time-1
-		if vehicle.damage_popup_time<=0 then
-			server.removePopup(-1, vehicle.damage_popup_id)
+	else
+		if vehicle.damage_popup_time_team>0 then
+			vehicle.damage_popup_time_team=vehicle.damage_popup_time_team-1
+		end
+		if vehicle.damage_popup_time_other>0 then
+			vehicle.damage_popup_time_other=vehicle.damage_popup_time_other-1
+		end
+	end
+
+	vehicle.damage_popup_trans=server.getVehiclePos(vehicle_id)
+	local popup_trans=vehicle.damage_popup_trans
+	if popup_trans then
+		local has_damage_popup_team = vehicle.damage_popup_time_team>0 and vehicle.damage_popup_value_team>=g_savedata.min_damage_popup
+		local has_damage_popup_other = vehicle.damage_popup_time_other>0 and vehicle.damage_popup_value_other>=g_savedata.min_damage_popup
+		local owner_player=vehicle.player
+		local sv_players=server.getPlayers()
+		if has_damage_popup_team then
+			if vehicle.damage_popup_time_team % 8 == 0 then
+				vehicle.damage_popup_shake_h=math.random(-1,1)*3
+				vehicle.damage_popup_shake_v=math.random(-1,1)*3
+			end
+		end
+		for i,sv_player in ipairs(sv_players) do
+			local is_show=false
+			local text=''
+			local shake_h = 0
+			local shake_v = 0
+			if owner_player and owner_player.team then
+				local other_player=g_players[sv_player.id]
+				--自チームは常に表示、但し自分は表示しない
+				local is_team_member = other_player and other_player.team==owner_player.team and owner_player ~= other_player
+				local has_damage_popup = is_team_member and has_damage_popup_team or has_damage_popup_other
+
+				local distance = 0
+				if is_team_member then
+					--自分と相手の距離を計算する
+					local other_player_trans, is_success =server.getPlayerPos(sv_player.id)
+					if is_success then
+						local other_player_x, other_player_y, other_player_z = matrix.position(other_player_trans)
+						local vehicle_x, vehicle_y, vehicle_z = matrix.position(popup_trans)
+						distance = (math.sqrt((vehicle_x - other_player_x)^2 + (vehicle_y - other_player_y)^2 + (vehicle_z - other_player_z)^2))/1000
+					end
+					local name_text = trim(owner_player.name,600)..'|'.. string.format('%.1f',distance)
+
+					text = name_text
+					is_show = true
+				end
+				if has_damage_popup then
+					--ダメージpopupの場合は、全員にダメージ表示、自チームは名前も表示する
+					-- メージtextを作成、前方にはダメージ量　後方には残りのHPの割合%を表示する
+					local damage_text=""
+					local hp_percent = math.floor(vehicle.hp and math.floor(vehicle.hp / g_savedata.vehicle_hp * 100) or 0)
+					if is_team_member then
+						text = text..'\n'
+						--チームメンバーの場合shakeさせる
+						shake_h = distance*vehicle.damage_popup_shake_h
+						shake_v = distance*vehicle.damage_popup_shake_v
+						damage_text = tostring(vehicle.damage_popup_value_team)..'|'..hp_percent..'%'
+					else
+						damage_text = tostring(vehicle.damage_popup_value_other)..'|'..hp_percent..'%'
+					end
+					text = text ..damage_text
+					is_show=true
+				end
+			end
+			local popup_height = calcPopupHeight(sv_player.id, vehicle_id)
+			server.setPopup(sv_player.id, vehicle.popup_id, text, is_show, text, 0+shake_h, popup_height+shake_v, 0+shake_h, g_savedata.damage_popup_distance,	vehicle_id)
+			local vehicle_trans=server.getVehiclePos(vehicle_id)
+			--local x,y,z=matrix.position(vehicle_trans)
+
+			--server.setPopup(sv_player.id, vehicle.popup_id, text, is_show, text, x,y,z, g_savedata.damage_popup_distance)
 		end
 	end
 
@@ -2944,6 +3111,12 @@ function clearPopups()
 	end
 	g_popups={}
 end
+function clearVehiclePopups()
+	--g_vehiclesの中のvehicle.popup_idを使って、全てのvehicle popupを消す
+	for i,vehicle in ipairs(g_vehicles) do
+		server.removeMapID(-1, vehicle.popup_id)
+	end
+end
 
 function renewUiIds()
 	for i,popup in ipairs(g_popups) do
@@ -3270,11 +3443,12 @@ end
 
 ----
 
-function trim(str)
+function trim(str, max_width_option)
+	local max_width = max_width_option or 1000
 	local w=0
 	for i=1,#str do
 		w=w+getWidth(str:byte(i))
-		if w>1000 then
+		if w>max_width then
 			return str:sub(1,i-1)
 		end
 	end
@@ -3380,22 +3554,48 @@ function getVehicleSeat(vehicle_id)
 	if success then
 		if LOADED_VEHICLE_DATA.mass > 0 then
 			for _, seat in ipairs(LOADED_VEHICLE_DATA.components.seats) do
-				local vx, vy, vz = seat.pos.x, seat.pos.y, seat.pos.z
-				DATA, success = server.getVehicleSeat(vehicle_id, vx, vy, vz)
-				if success and (DATA.seated_peer_id == -1) then
-					local seat_info = {
-						name = seat.name,
-						vehicle_id = vehicle_id,
-						voxel_position = { x = vx, y = vy, z = vz }
-					}
-					return seat_info
+				local seat_name = tostring(seat.name or '')
+				local seat_name_lower = string.lower(seat_name)
+				local is_excluded = string.find(seat_name_lower, 'passenger', 1, true)
+					or string.find(seat_name_lower, 'padded', 1, true)
+					or string.find(seat_name_lower, 'harness', 1, true)
+				if not is_excluded then
+					local vx, vy, vz = seat.pos.x, seat.pos.y, seat.pos.z
+					DATA, success = server.getVehicleSeat(vehicle_id, vx, vy, vz)
+					if success and (DATA.seated_peer_id == -1) then
+						local seat_info = {
+							name = seat.name,
+							vehicle_id = vehicle_id,
+							voxel_position = { x = vx, y = vy, z = vz }
+						}
+						return seat_info
+					end
 				end
 			end
 		end
 	end
 end
 
+
+function calcPopupHeight(peer_id, vehicle_id)
+    local y_min = 3
+    local y_max = g_savedata.damage_popup_max_height
+
+    local player_mat, pos_ok = server.getPlayerPos(peer_id)
+    if not pos_ok or player_mat == nil then return y_max end
+    local px, py, pz = matrix.position(player_mat)
+
+    local veh_mat, veh_ok = server.getVehiclePos(vehicle_id)
+    if not veh_ok or veh_mat == nil then return y_max end
+    local vx, vy, vz = matrix.position(veh_mat)
+
+    local dist = math.sqrt((vx-px)^2 + (vy-py)^2 + (vz-pz)^2)
+    local t    = math.max(0.0, math.min(1.0, dist / 2000))
+    return y_min + (y_max - y_min) * t
+end
+
 g_name_tx={}
 g_name_rx={}
 g_iff_keypad_cache={}  -- {[vid]={[key]=value}}
 g_decoded_names={}
+
