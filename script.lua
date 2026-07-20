@@ -2520,6 +2520,9 @@ function registerVehicle(vehicle_id,player)
 	local component_data,is_success=server.getVehicleComponents(vehicle_id)
 	if not is_success then return end
 
+	-- シートのない車両は登録しない
+	if #component_data.components.seats < 1 then return end
+
 	announce("Vehicle registered. Voxels:"..tostring(component_data.voxels//1|0), player.id)
 
 	local name=data.name=='' and 'Vehicle' or data.name
