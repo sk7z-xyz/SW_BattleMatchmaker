@@ -21,7 +21,7 @@ g_webmap_bindings={}
 g_tick_count=0
 g_freq_force_timer=0
 g_ready_remind_timer=0
-g_pending_link_requests={} -- {{peer_id=number, vehicle_id=number, delay=number}, ...}
+g_pending_link_requests={} -- {[vehicle_id]=peer_id}
 g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
 g_group_parents={}  -- {[group_id]=parent_vehicle_id}
@@ -86,14 +86,6 @@ g_ammo_supply_buttons={
 	AS_AP={70,1,'as'},
 }
 
-g_classes={
-	ground_light	={hp=300},
-	ground_medium	={hp=1200},
-	ground_heavy	={hp=2400},
-	ground_mega		={hp=3000},
-	ground_boss		={hp=20000},
-}
-
 g_item_supply_buttons={
 	['Take Extinguisher']	={1,10,0,  9},
 	['Take Torch']			={1,27,0,400},
@@ -113,9 +105,27 @@ g_settings={
 		min=1,
 	},
 	{
-		name='Vehicle class Enabled',
-		key='vehicle_class',
+		name='Adaptive HP',
+		key='adaptive_hp',
 		type='boolean',
+	},
+	{
+		name='Min HP',
+		key='min_hp',
+		type='integer',
+		min=1,
+	},
+	{
+		name='HP Per Voxel',
+		key='hp_per_voxel',
+		type='number',
+		min=0,
+	},
+	{
+		name='HP Step',
+		key='hp_step',
+		type='integer',
+		min=0,
 	},
 	{
 		name='Max Vehicle Damage',
@@ -268,7 +278,10 @@ g_temporary_team='Standby'
 
 g_default_savedata={
 	vehicle_hp			=property.slider("Vehicle HP", 50, 7000, 10, 50),
-	vehicle_class		=property.checkbox("Vehicle class Enabled", false),
+	adaptive_hp			=property.checkbox("Adaptive HP Enabled", false),
+	min_hp				=property.slider("Min HP", 50, 7000, 10, 2000),
+	hp_per_voxel		=property.slider("HP Per Voxel", 0, 10, 0.1, 3),
+	hp_step				=property.slider("HP Step", 10, 1000, 10, 500),
 	max_damage			=1000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
 	ammo_mg				=-1,
@@ -951,13 +964,7 @@ g_commands={
 			g_savedata.damage_popup_max_height = 15
 			g_savedata.nameplate_enabled = true
 			server.setGameSetting('infinite_batteries', true)
-			local updated_vehicle_count = 0
-			for _, vehicle in ipairs(g_vehicles) do
-				if vehicle and vehicle.alive then
-					vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
-					updated_vehicle_count = updated_vehicle_count + 1
-				end
-			end
+			local updated_vehicle_count = reregisterVehicles()
 			g_player_status_dirty=true
 			local command = "?wm ground_mode false"
 			server.command(command)
@@ -992,13 +999,7 @@ g_commands={
 			g_savedata.damage_popup_max_height = 15
 			g_savedata.nameplate_enabled = false
 			server.setGameSetting('infinite_batteries', false)
-			local updated_vehicle_count = 0
-			for _, vehicle in ipairs(g_vehicles) do
-				if vehicle and vehicle.alive then
-					vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
-					updated_vehicle_count = updated_vehicle_count + 1
-				end
-			end
+			local updated_vehicle_count = reregisterVehicles()
 			g_player_status_dirty=true
 			local command = "?wm ground_mode true"
 			server.command(command)
@@ -1636,17 +1637,6 @@ function onDestroy()
 end
 
 function onTick()
-
-	--1tick開けてから紐づけ処理
-	for i=#g_pending_link_requests,1,-1 do
-		local req=g_pending_link_requests[i]
-		req.delay=req.delay-1
-		if req.delay<=0 then
-			onPlayerSit_(req.peer_id, req.vehicle_id, '')
-			table.remove(g_pending_link_requests, i)
-		end
-	end
-
 	if g_ui_reset_requested then
 		g_ui_reset_requested=false
 		renewUiIds()
@@ -2021,11 +2011,7 @@ function getParentID(group_id, vehicle_id)
 end
 
 function enqueueVehicleLinkRequest(peer_id, vehicle_id)
-	table.insert(g_pending_link_requests, {
-		peer_id=peer_id//1|0,
-		vehicle_id=vehicle_id//1|0,
-		delay=1,
-	})
+	g_pending_link_requests[vehicle_id]=peer_id
 end
 
 function onVehicleDespawn(vehicle_id, peer_id)
@@ -2046,6 +2032,7 @@ function onVehicleDespawn(vehicle_id, peer_id)
 	end
 	g_iff_keypad_cache={}  -- IFF台数変化時はキャッシュをクリア
 	g_vehicle_owners[vehicle_id]= nil
+	g_pending_link_requests[vehicle_id]=nil
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
@@ -2059,6 +2046,15 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 		enqueueVehicleLinkRequest(peer_id, vehicle_id)
 	end
 	g_vehicle_owners[vehicle_id] = peer_id
+end
+
+function onVehicleLoad(vehicle_id)
+	-- registerVehicleでコンポーネントを取得したいのでロードしてから登録
+	local peer_id=g_pending_link_requests[vehicle_id]
+	if not peer_id then return end
+
+	onPlayerSit_(peer_id, vehicle_id, '')
+	g_pending_link_requests[vehicle_id]=nil
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
@@ -2139,6 +2135,7 @@ function join(peer_id, team, force)
 	end
 
 	local player={
+		id=id,
 		name=name,
 		trimmed_name=trim(name),
 		team=team,
@@ -2520,6 +2517,10 @@ function registerVehicle(vehicle_id,player)
 
 	local data,is_success=server.getVehicleData(vehicle_id)
 	if not is_success then return end
+	local component_data,is_success=server.getVehicleComponents(vehicle_id)
+	if not is_success then return end
+
+	announce("Vehicle registered. Voxels:"..tostring(component_data.voxels//1|0), player.id)
 
 	local name=data.name=='' and 'Vehicle' or data.name
 	vehicle={
@@ -2547,26 +2548,28 @@ function registerVehicle(vehicle_id,player)
 		name=name,
 		trimmed_name=trim(name),
 		player=player,--本来ならplayer_idのみを保持するべきだが、ここではplayerオブジェクトを直接保持することで、プレイヤーの情報にアクセスしやすくしている。参照渡しなので、playerオブジェクトが更新されるとvehicle.playerも更新される。
+		component_data=component_data,
 	}
 
-	local vehicle_hp
-	if g_savedata.vehicle_class then
-		for class_name,class in pairs(g_classes) do
-			local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
-			if is_success then
-				vehicle_hp=class.hp
-				break
-			end
+	local vehicle_hp=getVehicleMaxHp(vehicle)
+	vehicle.hp=vehicle_hp
+	vehicle.max_hp=vehicle_hp
+
+	table.insert(g_vehicles, vehicle)
+	return vehicle
+end
+function getVehicleMaxHp(vehicle)
+	local vehicle_hp=g_savedata.vehicle_hp
+	if g_savedata.adaptive_hp then
+		local estimated_hp=vehicle.component_data.voxels*g_savedata.hp_per_voxel
+		if g_savedata.hp_step>0 then
+			estimated_hp=(estimated_hp//g_savedata.hp_step)*g_savedata.hp_step
 		end
-	else
-		vehicle_hp=g_savedata.vehicle_hp
+
+		vehicle_hp = math.max(math.min(estimated_hp ,vehicle_hp), g_savedata.min_hp)
 	end
 
-	if vehicle_hp then
-		vehicle.hp=math.max(vehicle_hp//1|0,1)
-		table.insert(g_vehicles, vehicle)
-		return vehicle
-	end
+	return math.max(vehicle_hp//1|0,1)
 end
 
 function unregisterVehicle(vehicle_id)
@@ -2593,20 +2596,20 @@ function unregisterVehicle(vehicle_id)
 end
 
 function reregisterVehicles()
+	local updated_vehicle_count=0
 	for i=1,#g_vehicles do
 		local vehicle=g_vehicles[i]
 		if vehicle.alive then
-			vehicle.hp=nil
-			local vehicle_hp=g_savedata.vehicle_hp
-			if vehicle_hp and vehicle_hp>0 then
-				vehicle.hp=math.max(vehicle_hp//1|0,1)
-			end
-
+			local vehicle_hp=getVehicleMaxHp(vehicle)
+			vehicle.hp=vehicle_hp
+			vehicle.max_hp=vehicle_hp
 			vehicle.remain_ammo=g_savedata.supply_ammo//1|0
 
 			g_player_status_dirty=true
+			updated_vehicle_count = updated_vehicle_count + 1
 		end
 	end
+	return updated_vehicle_count
 end
 
 function updateVehicle(vehicle)
@@ -2708,7 +2711,7 @@ function updateVehicle(vehicle)
 					--ダメージpopupの場合は、全員にダメージ表示、自チームは名前も表示する
 					-- メージtextを作成、前方にはダメージ量　後方には残りのHPの割合%を表示する
 					local damage_text=""
-					local hp_percent = math.floor(vehicle.hp and math.floor(vehicle.hp / g_savedata.vehicle_hp * 100) or 0)
+					local hp_percent = math.floor(vehicle.hp and math.floor(vehicle.hp / vehicle.max_hp * 100) or 0)
 					if is_team_member then
 						text = text..'\n'
 						--チームメンバーの場合shakeさせる
