@@ -248,12 +248,6 @@ g_settings={
 		min=0,
 	},
 	{
-		name='Heavy Damage Multiplier',
-		key='heavy_damage_mul',
-		type='integer',
-		min=1,
-	},
-	{
 		name='Damage Popup Max Height',
 		key='damage_popup_max_height',
 		type='integer',
@@ -309,7 +303,6 @@ g_default_savedata={
 	shuffle_history_K	=4,
 	damage_popup		=property.checkbox("Damage Popup", true),
 	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 10),
-	heavy_damage_mul	=property.slider("Heavy Damage Multiplier", 1, 20, 1, 1),
 	damage_popup_max_height = property.slider("Damage Popup Max Height", 0, 150, 10, 15),
 	damage_popup_distance = property.slider("Damage Popup Distance", 0, 20000, 100, 4500),
 
@@ -2060,10 +2053,6 @@ end
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
 	vehicle_id=vehicle_id//1|0
 	if damage_amount<=0 then return end
-
-	if damage_amount>=3 and g_savedata.heavy_damage_mul>1 then
-		damage_amount=damage_amount*g_savedata.heavy_damage_mul
-	end
 
 	damage_amount=damage_amount//1|0
 
