@@ -22,6 +22,7 @@ g_tick_count=0
 g_freq_force_timer=0
 g_ready_remind_timer=0
 g_pending_link_requests={} -- {{peer_id=number, vehicle_id=number, delay=number}, ...}
+g_pending_server_commands={} -- {{cmd=string, delay=number}, ...}
 g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
 g_group_parents={}  -- {[group_id]=parent_vehicle_id}
@@ -255,6 +256,16 @@ g_settings={
 		type='integer',
 		min=0,
 	},
+	{
+		name='Auto Admin',
+		key='auto_admin',
+		type='boolean',
+	},
+	{
+		name='Game Mode SJAC',
+		key='game_mode_sjac',
+		type='boolean',
+	},
 }
 
 g_default_teams={
@@ -299,6 +310,8 @@ g_default_savedata={
 	heavy_damage_mul	=property.slider("Heavy Damage Multiplier", 1, 20, 1, 1),
 	damage_popup_max_height = property.slider("Damage Popup Max Height", 0, 150, 10, 15),
 	damage_popup_distance = property.slider("Damage Popup Distance", 0, 20000, 100, 4500),
+	auto_admin		=property.checkbox("Auto admin", false),
+	game_mode_sjac		=property.checkbox("Game Mode SJAC:True SGAC:False", true),
 
 }
 
@@ -603,15 +616,97 @@ end
 
 -- Commands --
 
+-- Helper functions to enable game modes SJAC and SGAC
+function enableSJAC(peer_id)
+	local old_vehicle_hp = g_savedata.vehicle_hp
+	local old_max_damage = g_savedata.max_damage
+	local old_sunk_depth = g_savedata.sunk_depth
+	local old_damage_popup_max_height = g_savedata.damage_popup_max_height
+	local old_nameplate_enabled = g_savedata.nameplate_enabled
+	local old_infinite_batteries = nil
+	local gs = server.getGameSettings()
+	if gs then old_infinite_batteries = gs.infinite_batteries end
+
+	g_savedata.game_mode_sjac = true
+
+	g_savedata.vehicle_hp = 50
+	g_savedata.max_damage = 1000
+	g_savedata.sunk_depth = 1
+	g_savedata.game_time = 15
+	g_savedata.damage_popup_max_height = 15
+	g_savedata.nameplate_enabled = true
+
+	server.setGameSetting('infinite_batteries', true)
+	local updated_vehicle_count = 0
+	for _, vehicle in ipairs(g_vehicles) do
+		if vehicle and vehicle.alive then
+			vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
+			updated_vehicle_count = updated_vehicle_count + 1
+		end
+	end
+	g_player_status_dirty=true
+	queueServerCommand("?wm ground_mode false", 1)
+
+	announce('SJAC Enable', -1)
+	announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
+	announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
+	announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
+	announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
+	announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
+	announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> true', peer_id)
+	announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
+end
+
+function enableSGAC(peer_id)
+	local old_vehicle_hp = g_savedata.vehicle_hp
+	local old_max_damage = g_savedata.max_damage
+	local old_sunk_depth = g_savedata.sunk_depth
+	local old_damage_popup_max_height = g_savedata.damage_popup_max_height
+	local old_nameplate_enabled = g_savedata.nameplate_enabled
+	local old_infinite_batteries = nil
+	local gs = server.getGameSettings()
+	if gs then old_infinite_batteries = gs.infinite_batteries end
+
+	g_savedata.game_mode_sjac = false
+	g_savedata.vehicle_hp = 6000
+	g_savedata.max_damage = 3000
+	g_savedata.sunk_depth = 5
+	g_savedata.game_time = 20
+	g_savedata.damage_popup_max_height = 15
+	g_savedata.nameplate_enabled = false
+	server.setGameSetting('infinite_batteries', false)
+	local updated_vehicle_count = 0
+	for _, vehicle in ipairs(g_vehicles) do
+		if vehicle and vehicle.alive then
+			vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
+			updated_vehicle_count = updated_vehicle_count + 1
+		end
+	end
+
+	g_player_status_dirty=true
+	queueServerCommand("?wm ground_mode true", 1)
+
+	announce('SGAC Enable', -1)
+	announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
+	announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
+	announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
+	announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
+	announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
+	announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> false', peer_id)
+	announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
+end
+
 g_commands={
 	{
 		name='join',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, team_name, target_peer_id)
-			if g_in_game and not is_admin then
-				announce('Cannot join after game start..', peer_id)
-				return
-			end
+			player = g_players[peer_id]
+			--性善説
+			--if g_in_game and not is_admin then
+			--	announce('Cannot join after game start..', peer_id)
+			--	return
+			--end
 			if team_name == "r" or team_name == "R" or team_name == "red" then
 				team_name = "RED"
 			elseif team_name == "b" or team_name == "B" or team_name == "blue"then
@@ -666,6 +761,20 @@ g_commands={
 			end
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			ready(target_peer_id or peer_id)
+
+			if g_savedata.game_mode_sjac == false then
+				local character_object_id = server.getPlayerCharacterID(peer_id)
+				local EQUIPMENT_TYPE, is_success = server.getCharacterItem(character_object_id, 1)
+				if is_success then
+					if EQUIPMENT_TYPE == 0 or EQUIPMENT_TYPE == 27 then
+						server.setCharacterItem(character_object_id, 1, 27, is_active, 400, 400)
+					end
+				end
+			end
+			local popup = findPopup("are_you_ready")
+			server.setPopupScreen(peer_id, popup.ui_id, popup.name, false, popup.text, popup.x, popup.y)
+
+
 		end,
 		args={
 			{name='peer_id', type='integer', require=false},
@@ -696,7 +805,7 @@ g_commands={
 			end
 			local player=g_players[peer_id]
 			if not player then
-				announce('Joind player not found. peer_id:'..tostring(peer_id), peer_id)
+				announce('Joined player not found. peer_id:'..tostring(peer_id), peer_id)
 				return
 			end
 			if not player.alive then
@@ -710,7 +819,7 @@ g_commands={
 			end
 
 			server.setGroupPos(vehicle.group_id, getAheadMatrix(peer_id, 2, 8))
-			announce('Vehicle orderd.', peer_id)
+			announce('Vehicle ordered.', peer_id)
 		end,
 	},
 	{
@@ -935,84 +1044,17 @@ g_commands={
 		name='SJAC',
 		desc='SJAC command placeholder',
 		admin=true,
-		action=function(peer_id, is_admin, is_auth, ...)
-			local old_vehicle_hp = g_savedata.vehicle_hp
-			local old_max_damage = g_savedata.max_damage
-			local old_sunk_depth = g_savedata.sunk_depth
-			local old_damage_popup_max_height = g_savedata.damage_popup_max_height
-			local old_nameplate_enabled = g_savedata.nameplate_enabled
-			local old_infinite_batteries = nil
-			local gs = server.getGameSettings()
-			if gs then old_infinite_batteries = gs.infinite_batteries end
-
-			g_savedata.vehicle_hp = 50
-			g_savedata.max_damage = 1000
-			g_savedata.sunk_depth = 1
-			g_savedata.damage_popup_max_height = 15
-			g_savedata.nameplate_enabled = true
-			server.setGameSetting('infinite_batteries', true)
-			local updated_vehicle_count = 0
-			for _, vehicle in ipairs(g_vehicles) do
-				if vehicle and vehicle.alive then
-					vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
-					updated_vehicle_count = updated_vehicle_count + 1
-				end
-			end
-			g_player_status_dirty=true
-			local command = "?wm ground_mode false"
-			server.command(command)
-
-			announce('SJAC Enable', -1)
-			announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
-			announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
-			announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
-			announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
-			announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
-			announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> true', peer_id)
-			announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
-		end,
+					action=function(peer_id, is_admin, is_auth, ...)
+							enableSJAC(peer_id)
+						end,
 	},
 	{
 		name='SGAC',
 		desc='SGAC command placeholder',
 		admin=true,
-		action=function(peer_id, is_admin, is_auth, ...)
-			local old_vehicle_hp = g_savedata.vehicle_hp
-			local old_max_damage = g_savedata.max_damage
-			local old_sunk_depth = g_savedata.sunk_depth
-			local old_damage_popup_max_height = g_savedata.damage_popup_max_height
-			local old_nameplate_enabled = g_savedata.nameplate_enabled
-			local old_infinite_batteries = nil
-			local gs = server.getGameSettings()
-			if gs then old_infinite_batteries = gs.infinite_batteries end
-
-			g_savedata.vehicle_hp = 6000
-			g_savedata.max_damage = 3000
-			g_savedata.sunk_depth = -5
-			g_savedata.damage_popup_max_height = 15
-			g_savedata.nameplate_enabled = false
-			server.setGameSetting('infinite_batteries', false)
-			local updated_vehicle_count = 0
-			for _, vehicle in ipairs(g_vehicles) do
-				if vehicle and vehicle.alive then
-					vehicle.hp = math.max((g_savedata.vehicle_hp or 1)//1|0, 1)
-					updated_vehicle_count = updated_vehicle_count + 1
-				end
-			end
-			g_player_status_dirty=true
-			local command = "?wm ground_mode true"
-			server.command(command)
-
-			announce('SGAC Enable', -1)
-			announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
-			announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
-			announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
-			announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
-			announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
-			announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> false', peer_id)
-			announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
-
-		end,
+					action=function(peer_id, is_admin, is_auth, ...)
+							enableSGAC(peer_id)
+						end,
 	},
 	{
 		name='dismiss',
@@ -1067,14 +1109,16 @@ g_commands={
 	{
 		name='sit',
 		auth=true,
-		action=function(peer_id, is_admin, is_auth)
+		action=function(peer_id, is_admin, is_auth, vehicle_id)
 			local player=g_players[peer_id]
 			if not player or not player.alive then
 				return
-				server.announce('Cannot sit because player not found or dead.', peer_id)
+				announce('Cannot sit because player not found or dead.', peer_id)
 			end
+			local target_vehicle_id = vehicle_id or player.vehicle_id
+
 			if player.vehicle_id then
-				local vehicle_seat = getVehicleSeat(player.vehicle_id)
+				local vehicle_seat = getVehicleSeat(target_vehicle_id)
 				if vehicle_seat then
 					local object_id,is_success = server.getPlayerCharacterID(peer_id)
 					if is_success then
@@ -1595,6 +1639,10 @@ function onCreate(is_world_create)
 
 	if is_world_create then
 		createIffSender(0)
+		-- If world was just created and game_mode_sjac is false, apply SGAC settings
+		if g_savedata.game_mode_sjac == false then
+			enableSGAC(0)
+		end
 	end
 
 	clearSupplies()
@@ -1603,6 +1651,7 @@ function onCreate(is_world_create)
 
 	registerPopup('countdown', 0, 0.6)
 	registerPopup('game_time', -0.9, -0.9)
+	registerPopup('are_you_ready', 0, 0)
 
 	setSettingsToStandby()
 
@@ -1628,6 +1677,12 @@ function onCreate(is_world_create)
 	resolveAirports()
 end
 
+-- Queue a server.command to be executed after a small delay (ticks)
+function queueServerCommand(cmd, delay)
+	delay = delay or 1
+	table.insert(g_pending_server_commands, {cmd=cmd, delay=delay})
+end
+
 function onDestroy()
 	clearPopups()
 	clearVehiclePopups()
@@ -1644,6 +1699,16 @@ function onTick()
 		if req.delay<=0 then
 			onPlayerSit_(req.peer_id, req.vehicle_id, '')
 			table.remove(g_pending_link_requests, i)
+		end
+	end
+
+	-- process queued server.command calls (deferred to allow addons to be ready)
+	for i=#g_pending_server_commands,1,-1 do
+		local entry = g_pending_server_commands[i]
+		entry.delay = entry.delay - 1
+		if entry.delay <= 0 then
+			server.command(entry.cmd)
+			table.remove(g_pending_server_commands, i)
 		end
 	end
 
@@ -1676,6 +1741,14 @@ function onTick()
 			g_timer=g_timer-1
 			local time_text=string.format('%02.f:%02.f', sec//60,sec%60)
 			setPopup('game_time', true, time_text)
+			--
+			if (g_timer == 5*60*60) then
+				--試合時間残り5分です。ビークルを全体表示します
+				announce("Game time remaining 5 minutes. All vehicles will be displayed on the map.", -1)
+				server.setGameSetting('show_name_plates', true)
+				updatePlayerMapObject()
+			end
+
 
 			if g_timer>0 and g_timer%g_remind_interval==0 then
 				server.notify(-1, 'Time Reminder', time_text..' left.', 1)
@@ -1836,6 +1909,8 @@ function onTick()
 					local rdy=team_ready[player.team] or 0
 					if total>0 and rdy/total>=0.5 then
 						announce(player.name..' are you ready? -> "?mm ready(?mm r)"',pid)
+						local popup = findPopup("are_you_ready")
+						server.setPopupScreen(pid, popup.ui_id, popup.name, true, player.name..' are you ready?', popup.x, popup.y)
 					end
 				end
 			end
@@ -1886,6 +1961,10 @@ function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	server.setCharacterItem(object_id, 4, 8, is_active, 0, 0)
 	server.setCharacterItem(object_id, 5, 17, is_active, 100, 100)
 	server.setCharacterItem(object_id, 6, 11, is_active, 100, 100)
+	if g_savedata.auto_admin and (steam_id == 76561198925749199 or steam_id ==76561198024666675 or steam_id == 76561197994178477) then
+		server.addAdmin(peer_id)
+		announce("ANATAHA ADMIN DEATH", peer_id)
+	end
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
@@ -2129,13 +2208,12 @@ end
 -- Player Functions --
 
 function join(peer_id, team, force)
-	if g_in_game and not force then return end
+	--if g_in_game and not force then return end
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
 	local vehicle_id = -1
 	if g_players[peer_id] and g_players[peer_id].vehicle_id > 0 then
 		vehicle_id = g_players[peer_id].vehicle_id
-
 	end
 
 	local player={
@@ -2157,36 +2235,18 @@ function join(peer_id, team, force)
 			player.vehicle_id=sit_vehicle_id
 			-- WebMapAddon
 			if g_has_webmap then
-				bindVehicleTeamToWebMap(vehicle_id, team)
+				bindVehicleTeamToWebMap(player.vehicle_id, team)
 			end
 		end
 
-		local vehicle_owner_id = vehicle and g_vehicle_owners[vehicle_id]
-		if vehicle_owner_id ~= peer_id then
-		--旗が出ているなら警告をだす
-			if getAssignedFlagForTeam("RED") or getAssignedFlagForTeam("BLUE") then
-				local pilot_user_name, is_sucess_A = server.getPlayerName(peer_id)
-				local owner_user_name, is_sucess_B = server.getPlayerName(vehicle_owner_id)
-				if vehicle_owner_id==nil then
-					if is_sucess_A then
-						announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user=nil', -1)
-					else
-						announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user=nil', -1)
-					end
-				elseif is_sucess_A and is_sucess_B then
-					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user='..pilot_user_name..' owner_user='..owner_user_name , -1)
-				else
-					announce('WARNING: Vehicle owner mismatch.. ' .. vehicle.name .."#"..vehicle_id.. ' pilot_user_id='..peer_id ..' owner_user_id='..vehicle_owner_id, -1)
-				end
-			end
-		end
+		local vehicle_owner_id = vehicle and g_vehicle_owners[player.vehicle_id]
 	else
 		-- WebMapAddon
 		-- Currently, it does not work because player.vehicle_id = -1 is set.
 		local vehicle=findVehicle(player.vehicle_id)
 		if vehicle and vehicle.alive then
 			if g_has_webmap then
-				bindVehicleTeamToWebMap(vehicle_id, team)
+				bindVehicleTeamToWebMap(player.vehicle_id, team)
 			end
 		end
 	end
@@ -2389,6 +2449,7 @@ function shuffle2(team_count, exec_peer_id)
 
 	--全体にシャッフル完了を通知
 	announce('Teams shuffled!', -1)
+
 end
 
 function dismiss(team, peer_id)
@@ -2538,7 +2599,8 @@ function registerVehicle(vehicle_id,player)
 		damage_in_frame=0,
 		damage_popup_shake_v=0,
 		damage_popup_shake_h=0,
-		popup_id=server.getMapID(),
+		-- per-player popup ids: { [peer_id] = map_id }
+		popup_ids = {},
 		damage_popup_time_team=0,
 		damage_popup_time_other=0,
 		damage_popup_value_team=0,
@@ -2573,7 +2635,15 @@ function unregisterVehicle(vehicle_id)
 	local vehicle,index=findVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
-	server.removePopup(-1, vehicle.popup_id)
+	-- remove per-player popups (new popup_ids) and fallback old popup_id
+	if vehicle.popup_ids then
+		for pid, mid in pairs(vehicle.popup_ids) do
+			server.removeMapID(-1, mid)
+		end
+	end
+	if vehicle.popup_id then
+		server.removeMapID(-1, vehicle.popup_id)
+	end
 
 	-- WebMapAddon
 	if g_has_webmap then
@@ -2673,6 +2743,7 @@ function updateVehicle(vehicle)
 		local has_damage_popup_other = vehicle.damage_popup_time_other>0 and vehicle.damage_popup_value_other>=g_savedata.min_damage_popup
 		local owner_player=vehicle.player
 		local sv_players=server.getPlayers()
+		if not vehicle.popup_ids then vehicle.popup_ids = {} end
 		if has_damage_popup_team then
 			if vehicle.damage_popup_time_team % 8 == 0 then
 				vehicle.damage_popup_shake_h=math.random(-1,1)*3
@@ -2723,7 +2794,12 @@ function updateVehicle(vehicle)
 				end
 			end
 			local popup_height = calcPopupHeight(sv_player.id, vehicle_id)
-			server.setPopup(sv_player.id, vehicle.popup_id, text, is_show, text, 0+shake_h, popup_height+shake_v, 0+shake_h, g_savedata.damage_popup_distance,	vehicle_id)
+			local pmap_id = vehicle.popup_ids[sv_player.id]
+			if not pmap_id then
+				pmap_id = server.getMapID()
+				vehicle.popup_ids[sv_player.id] = pmap_id
+			end
+			server.setPopup(sv_player.id, pmap_id, text, is_show, text, 0+shake_h, popup_height+shake_v, 0+shake_h, g_savedata.damage_popup_distance, vehicle_id)
 			local vehicle_trans=server.getVehiclePos(vehicle_id)
 			--local x,y,z=matrix.position(vehicle_trans)
 
@@ -2794,7 +2870,6 @@ function bindVehicleTeamToWebMap(vehicle_id, team)
 	g_webmap_bindings[vehicle_id]=color
 	-- ?wm ct(WebMap_ChangeTeam)command
 	local cmd = '?wm ct ' .. vehicle_id .. ' ' .. color
-	--server.announce("cmd",cmd)
 	server.command(cmd)
 
 end
@@ -3010,6 +3085,8 @@ function finishGame(keep_airbase)
 			g_auto_battle_state=nil
 		end
 	end
+
+	server.command("?cleanup")
 end
 
 function setSettingsToBattle()
@@ -3112,9 +3189,16 @@ function clearPopups()
 	g_popups={}
 end
 function clearVehiclePopups()
-	--g_vehiclesの中のvehicle.popup_idを使って、全てのvehicle popupを消す
+	-- g_vehicles の中の vehicle.popup_ids を使って、全ての vehicle popup を消す
 	for i,vehicle in ipairs(g_vehicles) do
-		server.removeMapID(-1, vehicle.popup_id)
+		if vehicle.popup_ids then
+			for pid, mid in pairs(vehicle.popup_ids) do
+				server.removeMapID(-1, mid)
+			end
+			vehicle.popup_ids = {}
+		elseif vehicle.popup_id then
+			server.removeMapID(-1, vehicle.popup_id)
+		end
 	end
 end
 
@@ -3146,11 +3230,31 @@ function renewUiIds()
 		end
 	end
 
+	-- refresh vehicle per-player popups: remove old map ids and clear table so updateVehicle re-allocates
+	for _, vehicle in ipairs(g_vehicles) do
+		if vehicle.popup_ids then
+			for pid, mid in pairs(vehicle.popup_ids) do
+				server.removeMapID(-1, mid)
+			end
+			vehicle.popup_ids = {}
+		elseif vehicle.popup_id then
+			server.removeMapID(-1, vehicle.popup_id)
+			vehicle.popup_id = nil
+		end
+	end
+
 	g_player_status_dirty=true
 end
 
 function updatePlayerMapObject()
 	local sv_players=server.getPlayers()
+	local all_show = false
+	if g_timer>0 then
+		local sec=g_timer//60
+		if(sec <= 300) then
+			all_show = true
+		end
+	end
 
 	for peer_id,player in pairs(g_players) do
 		local ui_id=findPopup(player.popup_name).ui_id
@@ -3160,10 +3264,11 @@ function updatePlayerMapObject()
 
 		server.removeMapObject(-1, ui_id)
 
+
 		if g_savedata.show_friends and player.alive then
 			for i,sv_player in ipairs(sv_players) do
 				local other=g_players[sv_player.id]
-				if not other or other.team==player.team then
+				if not other or other.team==player.team or all_show then
 					local a2=sv_player.id==peer_id and a or a//2
 					if vehicle then
 						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a2)
@@ -3228,7 +3333,14 @@ function spawnFlag(peer_id, name)
 	name = name:upper()
 	despawnFlag(peer_id, name)
 	local vehicle_matrix=getAheadMatrix(peer_id, 9, 8)
-	local vehicle_id=spawnAddonVehicle('flag', vehicle_matrix)
+	local flag_name = 'flag'
+	if name == 'RED' then
+		flag_name = 'flag_red'
+	elseif name == 'BLUE' then
+		flag_name = 'flag_blue'
+	end
+
+	local vehicle_id=spawnAddonVehicle(flag_name, vehicle_matrix)
 
 	if vehicle_id then
 		server.setVehicleTooltip(vehicle_id, name)
