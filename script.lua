@@ -1874,6 +1874,7 @@ function onTick()
 	g_ready_remind_timer=g_ready_remind_timer+1
 	if g_ready_remind_timer>=1200 then
 		g_ready_remind_timer=0
+		clearReadyReminderPopup(-1)
 		if not g_in_game and not g_in_countdown then
 			-- チームごとにready率を集計
 			local team_total={}
@@ -2249,6 +2250,7 @@ end
 function leave(peer_id)
 	local player=g_players[peer_id]
 	if not player then return end
+	clearReadyReminderPopup(peer_id)
 	unregisterPopup(player.popup_name)
 	g_players[peer_id]=nil
 	g_team_status_dirty=true
@@ -2607,8 +2609,7 @@ function registerVehicle(vehicle_id,player)
 	}
 
 	local vehicle_hp=getVehicleMaxHp(vehicle)
-	vehicle.hp=vehicle_hp
-	vehicle.max_hp=vehicle_hp
+	setVehicleMaxHp(vehicle, vehicle_hp)
 
 	table.insert(g_vehicles, vehicle)
 	return vehicle
@@ -2625,6 +2626,16 @@ function getVehicleMaxHp(vehicle)
 	end
 
 	return math.max(vehicle_hp//1|0,1)
+end
+--max_hpは必ずここで設定すること
+function setVehicleMaxHp(vehicle, max_hp)
+	vehicle.hp=max_hp
+	vehicle.max_hp=max_hp
+	if g_has_webmap then
+    	--WebMapAddonに最大HPを設定する
+    	local cmd = '?wm max_hp '..vehicle.max_hp..' '..vehicle.vehicle_id
+    	server.command(cmd)
+    end
 end
 
 function unregisterVehicle(vehicle_id)
@@ -2664,9 +2675,9 @@ function reregisterVehicles()
 		local vehicle=g_vehicles[i]
 		if vehicle.alive then
 			local vehicle_hp=getVehicleMaxHp(vehicle)
-			vehicle.hp=vehicle_hp
-			vehicle.max_hp=vehicle_hp
-			vehicle.remain_ammo=g_savedata.supply_ammo//1|0
+			setVehicleMaxHp(vehicle, vehicle_hp)
+
+			--vehicle.remain_ammo=g_savedata.supply_ammo//1|0
 
 			g_player_status_dirty=true
 			updated_vehicle_count = updated_vehicle_count + 1
@@ -2968,6 +2979,7 @@ function startCountdown(force, peer_id)
 		return
 	end
 	announce('Countdown start.', -1)
+	clearReadyReminderPopup(-1)
 	g_timer=300
 	g_in_countdown=true
 	g_player_status_dirty=true
@@ -3012,6 +3024,16 @@ function checkFinish()
 	else
 		notify('Game End', 'Draw Game!', 9, -1)
 	end
+	local win_team_name=alive_team_count==1 and alive_team_name or 'Draw'
+	if g_has_webmap then
+    	if g_savedata.game_mode_sjac then
+			cmd = "?wm finish_SJAC " .. win_team_name
+			server.command(cmd)
+		else
+			cmd = "?wm finish_SGAC " .. win_team_name
+			server.command(cmd)
+		end
+	end
 end
 
 function startGame()
@@ -3040,14 +3062,21 @@ function startGame()
 	announce('- Disable Weapons:'..tostring(settings.ceasefire), -1)
 
 	if g_has_webmap then
-		local cmd = '?wm max_hp ' .. tostring(g_savedata.vehicle_hp)
-		server.command(cmd)
+		--WebMapAddonに最大ダメージ量を通知
 		cmd = "?wm max_damage " .. tostring(g_savedata.max_damage)
 		server.command(cmd)
+
+       	if g_savedata.game_mode_sjac then
+	   		cmd = "?wm start_SJAC"
+	   		server.command(cmd)
+	   	else
+	   		cmd = "?wm start_SGAC"
+	   		server.command(cmd)
+	   	end
 	end
 end
 
-function finishGame(keep_airbase)
+function finishGame(is_abort)
 	g_in_game=false
 	g_in_countdown=false
 	g_pause=false
@@ -3074,7 +3103,7 @@ function finishGame(keep_airbase)
 
 	-- clear flag assignments unless caller requested to keep them
 	if g_savedata.auto_battle then
-		if not keep_airbase then
+		if not is_abort then
 			clearFlagAssignments(false)
 			scheduleAutoBattle(-1)
 		else
@@ -3158,6 +3187,12 @@ function setPopup(name, is_show, text)
 		popup.text=text
 		popup.is_dirty=true
 	end
+end
+
+function clearReadyReminderPopup(peer_id)
+	local popup=findPopup('are_you_ready')
+	if not popup then return end
+	server.setPopupScreen(peer_id, popup.ui_id, popup.name, false, popup.text, popup.x, popup.y)
 end
 
 function updatePopups()
@@ -3706,4 +3741,3 @@ g_name_tx={}
 g_name_rx={}
 g_iff_keypad_cache={}  -- {[vid]={[key]=value}}
 g_decoded_names={}
-
