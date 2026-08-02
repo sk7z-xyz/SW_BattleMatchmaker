@@ -98,179 +98,41 @@ g_item_supply_buttons={
 	['Take FirstAidKit']	={2,11,4,  0},
 }
 
-g_settings={
-	{
-		name='Vehicle HP',
-		key='vehicle_hp',
-		type='integer',
-		min=1,
-	},
-	{
-		name='Adaptive HP',
-		key='adaptive_hp',
-		type='boolean',
-	},
-	{
-		name='Min HP',
-		key='min_hp',
-		type='integer',
-		min=1,
-	},
-	{
-		name='HP Per Voxel',
-		key='hp_per_voxel',
-		type='number',
-		min=0,
-	},
-	{
-		name='HP Step',
-		key='hp_step',
-		type='integer',
-		min=0,
-	},
-	{
-		name='Max Vehicle Damage',
-		key='max_damage',
-		type='integer',
-		min=0,
-	},
-	{
-		name='Ammo supply Enabled',
-		key='ammo_supply',
-		type='boolean',
-	},
-	{
-		name='MG Ammo Count',
-		key='ammo_mg',
-		type='integer',
-		min=-1,
-	},
-	{
-		name='LA Ammo Count',
-		key='ammo_la',
-		type='integer',
-		min=-1,
-	},
-	{
-		name='RA Ammo Count',
-		key='ammo_ra',
-		type='integer',
-		min=-1,
-	},
-	{
-		name='HA Ammo Count',
-		key='ammo_ha',
-		type='integer',
-		min=-1,
-	},
-	{
-		name='BS Ammo Count',
-		key='ammo_bs',
-		type='integer',
-		min=-1,
-	},
-	{
-		name='AS Ammo Count',
-		key='ammo_as',
-		type='integer',
-		min=-1,
-	},
-	{
-		name='Game Time (min)',
-		key='game_time',
-		type='number',
-		min=1,
-	},
-	{
-		name='Order Command Enabled (in battle)',
-		key='order_enabled',
-		type='boolean',
-	},
-	{
-		name='TPS Enabled (in battle)',
-		key='tps_enabled',
-		type='boolean',
-	},
-	{
-		name='Nameplate Enabled (in battle)',
-		key='nameplate_enabled',
-		type='boolean',
-	},
-	{
-		name='Player Damage (in battle)',
-		key='player_damage',
-		type='boolean',
-	},
-	{
-		name='Show Friends on map',
-		key='show_friends',
-		type='boolean',
-	},
-	{
-		name='Auto standby',
-		key='auto_standby',
-		type='boolean',
-	},
-	{
-		name='Auto battle after finish',
-		key='auto_battle',
-		type='boolean',
-	},
-	{
-		name='Auto vehicle cleanup',
-		key='gc_vehicle',
-		type='boolean',
-	},
-	{
-		name='Auto auth',
-		key='auto_auth',
-		type='boolean',
-	},
-	{
-		name='Sunk Depth',
-		key='sunk_depth',
-		type='integer',
-		min=0,
-	},
-	{
-		name='Auto Link on Spawn',
-		key='auto_link_on_spawn',
-		type='boolean',
-	},
-	{
-		name='Damage Popup',
-		key='damage_popup',
-		type='boolean',
-	},
-	{
-		name='Min Damage Popup',
-		key='min_damage_popup',
-		type='integer',
-		min=0,
-	},
-	{
-		name='Damage Popup Max Height',
-		key='damage_popup_max_height',
-		type='integer',
-		min=0,
-	},
-	{
-		name='Damage Popup Distance',
-		key='damage_popup_distance',
-		type='integer',
-		min=0,
-	},
-	{
-		name='Auto Admin',
-		key='auto_admin',
-		type='boolean',
-	},
-	{
-		name='Game Mode SJAC',
-		key='game_mode_sjac',
-		type='boolean',
-	},
-}
+g_settings={}
+local function add_setting(name,key,type,min)
+	table.insert(g_settings,{name=name,key=key,type=type,min=min})
+end
+add_setting('Vehicle HP','vehicle_hp','integer',1)
+add_setting('Adaptive HP','adaptive_hp','boolean')
+add_setting('Min HP','min_hp','integer',1)
+add_setting('HP Per Voxel','hp_per_voxel','number',0)
+add_setting('HP Step','hp_step','integer',0)
+add_setting('Max Vehicle Damage','max_damage','integer',0)
+add_setting('Ammo supply Enabled','ammo_supply','boolean')
+add_setting('MG Ammo Count','ammo_mg','integer',-1)
+add_setting('LA Ammo Count','ammo_la','integer',-1)
+add_setting('RA Ammo Count','ammo_ra','integer',-1)
+add_setting('HA Ammo Count','ammo_ha','integer',-1)
+add_setting('BS Ammo Count','ammo_bs','integer',-1)
+add_setting('AS Ammo Count','ammo_as','integer',-1)
+add_setting('Game Time (min)','game_time','number',1)
+add_setting('Order Command Enabled (in battle)','order_enabled','boolean')
+add_setting('TPS Enabled (in battle)','tps_enabled','boolean')
+add_setting('Nameplate Enabled (in battle)','nameplate_enabled','boolean')
+add_setting('Player Damage (in battle)','player_damage','boolean')
+add_setting('Show Friends on map','show_friends','boolean')
+add_setting('Auto standby','auto_standby','boolean')
+add_setting('Auto battle after finish','auto_battle','boolean')
+add_setting('Auto vehicle cleanup','gc_vehicle','boolean')
+add_setting('Auto auth','auto_auth','boolean')
+add_setting('Sunk Depth','sunk_depth','integer',0)
+add_setting('Auto Link on Spawn','auto_link_on_spawn','boolean')
+add_setting('Damage Popup','damage_popup','boolean')
+add_setting('Min Damage Popup','min_damage_popup','integer',0)
+add_setting('Damage Popup Max Height','damage_popup_max_height','integer',0)
+add_setting('Damage Popup Distance','damage_popup_distance','integer',0)
+add_setting('Auto Admin','auto_admin','boolean')
+add_setting('Game Mode SJAC','game_mode_sjac','boolean')
 
 g_default_teams={
 	'RED',
@@ -320,6 +182,23 @@ g_default_savedata={
 	game_mode_sjac		=property.checkbox("Game Mode SJAC:True SGAC:False", true),
 
 }
+
+local function normalizeTeamName(team_name)
+	if team_name == 'r' or team_name == 'R' or team_name == 'red' then
+		return 'RED'
+	elseif team_name == 'b' or team_name == 'B' or team_name == 'blue' then
+		return 'BLUE'
+	end
+	if team_name then
+		return string.upper(team_name)
+	end
+	return g_temporary_team
+end
+
+local function execTargeted(peer_id, is_admin, target_peer_id, fn)
+	if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
+	fn(target_peer_id or peer_id)
+end
 
 g_mag_names={}
 for i=1,10 do g_mag_names[i]='magazine_'..tostring(i) end
@@ -623,7 +502,7 @@ end
 -- Commands --
 
 -- Helper functions to enable game modes SJAC and SGAC
-function enableSJAC(peer_id)
+local function setGameMode(is_sjac, peer_id)
 	local old_vehicle_hp = g_savedata.vehicle_hp
 	local old_max_damage = g_savedata.max_damage
 	local old_sunk_depth = g_savedata.sunk_depth
@@ -633,61 +512,35 @@ function enableSJAC(peer_id)
 	local gs = server.getGameSettings()
 	if gs then old_infinite_batteries = gs.infinite_batteries end
 
-	g_savedata.game_mode_sjac = true
-
-	g_savedata.vehicle_hp = 50
-	g_savedata.max_damage = 1000
-	g_savedata.sunk_depth = 1
-	g_savedata.game_time = 15
+	g_savedata.game_mode_sjac = is_sjac
+	g_savedata.vehicle_hp = is_sjac and 50 or 6000
+	g_savedata.max_damage = is_sjac and 1000 or 3000
+	g_savedata.sunk_depth = is_sjac and 1 or 5
+	g_savedata.game_time = is_sjac and 15 or 20
 	g_savedata.damage_popup_max_height = 15
-	g_savedata.nameplate_enabled = true
-
-	server.setGameSetting('infinite_batteries', true)
+	g_savedata.nameplate_enabled = is_sjac
+	server.setGameSetting('infinite_batteries', is_sjac)
 	local updated_vehicle_count = reregisterVehicles()
-	g_player_status_dirty=true
-	queueServerCommand("?wm ground_mode false", 1)
 
-	announce('SJAC Enable', -1)
+	g_player_status_dirty=true
+	queueServerCommand('?wm ground_mode '..(is_sjac and 'false' or 'true'), 1)
+
+	announce(is_sjac and 'SJAC Enable' or 'SGAC Enable', -1)
 	announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
 	announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
 	announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
 	announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
 	announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
-	announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> true', peer_id)
+	announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> '..tostring(is_sjac), peer_id)
 	announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
 end
 
+function enableSJAC(peer_id)
+	setGameMode(true, peer_id)
+end
+
 function enableSGAC(peer_id)
-	local old_vehicle_hp = g_savedata.vehicle_hp
-	local old_max_damage = g_savedata.max_damage
-	local old_sunk_depth = g_savedata.sunk_depth
-	local old_damage_popup_max_height = g_savedata.damage_popup_max_height
-	local old_nameplate_enabled = g_savedata.nameplate_enabled
-	local old_infinite_batteries = nil
-	local gs = server.getGameSettings()
-	if gs then old_infinite_batteries = gs.infinite_batteries end
-
-	g_savedata.game_mode_sjac = false
-	g_savedata.vehicle_hp = 6000
-	g_savedata.max_damage = 3000
-	g_savedata.sunk_depth = 5
-	g_savedata.game_time = 20
-	g_savedata.damage_popup_max_height = 15
-	g_savedata.nameplate_enabled = false
-	server.setGameSetting('infinite_batteries', false)
-	local updated_vehicle_count = reregisterVehicles()
-
-	g_player_status_dirty=true
-	queueServerCommand("?wm ground_mode true", 1)
-
-	announce('SGAC Enable', -1)
-	announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
-	announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
-	announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
-	announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
-	announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
-	announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> false', peer_id)
-	announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
+	setGameMode(false, peer_id)
 end
 
 g_commands={
@@ -695,24 +548,10 @@ g_commands={
 		name='join',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, team_name, target_peer_id)
-			player = g_players[peer_id]
-			--性善説
-			--if g_in_game and not is_admin then
-			--	announce('Cannot join after game start..', peer_id)
-			--	return
-			--end
-			if team_name == "r" or team_name == "R" or team_name == "red" then
-				team_name = "RED"
-			elseif team_name == "b" or team_name == "B" or team_name == "blue"then
-				team_name = "BLUE"
-			end
-			if team_name then
-				team_name = string.upper(team_name)
-			else
-				team_name = g_temporary_team
-			end
-			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
-			join(target_peer_id or peer_id, team_name, is_admin)
+			team_name = normalizeTeamName(team_name)
+			execTargeted(peer_id, is_admin, target_peer_id, function(pid)
+				join(pid, team_name, is_admin)
+			end)
 		end,
 		args={
 			{name='team_name', type='string', require=false},
@@ -723,8 +562,7 @@ g_commands={
 		name='leave',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
-			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
-			leave(target_peer_id or peer_id)
+			execTargeted(peer_id, is_admin, target_peer_id, leave)
 		end,
 		args={
 			{name='peer_id', type='integer', require=false},
@@ -738,8 +576,7 @@ g_commands={
 				announce('Cannot die before game start.', peer_id)
 				return
 			end
-			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
-			kill(target_peer_id or peer_id)
+			execTargeted(peer_id, is_admin, target_peer_id, kill)
 		end,
 		args={
 			{name='peer_id', type='integer', require=false},
@@ -782,8 +619,7 @@ g_commands={
 				announce('Cannot wait after game start.', peer_id)
 				return
 			end
-			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
-			wait(target_peer_id or peer_id)
+			execTargeted(peer_id, is_admin, target_peer_id, wait)
 		end,
 		args={
 			{name='peer_id', type='integer', require=false},
@@ -872,12 +708,11 @@ g_commands={
 				announce('Flag name required.', peer_id)
 				return
 			end
-			name = name:upper()
-
-			if name == "R" or name == "RE" or name == "RED" then
-				name = "RED"
-			elseif name == "B" or name == "BL" or name == "BLU" or name == "BLUE" then
-				name = "BLUE"
+			name = normalizeTeamName(name)
+			if name == 'R' or name == 'RE' or name == 'RED' then
+				name = 'RED'
+			elseif name == 'B' or name == 'BL' or name == 'BLU' or name == 'BLUE' then
+				name = 'BLUE'
 			end
 
 			if x and z and y then
