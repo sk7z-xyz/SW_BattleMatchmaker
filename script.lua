@@ -18,6 +18,10 @@ g_flag_radius=1000
 -- WebMapAddon
 g_has_webmap=false
 g_webmap_bindings={}
+-- WebMap のリスポーンキャッシュ登録状態（Bridge と同様に Lua 再起動時に消える）
+g_player_steam_ids={} -- {[peer_id]=steamid64}
+g_webmap_cache_by_steam={} -- {[steamid64]={vehicle_name=string|nil, pending_vehicle_name=string|nil, pending_group_id=number|nil, restore_pending=boolean|nil}}
+g_webmap_restore_link_requests={} -- {[parent_vehicle_id]={steam_id=string, peer_id=number|nil, retries=number}}
 g_tick_count=0
 g_freq_force_timer=0
 g_ready_remind_timer=0
@@ -40,6 +44,184 @@ g_boundary_warning_popup_ids = {}
 g_center_popup_warning_distance = 75
 g_auto_battle_state=nil -- {phase='wait_shuffle'|'wait_teleport', timer=ticks}
 g_vehicle_owners={} -- {[vehicle_id]=peer_id}
+
+-- WebMap のイベントまたは ?mm order が来る前に登録しておく。
+function getPlayerSteamId(peer_id)
+	local steam_id=g_player_steam_ids[peer_id]
+	if steam_id then return steam_id end
+	for _,player_info in pairs(server.getPlayers()) do
+		if player_info.id==peer_id and player_info.steam_id then
+			steam_id=tostring(player_info.steam_id)
+			g_player_steam_ids[peer_id]=steam_id
+			return steam_id
+		end
+	end
+end
+
+function findPeerIdBySteamId(steam_id)
+	steam_id=tostring(steam_id)
+	for peer_id,current_steam_id in pairs(g_player_steam_ids) do
+		if current_steam_id==steam_id then return peer_id end
+	end
+	for _,player_info in pairs(server.getPlayers()) do
+		if player_info.steam_id and tostring(player_info.steam_id)==steam_id then
+			g_player_steam_ids[player_info.id]=steam_id
+			return player_info.id
+		end
+	end
+end
+
+-- 通常の order と restore で、完全に同じ前方 8 m・上方 2 m の目標行列を使用する。
+function getOrderTargetMatrix(peer_id)
+	local position,is_success=server.getPlayerPos(peer_id)
+	if not is_success then return nil end
+	local look_x,_,look_z=server.getPlayerLookDirection(peer_id)
+	local offset=matrix.translation(0, 2, -8)
+	local rotation=matrix.rotationToFaceXZ(-look_x, -look_z)
+	return matrix.multiply(position, matrix.multiply(rotation, offset))
+end
+
+function getMatrixHeading(transform)
+	if not transform then return nil end
+	-- sankou.lua の transform_to_attitude と同じ heading 定義（度数法）。
+	local unlocked=math.abs(transform[10])<0.99999
+	local yaw=unlocked and math.atan(-transform[9], transform[11]) or 0
+	return 360-((yaw/(math.pi*2)+1)%1*360)
+end
+
+function requestWebMapVehicleCache(peer_id, vehicle)
+	if not g_has_webmap then return end
+	local steam_id=getPlayerSteamId(peer_id)
+	if not steam_id then
+		announce('WebMap cache registration skipped: SteamID64 not found.', peer_id)
+		return
+	end
+	local cache_state=g_webmap_cache_by_steam[steam_id] or {}
+	cache_state.pending_vehicle_name=vehicle.name
+	cache_state.pending_group_id=vehicle.group_id
+	g_webmap_cache_by_steam[steam_id]=cache_state
+	server.command('?wm cache vehicle '..tostring(vehicle.vehicle_id)..' '..steam_id)
+end
+
+function requestWebMapVehicleRestore(peer_id)
+	if not g_has_webmap then return false end
+	local steam_id=getPlayerSteamId(peer_id)
+	if not steam_id then
+		announce('WebMap restore skipped: SteamID64 not found.', peer_id)
+		return false
+	end
+	-- Lua 再読み込み後はこのテーブルが空になるため、Bridge 側に残った古いキャッシュは使用しない。
+	local cache_state=g_webmap_cache_by_steam[steam_id]
+	if not cache_state or not cache_state.vehicle_name then
+		announce('WebMap restore skipped: no cache registered in this script session.', peer_id)
+		return false
+	end
+	if cache_state.restore_pending then return false,'pending' end
+
+	local order_target=getOrderTargetMatrix(peer_id)
+	if not order_target then return false end
+	local sw_x,sw_y,sw_z=matrix.position(order_target)
+	local heading=getMatrixHeading(order_target)
+	if sw_x==nil or sw_y==nil or sw_z==nil or heading==nil then return false end
+
+	-- WebMap: x=X、y=Z、z=Y（高度）。高度補正は加えない。
+	cache_state.restore_pending=true
+	server.command(string.format('?wm cache restore %s %.6f %.6f %.6f %.6f', steam_id, sw_x, sw_z, sw_y, heading))
+	return true
+end
+
+function tryLinkRestoredVehicle(parent_vehicle_id)
+	local request=g_webmap_restore_link_requests[parent_vehicle_id]
+	if not request then return false end
+
+	local peer_id=request.peer_id or findPeerIdBySteamId(request.steam_id)
+	local player=peer_id and g_players[peer_id] or nil
+	if not player then return false end
+	request.peer_id=peer_id
+
+	-- 親ビークルは必ず操作席を持つため、親ビークルだけを登録対象にする。
+	-- onVehicleLoad 前はコンポーネントを取得できず登録に失敗するため、次の通知／tick で再試行する。
+	local vehicle=registerVehicle(parent_vehicle_id, player)
+	if vehicle then
+		-- 一時 XML から復元した車両名ではなく、キャッシュ登録時の表示名を維持する。
+		if request.vehicle_name and request.vehicle_name~='' then
+			vehicle.name=request.vehicle_name
+			vehicle.trimmed_name=trim(request.vehicle_name)
+		end
+		player.vehicle_id=parent_vehicle_id
+		g_vehicle_owners[parent_vehicle_id]=peer_id
+		if g_has_webmap then bindVehicleTeamToWebMap(parent_vehicle_id, player.team) end
+		g_webmap_restore_link_requests[parent_vehicle_id]=nil
+		g_player_status_dirty=true
+		announce('Vehicle restored.', peer_id)
+		return true
+	end
+	return false
+end
+
+function linkRestoredVehicle(steam_id, parent_vehicle_id)
+	if not parent_vehicle_id then return end
+	local cache_state=g_webmap_cache_by_steam[steam_id]
+	g_webmap_restore_link_requests[parent_vehicle_id]={
+		steam_id=steam_id,
+		peer_id=findPeerIdBySteamId(steam_id),
+		vehicle_name=cache_state and cache_state.vehicle_name or nil,
+		retries=600,
+	}
+	-- restore イベントが onVehicleLoad 後に届いた場合にも、この場で紐付けを試みる。
+	tryLinkRestoredVehicle(parent_vehicle_id)
+end
+
+function updateWebMapRestoreLinks()
+	for parent_vehicle_id,request in pairs(g_webmap_restore_link_requests) do
+		if not tryLinkRestoredVehicle(parent_vehicle_id) then
+			request.retries=request.retries-1
+			if request.retries<=0 then
+				g_webmap_restore_link_requests[parent_vehicle_id]=nil
+			end
+		end
+	end
+end
+
+function handleWebMapCacheEvent(event_name, ...)
+	local args={...}
+	if event_name=='webmap_cache_restore' then
+		local steam_id=args[1] and tostring(args[1]) or nil
+		local parent_vehicle_id=tonumber(args[2])
+		local cache_state=steam_id and g_webmap_cache_by_steam[steam_id] or nil
+		if cache_state then cache_state.restore_pending=nil end
+		if steam_id and parent_vehicle_id then linkRestoredVehicle(steam_id, parent_vehicle_id) end
+		return
+	end
+	if event_name=='webmap_cache_restore_failed' then
+		local steam_id=args[1] and tostring(args[1]) or nil
+		if steam_id then
+			g_webmap_cache_by_steam[steam_id]=nil
+		end
+		return
+	end
+	if event_name~='webmap_cache_register' then return end
+
+	local status=args[1]
+	local steam_id=args[2] and tostring(args[2]) or nil
+	local group_id=tonumber(args[4])
+	if not steam_id then return end
+	local cache_state=g_webmap_cache_by_steam[steam_id]
+	if not cache_state or not cache_state.pending_vehicle_name then return end
+	if group_id and cache_state.pending_group_id~=group_id then return end
+	if status=='success' then
+		cache_state.vehicle_name=cache_state.pending_vehicle_name
+		cache_state.pending_vehicle_name=nil
+		cache_state.pending_group_id=nil
+	elseif status=='failed' then
+		cache_state.pending_vehicle_name=nil
+		cache_state.pending_group_id=nil
+		if not cache_state.vehicle_name then
+			g_webmap_cache_by_steam[steam_id]=nil
+		end
+	end
+end
+
 -- finishGame now accepts an optional keep_airbase argument
 -- airports: 複数の基地を設定できる構造化テーブル
 -- 各エントリ: { tile = '<tile_name>', name = '<基地名>', x = <world_x>, y = <world_z> }
@@ -693,12 +875,46 @@ g_commands={
 			end
 			local vehicle=findVehicle(player.vehicle_id)
 			if not vehicle then
+				local restore_requested,restore_reason=requestWebMapVehicleRestore(peer_id)
+				if restore_requested then
+					announce('Vehicle restore requested.', peer_id)
+				elseif restore_reason=='pending' then
+					announce('Vehicle restore is already in progress.', peer_id)
+				else
+					announce('Vehicle not found.', peer_id)
+				end
+				return
+			end
+
+			local order_target=getOrderTargetMatrix(peer_id)
+			if not order_target then
+				announce('Failed to get player position.', peer_id)
+				return
+			end
+			server.setGroupPos(vehicle.group_id, order_target)
+			requestWebMapVehicleCache(peer_id, vehicle)
+			announce('Vehicle ordered.', peer_id)
+		end,
+	},
+	{
+		name='remove',
+		desc='Despawn your registered vehicle group (alias: rm)',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			local player=g_players[peer_id]
+			if not player then
+				announce('Joined player not found. peer_id:'..tostring(peer_id), peer_id)
+				return
+			end
+
+			local vehicle=findVehicle(player.vehicle_id)
+			if not vehicle then
 				announce('Vehicle not found.', peer_id)
 				return
 			end
 
-			server.setGroupPos(vehicle.group_id, getAheadMatrix(peer_id, 2, 8))
-			announce('Vehicle ordered.', peer_id)
+			server.despawnVehicleGroup(vehicle.group_id, true)
+			announce('Your vehicle group has been removed.', peer_id)
 		end,
 	},
 	{
@@ -1445,6 +1661,7 @@ g_command_aliases={
 	l='leave',
 	r='ready',
 	o='order',
+	rm='remove',
 	s='start',
 	f='flag',
 	sh='shuffle',
@@ -1673,6 +1890,7 @@ function onDestroy()
 end
 
 function onTick()
+	updateWebMapRestoreLinks()
 	updatePendingCenterFlagSpawns()
 
 	-- process queued server.command calls (deferred to allow addons to be ready)
@@ -1929,6 +2147,7 @@ end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	g_ui_reset_requested=true
+	g_player_steam_ids[peer_id]=tostring(steam_id)
 
 	if not is_auth and g_savedata.auto_auth then
 		server.addAuth(peer_id)
@@ -1947,6 +2166,7 @@ end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
 	peer_id=peer_id//1|0
+	g_player_steam_ids[peer_id]=nil
 	clearCenterInfoPopups(peer_id)
 	clearBoundaryWarningPopups(peer_id)
 	leave(peer_id)
@@ -2039,37 +2259,51 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 	announce('Ammo here!', peer_id)
 end
 
-function onPlayerSit_(peer_id, vehicle_id, seat_name)
+function linkSpawnedVehicle(peer_id, vehicle_id)
+	local player=g_players[peer_id]
+	if not player or not player.alive then return false end
 
+	local vehicle=registerVehicle(vehicle_id, player)
+	if not vehicle or not vehicle.alive then return false end
+
+	player.vehicle_id=vehicle_id
+	g_vehicle_owners[vehicle_id]=peer_id
+	if g_has_webmap then
+		bindVehicleTeamToWebMap(vehicle_id, player.team)
+		-- 自分でスポーンして紐付いた車両も、復元用にWebMapへ登録する。
+		requestWebMapVehicleCache(peer_id, vehicle)
+	end
+	g_player_status_dirty=true
+	return true
+end
+
+function onPlayerSit_(peer_id, vehicle_id, seat_name)
+	if not peer_id then return end
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
+	if not player or not player.alive then return end
 
-
-	if not player or not player.alive then
-		return
-	end
-
+	-- 着席時は Matchmaker 側の所有車両を更新する。ただし WebMap キャッシュは登録しない。
 	local vehicle=registerVehicle(vehicle_id, player)
 	if vehicle and vehicle.alive then
 		player.vehicle_id=vehicle_id
-		-- WebMapAddon
 		if g_has_webmap then
 			bindVehicleTeamToWebMap(vehicle_id, player.team)
 		end
 	end
-	local vehicle_owner_id = vehicle and g_vehicle_owners[vehicle_id]
-
 	g_player_status_dirty=true
 end
+
 function onCharacterSit(object_id, vehicle_id, seat_name)
 	local peer_id=findPeerIdByCharacterId(object_id)
 	onPlayerSit_(peer_id, vehicle_id, seat_name)
 end
+
 function findPeerIdByCharacterId(object_id)
-	for i,p in ipairs(server.getPlayers()) do
-		if object_id==server.getPlayerCharacterID(p.id) then
-			return p.id
+	for _,player_info in ipairs(server.getPlayers()) do
+		if object_id==server.getPlayerCharacterID(player_info.id) then
+			return player_info.id
 		end
 	end
 end
@@ -2102,6 +2336,7 @@ function onVehicleDespawn(vehicle_id, peer_id)
 	g_iff_keypad_cache={}  -- IFF台数変化時はキャッシュをクリア
 	g_vehicle_owners[vehicle_id]= nil
 	g_pending_link_requests[vehicle_id]=nil
+	g_webmap_restore_link_requests[vehicle_id]=nil
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
@@ -2115,15 +2350,22 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 		enqueueVehicleLinkRequest(peer_id, vehicle_id)
 	end
 	g_vehicle_owners[vehicle_id] = peer_id
+	-- cache restore 成功イベントで保留した親ビークルなら、スポーン完了を契機に所有者を再紐付けする。
+	tryLinkRestoredVehicle(vehicle_id)
 end
 
 function onVehicleLoad(vehicle_id)
-	-- registerVehicleでコンポーネントを取得したいのでロードしてから登録
-	local peer_id=g_pending_link_requests[vehicle_id]
-	if not peer_id then return end
+    if tryLinkRestoredVehicle(vehicle_id) then
+        g_pending_link_requests[vehicle_id] = nil
+        return
+    end
 
-	onPlayerSit_(peer_id, vehicle_id, '')
-	g_pending_link_requests[vehicle_id]=nil
+    -- registerVehicleでコンポーネントを取得したいのでロードしてから登録
+    local peer_id = g_pending_link_requests[vehicle_id]
+    if not peer_id then return end
+
+    linkSpawnedVehicle(peer_id, vehicle_id)
+    g_pending_link_requests[vehicle_id] = nil
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
@@ -2141,6 +2383,10 @@ end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, sub_command, ...)
 	peer_id=peer_id//1|0
+	if command=='?event' then
+		handleWebMapCacheEvent(sub_command, ...)
+		return
+	end
 	if command~='?mm' then return end
 
 	if not sub_command or sub_command=='' then
@@ -2199,7 +2445,7 @@ function join(peer_id, team, force)
 	end
 
 	local player={
-		id=id,
+		id=peer_id,
 		name=name,
 		trimmed_name=trim(name),
 		team=team,
@@ -2210,27 +2456,16 @@ function join(peer_id, team, force)
 	}
 	g_players[peer_id]=player
 
+	-- Matchmaker 側の車両紐付けは復元するが、onPlayerSit_ は WebMap キャッシュを登録しない。
 	local character_id=server.getPlayerCharacterID(peer_id)
-	local sit_vehicle_id, is_success=server.getCharacterVehicle(character_id)
-	if is_success then
-		local vehicle=registerVehicle(sit_vehicle_id,player)
-		if vehicle and vehicle.alive then
-			player.vehicle_id=sit_vehicle_id
-			-- WebMapAddon
-			if g_has_webmap then
-				bindVehicleTeamToWebMap(player.vehicle_id, team)
-			end
-		end
-
-		local vehicle_owner_id = vehicle and g_vehicle_owners[player.vehicle_id]
+	local sit_vehicle_id,is_seated=server.getCharacterVehicle(character_id)
+	if is_seated and sit_vehicle_id and sit_vehicle_id>=0 then
+		onPlayerSit_(peer_id, sit_vehicle_id, '')
 	else
-		-- WebMapAddon
-		-- Currently, it does not work because player.vehicle_id = -1 is set.
+		-- 既に自分へ紐付いている車両がある場合だけ、チーム色を更新する。
 		local vehicle=findVehicle(player.vehicle_id)
-		if vehicle and vehicle.alive then
-			if g_has_webmap then
-				bindVehicleTeamToWebMap(player.vehicle_id, team)
-			end
+		if vehicle and vehicle.alive and g_has_webmap then
+			bindVehicleTeamToWebMap(player.vehicle_id, team)
 		end
 	end
 
