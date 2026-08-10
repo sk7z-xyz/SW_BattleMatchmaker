@@ -27,7 +27,17 @@ g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
 g_group_parents={}  -- {[group_id]=parent_vehicle_id}
 -- Airbase assignment state
-g_flag_assignments = { RED = nil, BLUE = nil }
+g_flag_assignments = { RED = nil, BLUE = nil, CENTER = nil }
+g_debug_flag_radii = {}
+g_pending_center_flag_spawns = {}
+g_altitude_scan_height = 750
+g_battle_start_timer = 0
+g_center_radius_last_update = -1
+g_center_popup_ids = {}
+g_center_final_radius = 300
+g_center_warning_distance = 75
+g_boundary_warning_popup_ids = {}
+g_center_popup_warning_distance = 75
 g_auto_battle_state=nil -- {phase='wait_shuffle'|'wait_teleport', timer=ticks}
 g_vehicle_owners={} -- {[vehicle_id]=peer_id}
 -- finishGame now accepts an optional keep_airbase argument
@@ -44,6 +54,43 @@ airports = {
 	{ tile = 'arid_island_26_14',   		name = 'FJ Warner',          		x = 0, z = 0, y = 11 },
 	{ tile = 'arid_island_19_11',   		name = 'Clarke Airfield',          	x = 0, z = 0, y = 21 },
 	{ tile = 'arid_island_7_5',   			name = 'Ender Airfield',          	x = 0, z = 0, y = 177 },
+}
+ground_base = {
+	{
+		name = '1',
+		points = {
+			{ name = '1-1', x = 4000, z = -6000, y = 0 },
+			{ name = '1-2', x = 1300, z = -3700, y = 0 },
+		},
+	},
+	{
+		name = '2',
+		points = {
+			{ name = '2-1', x = 1500, z = -8700, y = 0 },
+			{ name = '2-2', x = 3000, z = -10600, y = 0 },
+		},
+	},
+	{
+		name = '3',
+		points = {
+			{ name = '3-1', x = 1100, z = -9400, y = 0 },
+			{ name = '3-2', x = -200, z = -12000, y = 0 },
+		},
+	},
+	{
+		name = '4',
+		points = {
+			{ name = '4-1', x = -5700, z = -11000, y = 0 },
+			{ name = '4-2', x = -8100, z = -12000, y = 0 },
+		},
+	},
+	{
+		name = '5',
+		points = {
+			{ name = '5-1', x = 1000, z = -6120, y = 0 },
+			{ name = '5-2', x = -1300, z = -5500, y = 0 },
+		},
+	},
 }
 
 function generateIffFreqs()
@@ -99,8 +146,8 @@ g_item_supply_buttons={
 }
 
 g_settings={}
-local function add_setting(name,key,type,min)
-	table.insert(g_settings,{name=name,key=key,type=type,min=min})
+local function add_setting(name,key,type,min,max)
+	table.insert(g_settings,{name=name,key=key,type=type,min=min,max=max})
 end
 add_setting('Vehicle HP','vehicle_hp','integer',1)
 add_setting('Adaptive HP','adaptive_hp','boolean')
@@ -133,6 +180,7 @@ add_setting('Damage Popup Max Height','damage_popup_max_height','integer',0)
 add_setting('Damage Popup Distance','damage_popup_distance','integer',0)
 add_setting('Auto Admin','auto_admin','boolean')
 add_setting('Game Mode SJAC','game_mode_sjac','boolean')
+add_setting('Battle Mode','battle_mode','integer',0,1)
 
 g_default_teams={
 	'RED',
@@ -180,6 +228,7 @@ g_default_savedata={
 	damage_popup_distance = property.slider("Damage Popup Distance", 0, 20000, 100, 4500),
 	auto_admin		=property.checkbox("Auto admin", false),
 	game_mode_sjac		=property.checkbox("Game Mode SJAC:True SGAC:False", true),
+	battle_mode			=0,
 
 }
 
@@ -516,7 +565,7 @@ local function setGameMode(is_sjac, peer_id)
 	g_savedata.vehicle_hp = is_sjac and 50 or 6000
 	g_savedata.max_damage = is_sjac and 1000 or 3000
 	g_savedata.sunk_depth = is_sjac and 1 or 5
-	g_savedata.game_time = is_sjac and 15 or 20
+	g_savedata.game_time = is_sjac and 15 or 15
 	g_savedata.damage_popup_max_height = 15
 	g_savedata.nameplate_enabled = is_sjac
 	server.setGameSetting('infinite_batteries', is_sjac)
@@ -862,6 +911,9 @@ g_commands={
 			local value, is_success=validateArg(setting_define, value, peer_id)
 			if not is_success then return end
 			g_savedata[setting_define.key]=value
+			if setting_define.key=='battle_mode' then
+				updateCenterFlag()
+			end
 			announce(setting_define.name..' set to '..tostring(value), -1)
 		end,
 		args={
@@ -884,6 +936,19 @@ g_commands={
 		action=function(peer_id, is_admin, is_auth, ...)
 			enableSGAC(peer_id)
 		end,
+	},
+	{
+		name='battle_mode',
+		desc='Set battle mode: 0=default, 1=center flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, mode)
+			g_savedata.battle_mode = mode
+			updateCenterFlag()
+			announce('Battle mode set to '..tostring(mode), -1)
+		end,
+		args={
+			{name='mode', type='integer', min=0, max=1, require=true},
+		},
 	},
 	{
 		name='dismiss',
@@ -1010,6 +1075,23 @@ g_commands={
 		args={
 			{name='range', type='number', require=false},
 		},
+	},
+	{
+		name='shuffle_ground_base',
+		desc='Select a random ground base pair and assign them to RED and BLUE (alias sg)',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			assignGroundBase(peer_id)
+		end,
+	},
+	-- DEBUG ONLY: Remove this command and debugGroundBases() after coordinate verification.
+	{
+		name='debug_ground_base',
+		desc='DEBUG: display all ground base flags and centers',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			debugGroundBases(peer_id)
+		end,
 	},
 	{
 		name='tp',
@@ -1145,13 +1227,78 @@ function assignAirbases(peer_id, range)
 	return true
 end
 
+-- Select a random ground base pair and assign its two points to RED/BLUE.
+function assignGroundBase(peer_id)
+	if not ground_base or #ground_base == 0 then
+		announce('No ground base is configured.', peer_id)
+		return false
+	end
+
+	local base = ground_base[math.random(1, #ground_base)]
+	local points = base and base.points
+	if not points or not points[1] or not points[2] then
+		announce('Invalid ground base configuration.', peer_id)
+		return false
+	end
+
+	local red = points[1]
+	local blue = points[2]
+	clearFlagAssignments(false, peer_id)
+	spawnFlagAtAdjustedAltitude(peer_id, 'RED', red.x, red.z, red.y, 10)
+	spawnFlagAtAdjustedAltitude(peer_id, 'BLUE', blue.x, blue.z, blue.y, 10)
+
+	announce('Ground base assigned: RED='..tostring(red.name)..' BLUE='..tostring(blue.name), -1)
+	return true
+end
+
+-- DEBUG ONLY: Remove this function after coordinate verification.
+-- Display every ground base point and the midpoint of each pair at once.
+function debugGroundBases(peer_id)
+	if not ground_base or #ground_base == 0 then
+		announce('No ground base is configured.', peer_id)
+		return false
+	end
+
+	clearFlags()
+	g_flag_assignments = { RED = nil, BLUE = nil, CENTER = nil }
+	g_debug_flag_radii = {}
+
+	local displayed = 0
+	for i, base in ipairs(ground_base) do
+		local points = base and base.points
+		if points and points[1] and points[2] then
+			for point_index, point in ipairs(points) do
+				local team_name = point_index == 1 and 'RED' or 'BLUE'
+				local flag_name = team_name..'_'..tostring(base.name or i)..'_'..tostring(point.name or point_index)
+				spawnFlagAt(peer_id, flag_name, point.x, point.z, point.y, true)
+				displayed = displayed + 1
+			end
+
+			local center_x = ((tonumber(points[1].x) or 0) + (tonumber(points[2].x) or 0)) / 2
+			local center_z = ((tonumber(points[1].z) or 0) + (tonumber(points[2].z) or 0)) / 2
+			local center_y = ((tonumber(points[1].y) or 0) + (tonumber(points[2].y) or 0)) / 2
+			local center_name = 'DEBUG_CENTER_'..tostring(base.name or i)
+			local dx = (tonumber(points[1].x) or 0) - (tonumber(points[2].x) or 0)
+			local dz = (tonumber(points[1].z) or 0) - (tonumber(points[2].z) or 0)
+			g_debug_flag_radii[string.upper(center_name)] = math.sqrt(dx * dx + dz * dz) / 2 * 1.5
+			spawnCenterFlagAtAdjustedAltitude(peer_id, center_name, center_x, center_z, center_y)
+			displayed = displayed + 1
+		end
+	end
+
+	announce('DEBUG ground bases displayed: '..tostring(displayed)..' flags', -1)
+	return true
+end
+
 -- Clear airbase assignments and remove flags (unless preserve==true)
 function clearFlagAssignments(preserve, peer_id)
 	if preserve then return end
 	-- remove flag markers 'RED' and 'BLUE' (use upper-case names to match spawn usage)
 	despawnFlag(peer_id or -1, 'RED')
 	despawnFlag(peer_id or -1, 'BLUE')
-	g_flag_assignments = { RED = nil, BLUE = nil }
+	cancelPendingCenterFlagSpawns()
+	despawnFlag(peer_id or -1, 'CENTER')
+	g_flag_assignments = { RED = nil, BLUE = nil, CENTER = nil }
 end
 
 -- Get assigned flag for a team (team may be 'RED'/'red'/'Red')
@@ -1299,11 +1446,15 @@ g_command_aliases={
 	r='ready',
 	o='order',
 	s='start',
+	f='flag',
 	sh='shuffle',
 	sh2='shuffle2',
 	sa='shuffle_airbase',
+	sg='shuffle_ground_base',
+	dgb='debug_ground_base',
 	sjac='SJAC',
 	sgac='SGAC',
+	bm='battle_mode',
 }
 
 -- shuffle2  shuffle
@@ -1515,11 +1666,14 @@ end
 function onDestroy()
 	clearPopups()
 	clearVehiclePopups()
+	clearCenterInfoPopups()
+	clearBoundaryWarningPopups()
 	clearSupplies()
 	clearFlags()
 end
 
 function onTick()
+	updatePendingCenterFlagSpawns()
 
 	-- process queued server.command calls (deferred to allow addons to be ready)
 	for i=#g_pending_server_commands,1,-1 do
@@ -1572,6 +1726,7 @@ function onTick()
 			if g_timer>0 and g_timer%g_remind_interval==0 then
 				server.notify(-1, 'Time Reminder', time_text..' left.', 1)
 			end
+			updateShrinkingCenterFlagRadius()
 		else
 			finishGame(false)
 			notify('Game End', 'Timeup!', 9, -1)
@@ -1594,6 +1749,9 @@ function onTick()
 		updatePlayerMapObject()
 	end
 
+	updateCenterInfoPopups()
+	updateCenterBoundaryExplosions()
+	updateBoundaryWarningPopups()
 	updatePopups()
 
 	-- チームビークル座標の収集（毎tick）
@@ -1789,6 +1947,8 @@ end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
 	peer_id=peer_id//1|0
+	clearCenterInfoPopups(peer_id)
+	clearBoundaryWarningPopups(peer_id)
 	leave(peer_id)
 	despawnSupply(peer_id)
 end
@@ -2878,6 +3038,8 @@ function startGame()
 	g_auto_battle_state=nil
 	g_player_status_dirty=true
 	g_timer=g_savedata.game_time*60*60//1|0
+	g_battle_start_timer=g_timer
+	g_center_radius_last_update=-1
 	g_remind_interval=g_timer//4
 
 	for _,player in pairs(g_players) do
@@ -2966,7 +3128,8 @@ function setSettingsToStandby()
 	server.setGameSetting('vehicle_damage', false)
 	server.setGameSetting('player_damage', false)
 	server.setGameSetting('map_show_players', true)
-	server.setGameSetting('map_show_vehicles', true)
+    server.setGameSetting('map_show_vehicles', true)
+    server.setGameSetting('infinite_ammo', true)
 end
 
 -- UI
@@ -3068,7 +3231,274 @@ function clearVehiclePopups()
 	end
 end
 
+function clearCenterInfoPopups(peer_id)
+	if peer_id then
+		local popup_id = g_center_popup_ids[peer_id]
+		if popup_id then server.removeMapID(peer_id, popup_id) end
+		g_center_popup_ids[peer_id] = nil
+		return
+	end
+	for pid, popup_id in pairs(g_center_popup_ids) do
+		server.removeMapID(pid, popup_id)
+	end
+	g_center_popup_ids = {}
+end
+
+function formatCenterBoundaryTime(seconds)
+	local total_seconds = math.max(0, math.ceil(seconds))
+	return string.format('%02d:%02d', total_seconds // 60, total_seconds % 60)
+end
+
+-- Display per-player Center information 1000m above the Center flag.
+function updateCenterInfoPopups()
+	if g_savedata.game_mode_sjac or not g_in_game or (g_savedata.battle_mode or 0) ~= 1 then
+		clearCenterInfoPopups()
+		return
+	end
+
+	local center_flag = g_savedata.flag_vehicles.CENTER
+	if not center_flag then
+		clearCenterInfoPopups()
+		return
+	end
+
+	local center_matrix, center_success = server.getVehiclePos(center_flag.vehicle_id)
+	if not center_success then return end
+	local center_x, center_y, center_z = matrix.position(center_matrix)
+	local radius = getFlagMapRadius('CENTER')
+	local shrink_speed = getCenterFlagShrinkSpeed()
+	local remaining_seconds = g_timer / 60
+
+	for _, player_info in ipairs(server.getPlayers()) do
+		local peer_id = player_info.id
+		local player_matrix, player_success = server.getPlayerPos(peer_id)
+		if player_success then
+			local player_x, _, player_z = matrix.position(player_matrix)
+			local dx = player_x - center_x
+			local dz = player_z - center_z
+			local center_distance = math.sqrt(dx * dx + dz * dz)
+			local boundary_distance = radius - center_distance
+			local time_text = '--'
+			local is_warning = false
+			if boundary_distance <= 0 then
+				time_text = '00:00'
+				is_warning = true
+			elseif shrink_speed <= 0 then
+				time_text = '--'
+			else
+				local seconds_to_boundary = boundary_distance / shrink_speed
+				if seconds_to_boundary <= remaining_seconds then
+					time_text = formatCenterBoundaryTime(seconds_to_boundary)
+					is_warning = boundary_distance <= g_center_popup_warning_distance
+				else
+					time_text = 'END'
+				end
+			end
+
+			local text = string.format('%.0fm/%.0fm\n%.0fm (%s)', center_distance, radius, boundary_distance, time_text)
+			if is_warning then text = text .. '\nWarning' end
+			local popup_id = g_center_popup_ids[peer_id]
+			if not popup_id then
+				popup_id = server.getMapID()
+				g_center_popup_ids[peer_id] = popup_id
+			end
+			server.setPopup(peer_id, popup_id, text, true, text, center_x, center_y + 1000, center_z, 20000)
+		else
+			clearCenterInfoPopups(peer_id)
+		end
+	end
+end
+
+function clearBoundaryWarningPopups(peer_id)
+	if peer_id then
+		local popup_ids = g_boundary_warning_popup_ids[peer_id]
+		if popup_ids then
+			for _, popup_id in pairs(popup_ids) do server.removeMapID(peer_id, popup_id) end
+		end
+		g_boundary_warning_popup_ids[peer_id] = nil
+		return
+	end
+	for pid, popup_ids in pairs(g_boundary_warning_popup_ids) do
+		for _, popup_id in pairs(popup_ids) do server.removeMapID(pid, popup_id) end
+	end
+	g_boundary_warning_popup_ids = {}
+end
+
+function setBoundaryWarningPopup(peer_id, popup_key, is_show, x, y, z, distance)
+	local popup_ids = g_boundary_warning_popup_ids[peer_id]
+	if not popup_ids then
+		if not is_show then return end
+		popup_ids = {}
+		g_boundary_warning_popup_ids[peer_id] = popup_ids
+	end
+	local popup_id = popup_ids[popup_key]
+	if not popup_id then
+		if not is_show then return end
+		popup_id = server.getMapID()
+		popup_ids[popup_key] = popup_id
+	end
+	local text = string.format('Warning\n%.0fm', distance or 0)
+	server.setPopup(peer_id, popup_id, text, is_show, text, x, y + 10, z, 500)
+end
+
+-- Match sankou.lua's transform_to_attitude heading calculation exactly.
+function getVehicleForwardDirection(vehicle_id)
+	if not vehicle_id or vehicle_id < 0 then return nil end
+
+	local vehicle_matrix, is_success = server.getVehiclePos(vehicle_id)
+	if not is_success or not vehicle_matrix then return nil end
+
+	local unlocked = math.abs(vehicle_matrix[10]) < 0.99999 -- m[3][2]
+	local yaw = unlocked and math.atan(-vehicle_matrix[9], vehicle_matrix[11]) or 0 -- m[3][1], m[3][3]
+	local heading = 360 - ((yaw / (math.pi * 2) + 1) % 1 * 360)
+	local heading_rad = math.rad(heading)
+	return {
+		x = math.sin(heading_rad),
+		z = math.cos(heading_rad),
+	}
+end
+
+-- Show warnings while either boundary point is within the configured distance.
+function updateBoundaryWarningPopups()
+	if g_savedata.game_mode_sjac or not g_in_game or (g_savedata.battle_mode or 0) ~= 1 then
+		clearBoundaryWarningPopups()
+		return
+	end
+
+	local center_flag = g_savedata.flag_vehicles.CENTER
+	if not center_flag then
+		clearBoundaryWarningPopups()
+		return
+	end
+	local center_matrix, center_success = server.getVehiclePos(center_flag.vehicle_id)
+	if not center_success then return end
+	local center_x, _, center_z = matrix.position(center_matrix)
+	local radius = getFlagMapRadius('CENTER')
+
+	for _, player_info in ipairs(server.getPlayers()) do
+		local player = g_players[player_info.id]
+		local peer_id = player_info.id
+		if not player or not player.alive then
+			clearBoundaryWarningPopups(peer_id)
+		else
+			local player_matrix, player_success = server.getPlayerPos(peer_id)
+			if not player_success then
+				clearBoundaryWarningPopups(peer_id)
+			else
+				local player_x, player_y, player_z = matrix.position(player_matrix)
+				local dx = player_x - center_x
+				local dz = player_z - center_z
+				local distance = math.sqrt(dx * dx + dz * dz)
+				if distance <= 0 then
+					clearBoundaryWarningPopups(peer_id)
+				else
+					local nearest_x = center_x + dx / distance * radius
+					local nearest_z = center_z + dz / distance * radius
+					local nearest_distance = math.abs(distance - radius)
+					setBoundaryWarningPopup(peer_id, 'nearest', nearest_distance <= g_center_popup_warning_distance, nearest_x, player_y, nearest_z, nearest_distance)
+
+					local forward_direction = getVehicleForwardDirection(player.vehicle_id)
+					local forward_x, forward_z, forward_distance = nil, nil, nil
+					if forward_direction then
+						local dot = dx * forward_direction.x + dz * forward_direction.z
+						local discriminant = dot * dot - (distance * distance - radius * radius)
+						if discriminant >= 0 then
+							local root = math.sqrt(discriminant)
+							local t1 = -dot - root
+							local t2 = -dot + root
+							local t = t1 > 0 and t1 or (t2 > 0 and t2 or nil)
+							if t then
+								forward_x = player_x + forward_direction.x * t
+								forward_z = player_z + forward_direction.z * t
+								forward_distance = t
+							end
+						end
+					end
+					setBoundaryWarningPopup(peer_id, 'forward', forward_distance and forward_distance <= g_center_popup_warning_distance, forward_x or player_x, player_y, forward_z or player_z, forward_distance)
+				end
+			end
+		end
+	end
+end
+
+-- In SGAC battle mode, bombard both the shortest circle-edge point and the
+-- forward-ray circle crossing for players near or beyond the shrinking edge.
+function updateCenterBoundaryExplosions()
+	if g_savedata.game_mode_sjac or not g_in_game or (g_savedata.battle_mode or 0) ~= 1 then return end
+
+	local center_flag = g_savedata.flag_vehicles.CENTER
+	if not center_flag then return end
+	local center_matrix, center_success = server.getVehiclePos(center_flag.vehicle_id)
+	if not center_success then return end
+	local center_x, _, center_z = matrix.position(center_matrix)
+	local radius = getFlagMapRadius('CENTER')
+
+	for _, player_info in ipairs(server.getPlayers()) do
+		local player = g_players[player_info.id]
+		if player and player.alive then
+			local player_matrix, player_success = server.getPlayerPos(player_info.id)
+			if player_success then
+				local player_x, player_y, player_z = matrix.position(player_matrix)
+				local dx = player_x - center_x
+				local dz = player_z - center_z
+				local distance = math.sqrt(dx * dx + dz * dz)
+				local forward_direction = getVehicleForwardDirection(player.vehicle_id)
+
+				if distance > 0 then
+					if distance > radius then
+						if math.random(1, 40) == 1 and player.vehicle_id and player.vehicle_id >= 0 then
+							local vehicle_matrix, vehicle_success = server.getVehiclePos(player.vehicle_id)
+							if vehicle_success then server.spawnExplosion(vehicle_matrix, 0.2) end
+						end
+					else
+						local nearest_x = dx / distance
+						local nearest_z = dz / distance
+						local forward_x, forward_z, forward_distance = nil, nil, nil
+
+						if forward_direction then
+							local dot = dx * forward_direction.x + dz * forward_direction.z
+							local discriminant = dot * dot - (distance * distance - radius * radius)
+							if discriminant >= 0 then
+								local root = math.sqrt(discriminant)
+								local t1 = -dot - root
+								local t2 = -dot + root
+								local t = t1 > 0 and t1 or (t2 > 0 and t2 or nil)
+								if t then
+									forward_x = (dx + forward_direction.x * t) / radius
+									forward_z = (dz + forward_direction.z * t) / radius
+									forward_distance = t
+								end
+							end
+						end
+
+						local function spawnOutsideCircle(direction_x, direction_z)
+							-- Keep every blast on one circular wall.  Only the angle around
+							-- that circumference varies, never the distance from the center.
+							local base_angle = math.atan(direction_z, direction_x)
+							local angle_offset = (math.random() - 0.5) * math.rad(12)
+							local explosion_angle = base_angle + angle_offset
+							local wall_radius = radius
+							local explosion_x = center_x + math.cos(explosion_angle) * wall_radius
+							local explosion_z = center_z + math.sin(explosion_angle) * wall_radius
+							server.spawnExplosion(matrix.translation(explosion_x, player_y, explosion_z), 0.2)
+						end
+
+						if radius - distance <= g_center_warning_distance and math.random(1, 40) == 1 then
+							spawnOutsideCircle(nearest_x, nearest_z)
+						end
+						if forward_distance and forward_distance <= g_center_warning_distance and math.random(1, 40) == 1 then
+							spawnOutsideCircle(forward_x, forward_z)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 function renewUiIds()
+	clearCenterInfoPopups()
+	clearBoundaryWarningPopups()
 	for i,popup in ipairs(g_popups) do
 		server.removeMapID(-1, popup.ui_id)
 		popup.ui_id=server.getMapID()
@@ -3092,7 +3522,8 @@ function renewUiIds()
 			flag.ui_id=server.getMapID()
 			local x,y,z = matrix.position(vehicle_matrix)
 			local r,g,b,a=getColor(name)
-			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
+			local text = getFlagDisplayText(name)
+			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, text, getFlagMapRadius(name), text, r, g, b, a)
 		end
 	end
 
@@ -3195,6 +3626,176 @@ function isSupply(vehicle_id)
 	return false
 end
 
+-- Return the base radius for CENTER: 1.5 times the midpoint-to-flag distance.
+function getCenterFlagBaseRadius()
+	local red = g_flag_assignments.RED
+	local blue = g_flag_assignments.BLUE
+	if not red or not blue then return g_flag_radius end
+
+	local dx = (tonumber(red.x) or 0) - (tonumber(blue.x) or 0)
+	local dz = (tonumber(red.z) or 0) - (tonumber(blue.z) or 0)
+	return math.max(g_center_final_radius, math.sqrt(dx * dx + dz * dz) / 2 * 1.5)
+end
+
+function getCenterFlagShrinkSpeed()
+	if g_savedata.game_mode_sjac or not g_in_game or g_battle_start_timer <= 0 then return 0 end
+	return (getCenterFlagBaseRadius() - g_center_final_radius) / (g_battle_start_timer / 60)
+end
+
+-- Return the map radius for a flag. In SGAC battle mode, CENTER shrinks
+-- linearly from its base radius to the configured final radius as the game timer counts down.
+function getFlagMapRadius(name)
+	name = string.upper(name or '')
+	if g_debug_flag_radii[name] then
+		return g_debug_flag_radii[name]
+	end
+	if name ~= 'CENTER' or (g_savedata.battle_mode or 0) ~= 1 then
+		return g_flag_radius
+	end
+
+	local base_radius = getCenterFlagBaseRadius()
+	if g_savedata.game_mode_sjac or not g_in_game or g_battle_start_timer <= 0 then
+		return base_radius
+	end
+
+	local remaining_ratio = clamp(g_timer / g_battle_start_timer, 0, 1)
+	return g_center_final_radius + (base_radius - g_center_final_radius) * remaining_ratio
+end
+
+function getFlagDisplayText(name)
+	local upper_name = string.upper(name or '')
+	if upper_name == 'CENTER' or string.sub(upper_name, 1, 13) == 'DEBUG_CENTER_' then
+		local display_name = upper_name == 'CENTER' and 'BattleArea' or name
+		return string.format('%s\nRadius: %.0fm', display_name, getFlagMapRadius(name))
+	end
+	return name
+end
+
+function refreshCenterFlagMapRadius()
+	local flag = g_savedata.flag_vehicles.CENTER
+	if not flag then return end
+
+	local vehicle_matrix, is_success = server.getVehiclePos(flag.vehicle_id)
+	if not is_success then return end
+	local x, _, z = matrix.position(vehicle_matrix)
+	local r, g, b, a = getColor('CENTER')
+	local text = getFlagDisplayText('CENTER')
+	server.setVehicleTooltip(flag.vehicle_id, text)
+	server.removeMapObject(-1, flag.ui_id)
+	server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, text, getFlagMapRadius('CENTER'), text, r, g, b, a)
+end
+
+function updateShrinkingCenterFlagRadius()
+	if g_savedata.game_mode_sjac or not g_in_game or (g_savedata.battle_mode or 0) ~= 1 then return end
+	if g_timer ~= 0 and g_timer % 60 ~= 0 then return end
+	if g_center_radius_last_update == g_timer then return end
+	g_center_radius_last_update = g_timer
+	refreshCenterFlagMapRadius()
+end
+
+-- Spawn the altitude checker used to place a CENTER flag on the terrain.
+-- Requires an addon vehicle tagged `name=alt` with an `alt` dial.
+function spawnAltitudeChecker(x, z)
+	local check_pos = matrix.translation(x, 10, z)
+	local tile_data, tile_success = server.getTile(check_pos)
+	if not (tile_success and tile_data and tile_data.name and tile_data.name ~= '') then
+		announce(string.format('[AltChecker] Tile unavailable at x=%.1f z=%.1f', x, z), -1)
+		return nil
+	end
+	local check_vehicle_id = spawnAddonVehicle('alt', matrix.translation(x, g_altitude_scan_height, z))
+	if check_vehicle_id then
+		announce(string.format('[AltChecker] Spawned id=%d at x=%.1f z=%.1f', check_vehicle_id, x, z), -1)
+	else
+		announce(string.format('[AltChecker] Spawn failed: name=alt x=%.1f z=%.1f', x, z), -1)
+	end
+	return check_vehicle_id
+end
+
+function getGroundAltitudeFromChecker(check_vehicle_id)
+	local data, is_success = server.getVehicleDial(check_vehicle_id, 'alt')
+	if not (is_success and data and data.value and data.value > 0 and data.value < 4000) then
+		return nil
+	end
+	return math.max(0, g_altitude_scan_height - data.value), data.value
+end
+
+-- Queue a flag until its terrain altitude has been measured.
+function cancelPendingCenterFlagSpawns(name)
+	for i = #g_pending_center_flag_spawns, 1, -1 do
+		local pending = g_pending_center_flag_spawns[i]
+		if not name or pending.name == name then
+			server.despawnVehicle(pending.check_vehicle_id, true)
+			table.remove(g_pending_center_flag_spawns, i)
+		end
+	end
+end
+
+function spawnFlagAtAdjustedAltitude(peer_id, name, x, z, fallback_y, ground_offset)
+	cancelPendingCenterFlagSpawns(name)
+
+	local check_vehicle_id = spawnAltitudeChecker(x, z)
+	if not check_vehicle_id then
+		announce('[AltChecker] Using fallback altitude for '..name, -1)
+		spawnFlagAt(peer_id, name, x, z, fallback_y, false)
+		return
+	end
+
+	table.insert(g_pending_center_flag_spawns, {
+		peer_id = peer_id,
+		name = name,
+		x = x,
+		z = z,
+		fallback_y = fallback_y,
+		ground_offset = ground_offset or 0,
+		check_vehicle_id = check_vehicle_id,
+		tries = 0,
+	})
+end
+
+function updatePendingCenterFlagSpawns()
+	for i = #g_pending_center_flag_spawns, 1, -1 do
+		local pending = g_pending_center_flag_spawns[i]
+		pending.tries = pending.tries + 1
+		local ground_altitude, dial_value = getGroundAltitudeFromChecker(pending.check_vehicle_id)
+		if ground_altitude or pending.tries >= 600 then
+			server.despawnVehicle(pending.check_vehicle_id, true)
+			if ground_altitude then
+				announce(string.format('[AltChecker] %s ready: dial=%.1f ground_y=%.1f (%d ticks)', pending.name, dial_value, ground_altitude, pending.tries), -1)
+			else
+				announce(string.format('[AltChecker] %s timed out after %d ticks; fallback_y=%.1f', pending.name, pending.tries, pending.fallback_y or 0), -1)
+			end
+			local spawn_y = ground_altitude and ground_altitude + pending.ground_offset or pending.fallback_y
+			spawnFlagAt(pending.peer_id, pending.name, pending.x, pending.z, spawn_y, false)
+			table.remove(g_pending_center_flag_spawns, i)
+		end
+	end
+end
+
+function spawnCenterFlagAtAdjustedAltitude(peer_id, name, x, z, fallback_y)
+	-- flag_center has a 27m pivot offset from its ground contact point.
+	spawnFlagAtAdjustedAltitude(peer_id, name, x, z, fallback_y, 27)
+end
+
+-- Create or remove the CENTER flag according to the current battle mode.
+function updateCenterFlag()
+	if (g_savedata.battle_mode or 0) ~= 1 then
+		cancelPendingCenterFlagSpawns('CENTER')
+		despawnFlag(-1, 'CENTER')
+		g_flag_assignments.CENTER = nil
+		return
+	end
+
+	local red = g_flag_assignments.RED
+	local blue = g_flag_assignments.BLUE
+	if not red or not blue then return end
+
+	local x = ((tonumber(red.x) or 0) + (tonumber(blue.x) or 0)) / 2
+	local z = ((tonumber(red.z) or 0) + (tonumber(blue.z) or 0)) / 2
+	local y = ((tonumber(red.y) or 0) + (tonumber(blue.y) or 0)) / 2
+	spawnCenterFlagAtAdjustedAltitude(-1, 'CENTER', x, z, y)
+	g_flag_assignments.CENTER = { idx = -1, name = 'CENTER', x = x, z = z, y = y }
+end
+
 function spawnFlag(peer_id, name)
 	name = name:upper()
 	despawnFlag(peer_id, name)
@@ -3209,11 +3810,12 @@ function spawnFlag(peer_id, name)
 	local vehicle_id=spawnAddonVehicle(flag_name, vehicle_matrix)
 
 	if vehicle_id then
-		server.setVehicleTooltip(vehicle_id, name)
+		local text = getFlagDisplayText(name)
+		server.setVehicleTooltip(vehicle_id, text)
 		local ui_id=server.getMapID()
 		local x,y,z=matrix.position(vehicle_matrix)
 		local r,g,b,a=getColor(name)
-		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, text, getFlagMapRadius(name), text, r, g, b, a)
 		g_savedata.flag_vehicles[name]={
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
@@ -3223,6 +3825,7 @@ function spawnFlag(peer_id, name)
 		elseif name == 'BLUE' then
 			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
 		end
+		if name == 'RED' or name == 'BLUE' then updateCenterFlag() end
 	end
 end
 
@@ -3242,13 +3845,22 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
 		altitude = y
 	end
 	local vehicle_matrix = matrix.translation(tonumber(x) or 0, altitude, tonumber(z) or 0)
-	local vehicle_id = spawnAddonVehicle('flag', vehicle_matrix)
+	local flag_name = 'flag'
+	if name == 'RED' or string.sub(name, 1, 4) == 'RED_' then
+		flag_name = 'flag_red'
+	elseif name == 'BLUE' or string.sub(name, 1, 5) == 'BLUE_' then
+		flag_name = 'flag_blue'
+	elseif name == 'CENTER' or string.sub(name, 1, 13) == 'DEBUG_CENTER_' then
+		flag_name = 'flag_center'
+	end
+	local vehicle_id = spawnAddonVehicle(flag_name, vehicle_matrix)
 
 	if vehicle_id then
-		server.setVehicleTooltip(vehicle_id, name)
+		local text = getFlagDisplayText(name)
+		server.setVehicleTooltip(vehicle_id, text)
 		local ui_id = server.getMapID()
 		local r, g, b, a = getColor(name)
-		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, text, getFlagMapRadius(name), text, r, g, b, a)
 		g_savedata.flag_vehicles[name] = {
 			vehicle_id = vehicle_id,
 			ui_id = ui_id,
@@ -3258,6 +3870,7 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
 		elseif name == 'BLUE' then
 			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
 		end
+		if name == 'RED' or name == 'BLUE' then updateCenterFlag() end
 	else
 		announce('Failed to spawn flag "' .. name .. '"', peer_id)
 	end
@@ -3273,11 +3886,13 @@ function despawnFlag(peer_id, name)
 end
 
 function clearFlags()
+	cancelPendingCenterFlagSpawns()
 	for name,flag in pairs(g_savedata.flag_vehicles) do
 		server.despawnVehicle(flag.vehicle_id, true)
 		server.removeMapID(-1, flag.ui_id)
 	end
 	g_savedata.flag_vehicles={}
+	g_debug_flag_radii={}
 end
 
 -- Utility Functions --
@@ -3366,7 +3981,13 @@ function findEmptySlot(object_id, slot)
 end
 
 function getColor(name)
-	return table.unpack(g_colors[string.lower(name)] or g_color_default)
+	local color_name = string.lower(name or '')
+	if color_name == 'red' or string.sub(color_name, 1, 4) == 'red_' then
+		return table.unpack(g_colors.red)
+	elseif color_name == 'blue' or string.sub(color_name, 1, 5) == 'blue_' then
+		return table.unpack(g_colors.blue)
+	end
+	return table.unpack(g_colors[color_name] or g_color_default)
 end
 
 g_colors={
