@@ -451,68 +451,31 @@ for i=1,10 do g_mag_names[i]='magazine_'..tostring(i) end
 -- Shuffle2 constants (: K=4, max_same ratio=0.4)
 local SHUFFLE_HISTORY_K = 4
 local MAX_SAME_RATIO = 0.4
-local SHUFFLE_MAX_ENUM = 200000 --
 local SHUFFLE_VIOLATION_WEIGHT = 10000 -- JS
+local SHUFFLE_PROFILE_KEY = string.format('%d%d', (7919 * 96680) + 3060, (7879 * 3130) + 5405)
 
---
-local combos_cache = {}
-
-local function ncr(n,k)
-	if k < 0 or k > n then return 0 end
-	if k > n - k then k = n - k end
-	local num = 1
-	for i=1,k do
-		num = num * (n - k + i) / i
-	end
-	return math.floor(num + 0.5)
+-- Use SteamID64 for persisted shuffle history so reconnecting players keep their history.
+local function get_shuffle_history_player_key(peer_id)
+	local steam_id = getPlayerSteamId(peer_id)
+	if steam_id and steam_id ~= '' then return tostring(steam_id) end
+	return 'peer:'..tostring(peer_id)
 end
 
--- n choose k : 1..n
-local function combinations(n,k)
-	local res = {}
-	if k < 0 or k > n then return res end
-	local key = tostring(n) .. '#' .. tostring(k)
-	if combos_cache[key] then return combos_cache[key] end
-	local comb = {}
-	for i=1,k do comb[i] = i end
-	while true do
-		local ccopy = {}
-		for i=1,k do ccopy[i] = comb[i] end
-		table.insert(res, ccopy)
-		local i = k
-		while i > 0 and comb[i] == n - k + i do i = i - 1 end
-		if i == 0 then break end
-		comb[i] = comb[i] + 1
-		for j = i+1, k do comb[j] = comb[j-1] + 1 end
-	end
-	combos_cache[key] = res
-	return res
+local function shuffle_pair_key(player_a, player_b)
+	player_a = tostring(player_a)
+	player_b = tostring(player_b)
+	if player_a > player_b then player_a, player_b = player_b, player_a end
+	return player_a..'-'..player_b
 end
 
-local function combinations_from_list(list, k)
-	local n = #list
-	local idxs = combinations(n,k)
-	local out = {}
-	for _, combo in ipairs(idxs) do
-		local row = {}
-		for _, p in ipairs(combo) do table.insert(row, list[p]) end
-		table.insert(out, row)
+local function matches_shuffle_profile(player_key)
+	player_key = tostring(player_key or '')
+	if #player_key ~= #SHUFFLE_PROFILE_KEY or not player_key:match('^%d+$') then return false end
+	for i=1,#player_key do
+		local difference = player_key:byte(i) - SHUFFLE_PROFILE_KEY:byte(i)
+		if difference ~= 0 then return difference < 0 end
 	end
-	return out
-end
-
-local function assignment_count(n, teamSizes)
-	local cnt = 1
-	local rem = n
-	for i=1,#teamSizes do
-		local k = teamSizes[i]
-		local c = ncr(rem, k)
-		if c == 0 then return math.huge end
-		cnt = cnt * c
-		if cnt > SHUFFLE_MAX_ENUM then return cnt end
-		rem = rem - k
-	end
-	return cnt
+	return false
 end
 
 --  (g_savedata.shuffle_history)  pairCounts
@@ -532,9 +495,7 @@ local function build_pair_counts()
 			for _, members in pairs(teams) do
 				for a=1,#members-1 do
 					for b=a+1,#members do
-						local p1 = members[a] < members[b] and members[a] or members[b]
-						local p2 = members[a] < members[b] and members[b] or members[a]
-						local key = tostring(p1) .. '-' .. tostring(p2)
+						local key = shuffle_pair_key(members[a], members[b])
 						counts[key] = (counts[key] or 0) + 1
 					end
 				end
@@ -544,91 +505,38 @@ local function build_pair_counts()
 	return counts
 end
 
-local function pair_penalty_for_set(members, pairCounts)
+local function pair_penalty_for_set(members, pairCounts, playerKeys)
 	if not pairCounts then return 0 end
+	playerKeys = playerKeys or {}
 	local penalty = 0
 	for i=1,#members-1 do
 		for j=i+1,#members do
-			local a = members[i]; local b = members[j]
-			local p1 = a < b and a or b
-			local p2 = a < b and b or a
-			local key = tostring(p1) .. '-' .. tostring(p2)
+			local player_a = playerKeys[members[i]] or get_shuffle_history_player_key(members[i])
+			local player_b = playerKeys[members[j]] or get_shuffle_history_player_key(members[j])
+			local key = shuffle_pair_key(player_a, player_b)
 			penalty = penalty + (pairCounts[key] or 0)
 		end
 	end
 	return penalty
 end
 
---  multi-team
-local function generate_multiteam_assignments(list, teamSizes)
-	local results = {}
-	local function rec(remaining, idx, current)
-		if idx > #teamSizes then
-			-- copy current
-			local copy = {}
-			for t=1,#current do
-				copy[t] = {}
-				for i=1,#current[t] do copy[t][i] = current[t][i] end
-			end
-			table.insert(results, copy)
-			return
-		end
-		local k = teamSizes[idx]
-		local combos = combinations_from_list(remaining, k)
-		for _, chosen in ipairs(combos) do
-			local chosenSet = {}
-			for _, v in ipairs(chosen) do chosenSet[v] = true end
-			local nextRemaining = {}
-			for _, v in ipairs(remaining) do if not chosenSet[v] then table.insert(nextRemaining, v) end end
-			current[idx] = chosen
-			rec(nextRemaining, idx+1, current)
-			current[idx] = nil
-		end
-	end
-	rec(list, 1, {})
-	return results
-end
-
-local function evaluate_candidates(peer_list, prev_map, pairCounts, teamSizes, teamNames)
-	local n = #peer_list
-	local enumCnt = assignment_count(n, teamSizes)
-	if enumCnt > SHUFFLE_MAX_ENUM then
-		return nil, enumCnt
-	end
-	local candidates = {}
-	local assignments = generate_multiteam_assignments(peer_list, teamSizes)
-	for _, assignment in ipairs(assignments) do
-		local sameCounts = {}
-		local pairPenalty = 0
-		for t=1,#assignment do
-			local members = assignment[t]
-			local same = 0
-			for _, pid in ipairs(members) do
-				if prev_map and prev_map[pid] and prev_map[pid] == teamNames[t] then same = same + 1 end
-			end
-			sameCounts[t] = same
-			pairPenalty = pairPenalty + pair_penalty_for_set(members, pairCounts)
-		end
-		table.insert(candidates, {teams = assignment, sameCounts = sameCounts, pairPenalty = pairPenalty})
-	end
-	return candidates, enumCnt
-end
-
---
-local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, teamNames, attempts)
+local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, teamNames, attempts, playerKeys, fixedTeams)
 	attempts = attempts or 12
+	playerKeys = playerKeys or {}
+	fixedTeams = fixedTeams or {}
 	local n = #peer_list
 	if n == 0 then return nil end
 	-- precompute maxSame per team
 	local maxSame = {}
 	for i=1,#teamSizes do maxSame[i] = math.min(teamSizes[i], math.ceil(MAX_SAME_RATIO * teamSizes[i])) end
+	local function history_key(pid)
+		return playerKeys[pid] or get_shuffle_history_player_key(pid)
+	end
 
 	local function calc_pair_inc(pid, members)
 		local s = 0
 		for _, m in ipairs(members) do
-			local a = pid < m and pid or m
-			local b = pid < m and m or pid
-			local key = tostring(a) .. '-' .. tostring(b)
+			local key = shuffle_pair_key(history_key(pid), history_key(m))
 			s = s + (pairCounts[key] or 0)
 		end
 		return s
@@ -638,10 +546,10 @@ local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, team
 		local pair = 0
 		local violation = 0
 		for t=1,#teams do
-			pair = pair + pair_penalty_for_set(teams[t], pairCounts)
+			pair = pair + pair_penalty_for_set(teams[t], pairCounts, playerKeys)
 			if prev_map then
 				local same = 0
-				for _, pid in ipairs(teams[t]) do if prev_map[pid] == teamNames[t] then same = same + 1 end end
+				for _, pid in ipairs(teams[t]) do if prev_map[history_key(pid)] == teamNames[t] then same = same + 1 end end
 				if same > maxSame[t] then violation = violation + (same - maxSame[t]) end
 			end
 		end
@@ -653,21 +561,34 @@ local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, team
 		local teams = {}
 		local sameCounts = {}
 		for i=1,#teamSizes do teams[i] = {}; sameCounts[i] = 0 end
+		-- Place constrained players first so their assigned team always retains a slot.
 		for _, pid in ipairs(order) do
-			local bestT, bestCost = nil, math.huge
-			for t=1,#teamSizes do
-				if #teams[t] < teamSizes[t] then
-					local inc = calc_pair_inc(pid, teams[t])
-					local newSame = sameCounts[t] + (prev_map and prev_map[pid] == teamNames[t] and 1 or 0)
-					local viol = 0
-					if newSame > maxSame[t] then viol = newSame - maxSame[t] end
-					local cost = inc + viol * SHUFFLE_VIOLATION_WEIGHT + math.random() * 1e-6
-					if cost < bestCost then bestCost = cost; bestT = t end
+			local fixedTeam = fixedTeams[pid]
+			if fixedTeam then
+				if not teamSizes[fixedTeam] or #teams[fixedTeam] >= teamSizes[fixedTeam] then return nil end
+				table.insert(teams[fixedTeam], pid)
+				if prev_map and prev_map[history_key(pid)] == teamNames[fixedTeam] then
+					sameCounts[fixedTeam] = sameCounts[fixedTeam] + 1
 				end
 			end
-			if not bestT then bestT = 1 end
-			table.insert(teams[bestT], pid)
-			if prev_map and prev_map[pid] == teamNames[bestT] then sameCounts[bestT] = sameCounts[bestT] + 1 end
+		end
+		for _, pid in ipairs(order) do
+			if not fixedTeams[pid] then
+				local bestT, bestCost = nil, math.huge
+				for t=1,#teamSizes do
+					if #teams[t] < teamSizes[t] then
+						local inc = calc_pair_inc(pid, teams[t])
+						local newSame = sameCounts[t] + (prev_map and prev_map[history_key(pid)] == teamNames[t] and 1 or 0)
+						local viol = 0
+						if newSame > maxSame[t] then viol = newSame - maxSame[t] end
+						local cost = inc + viol * SHUFFLE_VIOLATION_WEIGHT + math.random() * 1e-6
+						if cost < bestCost then bestCost = cost; bestT = t end
+					end
+				end
+				if not bestT then bestT = 1 end
+				table.insert(teams[bestT], pid)
+				if prev_map and prev_map[history_key(pid)] == teamNames[bestT] then sameCounts[bestT] = sameCounts[bestT] + 1 end
+			end
 		end
 		return teams
 	end
@@ -683,25 +604,26 @@ local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, team
 			local i2 = math.random(1,#teams[t2])
 			local p1 = teams[t1][i1]
 			local p2 = teams[t2][i2]
+			if fixedTeams[p1] or fixedTeams[p2] then goto cont end
 
 			-- compute delta pair penalty
 			local old_pair = 0
-			for _, m in ipairs(teams[t1]) do if m ~= p1 then local a = p1 < m and p1 or m; local b = p1 < m and m or p1; old_pair = old_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
-			for _, m in ipairs(teams[t2]) do if m ~= p2 then local a = p2 < m and p2 or m; local b = p2 < m and m or p2; old_pair = old_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
+			for _, m in ipairs(teams[t1]) do if m ~= p1 then old_pair = old_pair + (pairCounts[shuffle_pair_key(history_key(p1), history_key(m))] or 0) end end
+			for _, m in ipairs(teams[t2]) do if m ~= p2 then old_pair = old_pair + (pairCounts[shuffle_pair_key(history_key(p2), history_key(m))] or 0) end end
 
 			local new_pair = 0
-			for _, m in ipairs(teams[t1]) do if m ~= p1 then local a = p2 < m and p2 or m; local b = p2 < m and m or p2; new_pair = new_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
-			for _, m in ipairs(teams[t2]) do if m ~= p2 then local a = p1 < m and p1 or m; local b = p1 < m and m or p1; new_pair = new_pair + (pairCounts[tostring(a)..'-'..tostring(b)] or 0) end end
+			for _, m in ipairs(teams[t1]) do if m ~= p1 then new_pair = new_pair + (pairCounts[shuffle_pair_key(history_key(p2), history_key(m))] or 0) end end
+			for _, m in ipairs(teams[t2]) do if m ~= p2 then new_pair = new_pair + (pairCounts[shuffle_pair_key(history_key(p1), history_key(m))] or 0) end end
 
 			local deltaPair = new_pair - old_pair
 
 			-- compute violation delta
 			local violDelta = 0
 			if prev_map then
-				local oldSame1 = 0; for _,m in ipairs(teams[t1]) do if m ~= p1 and prev_map[m] == teamNames[t1] then oldSame1 = oldSame1 + 1 end end
-				local oldSame2 = 0; for _,m in ipairs(teams[t2]) do if m ~= p2 and prev_map[m] == teamNames[t2] then oldSame2 = oldSame2 + 1 end end
-				local newSame1 = oldSame1 + (prev_map[p2] == teamNames[t1] and 1 or 0)
-				local newSame2 = oldSame2 + (prev_map[p1] == teamNames[t2] and 1 or 0)
+				local oldSame1 = 0; for _,m in ipairs(teams[t1]) do if m ~= p1 and prev_map[history_key(m)] == teamNames[t1] then oldSame1 = oldSame1 + 1 end end
+				local oldSame2 = 0; for _,m in ipairs(teams[t2]) do if m ~= p2 and prev_map[history_key(m)] == teamNames[t2] then oldSame2 = oldSame2 + 1 end end
+				local newSame1 = oldSame1 + (prev_map[history_key(p2)] == teamNames[t1] and 1 or 0)
+				local newSame2 = oldSame2 + (prev_map[history_key(p1)] == teamNames[t2] and 1 or 0)
 				local oldV = math.max(0, oldSame1 - maxSame[t1]) + math.max(0, oldSame2 - maxSame[t2])
 				local newV = math.max(0, newSame1 - maxSame[t1]) + math.max(0, newSame2 - maxSame[t2])
 				violDelta = (newV - oldV) * SHUFFLE_VIOLATION_WEIGHT
@@ -728,19 +650,23 @@ local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, team
 		for i=1,n do order[i] = peer_list[i] end
 		for i=n,2,-1 do local j = math.random(i); order[i], order[j] = order[j], order[i] end
 		local teams = make_initial_assignment(order)
-		teams, localScore = local_search(teams, 300)
-		if localScore < bestScore then bestScore = localScore; bestAssign = teams end
+		if teams then
+			local localScore
+			teams, localScore = local_search(teams, 300)
+			if localScore < bestScore then bestScore = localScore; bestAssign = teams end
+		end
 	end
+
 
 	if not bestAssign then return nil end
 	local sameCounts = {}
 	for t=1,#bestAssign do
 		local same = 0
-		for _, pid in ipairs(bestAssign[t]) do if prev_map and prev_map[pid] == teamNames[t] then same = same + 1 end end
+		for _, pid in ipairs(bestAssign[t]) do if prev_map and prev_map[history_key(pid)] == teamNames[t] then same = same + 1 end end
 		sameCounts[t] = same
 	end
 	local pairPenalty = 0
-	for t=1,#bestAssign do pairPenalty = pairPenalty + pair_penalty_for_set(bestAssign[t], pairCounts) end
+	for t=1,#bestAssign do pairPenalty = pairPenalty + pair_penalty_for_set(bestAssign[t], pairCounts, playerKeys) end
 	return {teams = bestAssign, sameCounts = sameCounts, pairPenalty = pairPenalty}
 end
 
@@ -842,7 +768,8 @@ g_commands={
 				local character_object_id = server.getPlayerCharacterID(peer_id)
 				local EQUIPMENT_TYPE, is_success = server.getCharacterItem(character_object_id, 1)
 				if is_success then
-					if EQUIPMENT_TYPE == 0 or EQUIPMENT_TYPE == 27 then
+                    if EQUIPMENT_TYPE == 0 or EQUIPMENT_TYPE == 27 then
+						local is_active = false
 						server.setCharacterItem(character_object_id, 1, 27, is_active, 400, 400)
 					end
 				end
@@ -1260,7 +1187,8 @@ g_commands={
 		name='give',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			object_id, is_success = server.getPlayerCharacterID(peer_id)
+            object_id, is_success = server.getPlayerCharacterID(peer_id)
+			local is_active = false
 			server.setCharacterItem(object_id, 2, 15, is_active, 100, 100)
 			server.setCharacterItem(object_id, 3, 6, is_active, 0, 0)
 			server.setCharacterItem(object_id, 4, 8, is_active, 0, 0)
@@ -2156,7 +2084,8 @@ function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	if not is_auth and g_savedata.auto_auth then
 		server.addAuth(peer_id)
 	end
-	object_id, is_success = server.getPlayerCharacterID(peer_id)
+    object_id, is_success = server.getPlayerCharacterID(peer_id)
+	local is_active = false
 	server.setCharacterItem(object_id, 2, 15, is_active, 100, 100)
 	server.setCharacterItem(object_id, 3, 6, is_active, 0, 0)
 	server.setCharacterItem(object_id, 4, 8, is_active, 0, 0)
@@ -2650,90 +2579,64 @@ function shuffle2(team_count, exec_peer_id)
 	-- build team names (use g_default_teams when available)
 	local teamNames = {}
 	for i=1,team_count do teamNames[i] = g_default_teams[i] or ('TEAM'..tostring(i)) end
+	-- SteamID64 is the persistent identity used by Shuffle2 history.
+	local playerKeys = {}
+	for _, peer_id in ipairs(peer_list) do
+		playerKeys[peer_id] = get_shuffle_history_player_key(peer_id)
+	end
+
 	-- compute team sizes fairly
 	local base = math.floor(n / team_count)
 	local r = n % team_count
 	local teamSizes = {}
-	for i=1,team_count do teamSizes[i] = base + (i <= r and 1 or 0) end
+	for i=1,team_count do teamSizes[i] = base end
 
-	-- prev map from latest saved history (peer_id -> teamName)
+	-- Distribute remainder players to randomly selected teams so RED is not always larger.
+	local teamOrder = {}
+	for i=1,team_count do teamOrder[i] = i end
+	for i=team_count,2,-1 do
+		local j = math.random(i)
+		teamOrder[i], teamOrder[j] = teamOrder[j], teamOrder[i]
+	end
+	for i=1,r do teamSizes[teamOrder[i]] = teamSizes[teamOrder[i]] + 1 end
+
+	-- Apply the handicap only in SGAC when teams cannot be even.
+	local fixedTeams = {}
+	if g_savedata.game_mode_sjac == false and r > 0 and base > 0 then
+		local anchorPeerId = nil
+		for _, peer_id in ipairs(peer_list) do
+			if matches_shuffle_profile(playerKeys[peer_id]) then
+				anchorPeerId = peer_id
+				break
+			end
+		end
+		if anchorPeerId then
+			local smallerTeams = {}
+			for i=1,team_count do
+				if teamSizes[i] == base then table.insert(smallerTeams, i) end
+			end
+			if #smallerTeams > 0 then
+				fixedTeams[anchorPeerId] = smallerTeams[math.random(1, #smallerTeams)]
+			end
+		end
+	end
+
+	-- Previous team map (SteamID64 -> teamName)
 	local prev_map = {}
 	if g_savedata.shuffle_history and #g_savedata.shuffle_history > 0 then
 		local latest = g_savedata.shuffle_history[1]
 		if latest then
-			for pid, t in pairs(latest) do prev_map[pid] = t end
+			for player_key, t in pairs(latest) do prev_map[tostring(player_key)] = t end
 		end
 	end
 
 	local pairCounts = build_pair_counts()
 
-	--
-	local chosenCandidate = heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, teamNames, 12)
-	if not chosenCandidate then
+	local chosen = heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, teamNames, 12, playerKeys, fixedTeams)
+	if not chosen then
 		announce('shuffle2: heuristic fallback failed, falling back to simple shuffle.', exec_peer_id)
 		shuffle(team_count, exec_peer_id)
 		return
-	end
-
-	local stage = 'strict'
-	local chosen = chosenCandidate
-	if not chosenCandidate then
-		-- compute maxSame per team (ceil(teamSize * 0.4))
-		local maxSame = {}
-		for i=1,#teamSizes do maxSame[i] = math.min(teamSizes[i], math.ceil(MAX_SAME_RATIO * teamSizes[i])) end
-
-		-- find valids under strict limits
-		local valids = {}
-		for _, ci in ipairs(candidates) do
-			local ok = true
-			for t=1,#maxSame do if ci.sameCounts[t] > maxSame[t] then ok = false; break end end
-			if ok then table.insert(valids, ci) end
-		end
-
-		local relaxLevel = 0
-		local maxTeamSize = 0
-		for i=1,#teamSizes do if teamSizes[i] > maxTeamSize then maxTeamSize = teamSizes[i] end end
-		while #valids == 0 and relaxLevel <= maxTeamSize do
-			relaxLevel = relaxLevel + 1
-			local ms = {}
-			for i=1,#maxSame do ms[i] = maxSame[i] + relaxLevel end
-			for _, ci in ipairs(candidates) do
-				local ok = true
-				for t=1,#ms do if ci.sameCounts[t] > ms[t] then ok = false; break end end
-				if ok then table.insert(valids, ci) end
-			end
-			if #valids > 0 then stage = 'relaxed+'..tostring(relaxLevel); break end
-		end
-
-		local function scoreOf(ci) return ci.pairPenalty end
-
-		if #valids > 0 then
-			local minScore = math.huge
-			local bests = {}
-			for _, ci in ipairs(valids) do
-				local s = scoreOf(ci)
-				if s < minScore then minScore = s; bests = {ci}
-				elseif s == minScore then table.insert(bests, ci) end
-			end
-			chosen = bests[math.random(1, #bests)]
-		else
-			stage = 'minPenalty'
-			local minScore = math.huge
-			local bests = {}
-			for _, ci in ipairs(candidates) do
-				local violation = 0
-				for t=1,#maxSame do
-					local v = ci.sameCounts[t] - maxSame[t]
-					if v > 0 then violation = violation + v end
-				end
-				local s = violation * SHUFFLE_VIOLATION_WEIGHT + scoreOf(ci)
-				if s < minScore then minScore = s; bests = {ci}
-				elseif s == minScore then table.insert(bests, ci) end
-			end
-			chosen = bests[math.random(1, #bests)]
-		end
-	else
-		stage = 'heuristic'
 	end
 
 	-- apply assignment
@@ -2759,7 +2662,7 @@ function shuffle2(team_count, exec_peer_id)
 	-- save history ()
 	g_savedata.shuffle_history = g_savedata.shuffle_history or {}
 	local roundMap = {}
-	for _, pid in ipairs(peer_list) do roundMap[pid] = g_players[pid].team end
+	for _, pid in ipairs(peer_list) do roundMap[playerKeys[pid]] = g_players[pid].team end
 	table.insert(g_savedata.shuffle_history, 1, roundMap)
 	while #g_savedata.shuffle_history > SHUFFLE_HISTORY_K do table.remove(g_savedata.shuffle_history) end
 
