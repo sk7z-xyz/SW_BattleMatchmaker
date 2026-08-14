@@ -25,6 +25,18 @@ g_webmap_restore_link_requests={} -- {[parent_vehicle_id]={steam_id=string, peer
 g_tick_count=0
 g_freq_force_timer=0
 g_ready_remind_timer=0
+-- Ready 催促用ポップアップの表示先と移動状態。
+-- Stormworks の PopupScreen 座標は画面中央が 0 の正規化座標として扱う。
+g_ready_reminder_players={}
+g_ready_popup_names={'are_you_ready'}
+g_ready_popup_motion={
+	are_you_ready={vx=0, vy=0},
+}
+g_ready_popup_collision_cooldowns={}
+g_ready_popup_add_timer=0
+g_ready_popup_max_count=8
+-- 一時的な表示確認用。確認後は false に戻す。
+g_debug_force_ready_reminder=false
 g_pending_link_requests={} -- {[vehicle_id]=peer_id}
 g_pending_server_commands={} -- {{cmd=string, delay=number}, ...}
 g_iff_vehicles={}
@@ -38,6 +50,7 @@ g_altitude_scan_height = 750
 g_battle_start_timer = 0
 g_center_radius_last_update = -1
 g_center_popup_ids = {}
+g_center_info_popup_update_timer = 60
 g_center_final_radius = 300
 g_center_warning_distance = 75
 g_boundary_warning_popup_ids = {}
@@ -405,7 +418,7 @@ g_default_savedata={
 	shuffle_history		={},
 	shuffle_history_K	=4,
 	damage_popup		=property.checkbox("Damage Popup", true),
-	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 10),
+	min_damage_popup	=property.slider("Min Damage Popup", 0, 100, 5, 30),
 	damage_popup_max_height = property.slider("Damage Popup Max Height", 0, 150, 10, 15),
 	damage_popup_distance = property.slider("Damage Popup Distance", 0, 20000, 100, 4500),
 	auto_admin		=property.checkbox("Auto admin", false),
@@ -833,10 +846,6 @@ g_commands={
 					end
 				end
 			end
-			local popup = findPopup("are_you_ready")
-			server.setPopupScreen(peer_id, popup.ui_id, popup.name, false, popup.text, popup.x, popup.y)
-
-
 		end,
 		args={
 			{name='peer_id', type='integer', require=false},
@@ -1848,6 +1857,7 @@ function onCreate(is_world_create)
 
 	registerPopup('countdown', 0, 0.6)
 	registerPopup('game_time', -0.9, -0.9)
+	-- Ready 催促は最初、画面中央に静止して表示する。
 	registerPopup('are_you_ready', 0, 0)
 
 	setSettingsToStandby()
@@ -1971,6 +1981,7 @@ function onTick()
 	updateCenterBoundaryExplosions()
 	updateBoundaryWarningPopups()
 	updatePopups()
+	updateReadyReminderPopups()
 
 	-- チームビークル座標の収集（毎tick）
 	local team_vehicle_positions={}
@@ -2085,31 +2096,16 @@ function onTick()
 	g_ready_remind_timer=g_ready_remind_timer+1
 	if g_ready_remind_timer>=1200 then
 		g_ready_remind_timer=0
-		clearReadyReminderPopup(-1)
-		if not g_in_game and not g_in_countdown then
-			-- チームごとにready率を集計
-			local team_total={}
-			local team_ready={}
-			for _,player in pairs(g_players) do
-				if player.alive and player.team then
-					team_total[player.team]=(team_total[player.team] or 0)+1
-					if player.ready then
-						team_ready[player.team]=(team_ready[player.team] or 0)+1
-					end
-				end
-			end
-			-- 未readyプレイヤーへ催促DM
+		if isReadyReminderEligible() then
+			-- 両チーム合算で 50% 以上 Ready なら、未Readyプレイヤー全員へ催促する。
 			for pid,player in pairs(g_players) do
 				if player.alive and not player.ready and player.team then
-					local total=team_total[player.team] or 0
-					local rdy=team_ready[player.team] or 0
-					if total>0 and rdy/total>=0.5 then
-						announce(player.name..' are you ready? -> "?mm ready(?mm r)"',pid)
-						local popup = findPopup("are_you_ready")
-						server.setPopupScreen(pid, popup.ui_id, popup.name, true, player.name..' are you ready?', popup.x, popup.y)
-					end
+					announce(player.name..' are you ready? -> "?mm ready(?mm r)"',pid)
+					g_ready_reminder_players[pid]=true
 				end
 			end
+		else
+			clearReadyReminderIfIneligible()
 		end
 	end
 
@@ -2475,6 +2471,7 @@ function join(peer_id, team, force)
 	announce('You joined to '..team..'.', peer_id)
 
 	stopCountdown()
+	clearReadyReminderIfIneligible()
 end
 
 function leave(peer_id)
@@ -2485,6 +2482,7 @@ function leave(peer_id)
 	g_players[peer_id]=nil
 	g_team_status_dirty=true
 	g_player_status_dirty=true
+	clearReadyReminderIfIneligible()
 
 	announce('You leaved from '..player.team..'.', peer_id)
 
@@ -2530,6 +2528,7 @@ function shuffle(team_count, exec_peer_id)
 	end
 
 	stopCountdown()
+	clearReadyReminderIfIneligible()
 	g_team_status_dirty=true
 	g_player_status_dirty=true
 end
@@ -2656,6 +2655,7 @@ function shuffle2(team_count, exec_peer_id)
 	end
 
 	stopCountdown()
+	clearReadyReminderIfIneligible()
 	g_team_status_dirty = true
 	g_player_status_dirty = true
 
@@ -2684,10 +2684,12 @@ function dismiss(team, peer_id)
 
 	if #remove_peer_ids>0 then
 		for i=1,#remove_peer_ids do
+			clearReadyReminderPopup(remove_peer_ids[i])
 			g_players[remove_peer_ids[i]]=nil
 		end
 		g_team_status_dirty=true
 		g_player_status_dirty=true
+		clearReadyReminderIfIneligible()
 		announce('Team '..team..' dismissed.', peer_id)
 	else
 		announce('Team '..team..' not found.', peer_id)
@@ -2723,6 +2725,7 @@ function ready(peer_id)
 	if g_in_game then return end
 	local player=g_players[peer_id]
 	if not player then return end
+	clearReadyReminderPopup(peer_id)
 	if not player.alive then
 		player.alive=true
 		g_player_status_dirty=true
@@ -2753,6 +2756,7 @@ function readyAll(peer_id)
 			player.ready=true
 		end
 	end
+	clearReadyReminderPopup(-1)
 	startCountdown(true, peer_id)
 	g_player_status_dirty=true
 end
@@ -2769,6 +2773,7 @@ function wait(peer_id)
 		player.ready=false
 		g_player_status_dirty=true
 		stopCountdown()
+		clearReadyReminderIfIneligible()
 	end
 end
 
@@ -3210,6 +3215,7 @@ function startCountdown(force, peer_id)
 	end
 	announce('Countdown start.', -1)
 	clearReadyReminderPopup(-1)
+	resetReadyReminderPopups()
 	g_timer=300
 	g_in_countdown=true
 	g_player_status_dirty=true
@@ -3423,9 +3429,214 @@ function setPopup(name, is_show, text)
 end
 
 function clearReadyReminderPopup(peer_id)
+	for _,name in ipairs(g_ready_popup_names) do
+		local popup=findPopup(name)
+		if popup then
+			server.setPopupScreen(peer_id, popup.ui_id, popup.name, false, popup.text, popup.x, popup.y)
+		end
+	end
+	if peer_id==-1 then
+		g_ready_reminder_players={}
+	else
+		g_ready_reminder_players[peer_id]=nil
+	end
+end
+
+function isReadyReminderEligible()
+	if g_in_game or g_in_countdown then return false end
+	local total_players=0
+	local ready_players=0
+	for _,player in pairs(g_players) do
+		if player.alive and player.team then
+			total_players=total_players+1
+			if player.ready then ready_players=ready_players+1 end
+		end
+	end
+	return total_players>0 and ready_players/total_players>=0.5
+end
+
+-- Ready 率低下などで催促の前提が崩れた場合だけ、表示中の催促を閉じる。
+function clearReadyReminderIfIneligible()
+	if not isReadyReminderEligible() and next(g_ready_reminder_players) then
+		clearReadyReminderPopup(-1)
+	end
+end
+
+-- 次の待機フェーズへ追加分を持ち越さないよう、Ready 催促を初期の 1 枚へ戻す。
+function resetReadyReminderPopups()
+	for i=#g_ready_popup_names,3,-1 do
+		local name=g_ready_popup_names[i]
+		local popup=findPopup(name)
+		if popup then
+			server.setPopupScreen(-1, popup.ui_id, popup.name, false, popup.text, popup.x, popup.y)
+			unregisterPopup(name)
+		end
+		g_ready_popup_motion[name]=nil
+		table.remove(g_ready_popup_names, i)
+	end
+
 	local popup=findPopup('are_you_ready')
-	if not popup then return end
-	server.setPopupScreen(peer_id, popup.ui_id, popup.name, false, popup.text, popup.x, popup.y)
+	if popup then
+		popup.x,popup.y=0,0
+		g_ready_popup_motion[popup.name]={vx=0, vy=0}
+	end
+	g_ready_popup_collision_cooldowns={}
+	g_ready_popup_add_timer=0
+end
+
+function addReadyReminderPopup()
+	local popup_count=#g_ready_popup_names
+	if popup_count>=g_ready_popup_max_count then return end
+
+	local index=popup_count+1
+	local name='are_you_ready_'..index
+	local x,y,speed_x,speed_y
+	if index==2 then
+		-- 最初の追加分は中央から離れたランダム位置・向きで開始する。
+		local angle=math.random()*math.pi*2
+		x=math.cos(angle)*(0.52+math.random()*0.16)
+		y=math.sin(angle)*(0.46+math.random()*0.16)
+		local x_sign=x>=0 and 1 or -1
+		local y_sign=y>=0 and 1 or -1
+		speed_x=x_sign*(0.0050+math.random()*0.0030)
+		speed_y=y_sign*(0.0045+math.random()*0.0030)
+	else
+		-- 以降は初期位置・方向をずらし、同じ軌道に重なりにくくする。
+		local angle=(index-1)*2.39996323
+		x=math.cos(angle)*0.62
+		y=math.sin(angle)*0.56
+		speed_x=0.0048+(index%3)*0.0011
+		speed_y=0.0045+(index%4)*0.0009
+		if index%2==0 then speed_x=-speed_x end
+		if index%3==0 then speed_y=-speed_y end
+	end
+
+	registerPopup(name, x, y)
+	local popup=findPopup(name)
+	-- 通常ポップアップ用の全員向け更新は使わず、催促対象へ直接描画する。
+	popup.is_dirty=false
+	table.insert(g_ready_popup_names, name)
+	g_ready_popup_motion[name]={vx=speed_x, vy=speed_y}
+end
+
+-- PopupScreen の座標は画面中央を 0 とするため、画面端を少し空けた範囲で反射させる。
+-- 表示中のプレイヤーにだけ毎 tick 座標を送り、全員には表示しない。
+function updateReadyReminderPopups()
+	-- 表示確認中は Ready 状態・ゲーム状態にかかわらず、参加中の全員に表示する。
+	if g_debug_force_ready_reminder then
+		for peer_id in pairs(g_players) do
+			g_ready_reminder_players[peer_id]=true
+		end
+	end
+	if not next(g_ready_reminder_players) then
+		g_ready_popup_add_timer=0
+		return
+	end
+
+	-- Ready 再通知と同じ20秒ごとに、移動するポップアップを1枚ずつ追加する。
+	if #g_ready_popup_names<g_ready_popup_max_count then
+		g_ready_popup_add_timer=g_ready_popup_add_timer+1
+		if g_ready_popup_add_timer>=1200 then
+			g_ready_popup_add_timer=0
+			addReadyReminderPopup()
+		end
+	end
+
+	local ready_popups={}
+	for _,name in ipairs(g_ready_popup_names) do
+		local popup=findPopup(name)
+		if popup then
+			table.insert(ready_popups, popup)
+		end
+	end
+	local min_x,max_x=-0.82,0.82
+	local min_y,max_y=-0.78,0.78
+
+	for _,popup in ipairs(ready_popups) do
+		local motion=g_ready_popup_motion[popup.name]
+		popup.x=popup.x+motion.vx
+		popup.y=popup.y+motion.vy
+		if popup.x<=min_x then
+			popup.x=min_x
+			motion.vx=math.abs(motion.vx)
+		elseif popup.x>=max_x then
+			popup.x=max_x
+			motion.vx=-math.abs(motion.vx)
+		end
+		if popup.y<=min_y then
+			popup.y=min_y
+			motion.vy=math.abs(motion.vy)
+		elseif popup.y>=max_y then
+			popup.y=max_y
+			motion.vy=-math.abs(motion.vy)
+		end
+	end
+
+	-- 衝突時は速度を交換する。静止中の中央ポップアップには速度を渡し、
+	-- 追加ポップアップも反射させることで、以降は 2 枚とも動かす。
+	for pair_key,cooldown in pairs(g_ready_popup_collision_cooldowns) do
+		if cooldown>1 then
+			g_ready_popup_collision_cooldowns[pair_key]=cooldown-1
+		else
+			g_ready_popup_collision_cooldowns[pair_key]=nil
+		end
+	end
+	for i=1,#ready_popups-1 do
+		local popup1=ready_popups[i]
+		local motion1=g_ready_popup_motion[popup1.name]
+		for j=i+1,#ready_popups do
+			local popup2=ready_popups[j]
+			local motion2=g_ready_popup_motion[popup2.name]
+			local pair_key=popup1.name..':'..popup2.name
+			if not g_ready_popup_collision_cooldowns[pair_key] then
+				local dx=popup1.x-popup2.x
+				local dy=popup1.y-popup2.y
+				local distance=math.sqrt(dx*dx+dy*dy)
+				local collision_threshold=0.19
+				if distance<collision_threshold then
+					local normal_x,normal_y=1,0
+					if distance>0.0001 then
+						normal_x=dx/distance
+						normal_y=dy/distance
+					end
+					local relative_x=motion1.vx-motion2.vx
+					local relative_y=motion1.vy-motion2.vy
+					if relative_x*normal_x+relative_y*normal_y<0 then
+						if motion1.vx==0 and motion1.vy==0 then
+							motion1.vx,motion1.vy=motion2.vx,motion2.vy
+							motion2.vx=-motion2.vx
+							motion2.vy=-motion2.vy
+						else
+							motion1.vx,motion2.vx=motion2.vx,motion1.vx
+							motion1.vy,motion2.vy=motion2.vy,motion1.vy
+						end
+						local push=(collision_threshold-distance)/2
+						popup1.x=popup1.x+normal_x*push
+						popup1.y=popup1.y+normal_y*push
+						popup2.x=popup2.x-normal_x*push
+						popup2.y=popup2.y-normal_y*push
+						g_ready_popup_collision_cooldowns[pair_key]=8
+					end
+				end
+			end
+		end
+	end
+
+	for peer_id in pairs(g_ready_reminder_players) do
+		local player=g_players[peer_id]
+		local should_hide=not player
+		if not g_debug_force_ready_reminder then
+			should_hide=should_hide or not player.alive or player.ready or g_in_game or g_in_countdown
+		end
+		if should_hide then
+			clearReadyReminderPopup(peer_id)
+		else
+			for i,popup in ipairs(ready_popups) do
+				local text=player.name..' are you ready?\n?mm ready  (?mm r)'
+				server.setPopupScreen(peer_id, popup.ui_id, popup.name, true, text, popup.x, popup.y)
+			end
+		end
+	end
 end
 
 function updatePopups()
@@ -3488,14 +3699,21 @@ end
 function updateCenterInfoPopups()
 	if g_savedata.game_mode_sjac or not g_in_game or (g_savedata.battle_mode or 0) ~= 1 then
 		clearCenterInfoPopups()
+		g_center_info_popup_update_timer=60
 		return
 	end
 
 	local center_flag = g_savedata.flag_vehicles.CENTER
 	if not center_flag then
 		clearCenterInfoPopups()
+		g_center_info_popup_update_timer=60
 		return
 	end
+
+	-- 中央ビークル上の距離ポップアップは 60 ticks ごとに更新する。
+	g_center_info_popup_update_timer=g_center_info_popup_update_timer+1
+	if g_center_info_popup_update_timer<60 then return end
+	g_center_info_popup_update_timer=0
 
 	local center_matrix, center_success = server.getVehiclePos(center_flag.vehicle_id)
 	if not center_success then return end
@@ -3526,7 +3744,7 @@ function updateCenterInfoPopups()
 					time_text = formatCenterBoundaryTime(seconds_to_boundary)
 					is_warning = boundary_distance <= g_center_popup_warning_distance
 				else
-					time_text = 'END'
+					time_text = 'Safe'
 				end
 			end
 
@@ -3915,7 +4133,7 @@ function refreshCenterFlagMapRadius()
 	local x, _, z = matrix.position(vehicle_matrix)
 	local r, g, b, a = getColor('CENTER')
 	local text = getFlagDisplayText('CENTER')
-	server.setVehicleTooltip(flag.vehicle_id, text)
+	--server.setVehicleTooltip(flag.vehicle_id, text)
 	server.removeMapObject(-1, flag.ui_id)
 	server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, text, getFlagMapRadius('CENTER'), text, r, g, b, a)
 end
