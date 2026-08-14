@@ -1688,8 +1688,12 @@ g_command_aliases={
 table.insert(g_commands, {
 	name='shuffle2',
 	desc='Shuffle players (alternate command, alias sh2)',
-	admin=false,
+	admin=true,
 	action=function(peer_id, is_admin, is_auth, ...)
+		if g_in_game or g_in_countdown then
+			announce('Cannot shuffle2 after game start.', peer_id)
+			return
+		end
 		local args={...}
 		local team_count = tonumber(args[1]) or 2
 		shuffle2(team_count, peer_id)
