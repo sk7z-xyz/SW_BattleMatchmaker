@@ -26,7 +26,7 @@ g_tick_count=0
 g_freq_force_timer=0
 g_ready_remind_timer=0
 -- Ready 催促用ポップアップの表示先と移動状態。
--- Stormworks の PopupScreen 座標は画面中央が 0 の正規化座標として扱う。
+-- StormWorks の PopupScreen 座標は画面中央が 0 の正規化座標として扱う。
 g_ready_reminder_players={}
 g_ready_popup_names={'are_you_ready'}
 g_ready_popup_motion={
@@ -38,6 +38,7 @@ g_ready_popup_max_count=8
 -- 一時的な表示確認用。確認後は false に戻す。
 g_debug_force_ready_reminder=false
 g_pending_link_requests={} -- {[vehicle_id]=peer_id}
+g_pending_vehicle_despawns={} -- {[vehicle_id]=true}
 g_pending_server_commands={} -- {{cmd=string, delay=number}, ...}
 g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
@@ -1816,7 +1817,7 @@ function processAutoBattle()
 			end
 		end
 		for peer_id,player in pairs(g_players) do
-			if player and player.team then
+			if player and player.team and not player.logged_out then
 				local assigned=getAssignedFlagForTeam(player.team)
 				if assigned then
 					teleportPlayerToAssignedFlag(peer_id)
@@ -1900,6 +1901,7 @@ function onDestroy()
 end
 
 function onTick()
+	processPendingVehicleDespawns()
 	updateWebMapRestoreLinks()
 	updatePendingCenterFlagSpawns()
 
@@ -1957,7 +1959,7 @@ function onTick()
 			updateShrinkingCenterFlagRadius()
 		else
 			finishGame(false)
-			notify('Game End', 'Timeup!', 9, -1)
+			notify('Game End', 'TimeUp!', 9, -1)
 		end
 	end
 
@@ -2143,7 +2145,9 @@ end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	g_ui_reset_requested=true
-	g_player_steam_ids[peer_id]=tostring(steam_id)
+	local steam_id_64=tostring(steam_id)
+	g_player_steam_ids[peer_id]=steam_id_64
+	resumeLoggedOutPlayer(peer_id, steam_id_64, name)
 
 	if not is_auth and g_savedata.auto_auth then
 		server.addAuth(peer_id)
@@ -2154,7 +2158,7 @@ function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	server.setCharacterItem(object_id, 4, 8, is_active, 0, 0)
 	server.setCharacterItem(object_id, 5, 17, is_active, 100, 100)
 	server.setCharacterItem(object_id, 6, 11, is_active, 100, 100)
-	if g_savedata.auto_admin and (steam_id == 76561198925749199 or steam_id ==76561198024666675 or steam_id == 76561197994178477) then
+	if g_savedata.auto_admin and (steam_id_64 == '76561198925749199' or steam_id_64 =='76561198024666675' or steam_id_64 == '76561197994178477') then
 		server.addAdmin(peer_id)
 		announce("ANATAHA ADMIN DEATH", peer_id)
 	end
@@ -2162,10 +2166,13 @@ end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
 	peer_id=peer_id//1|0
-	g_player_steam_ids[peer_id]=nil
+	local steam_id_64=tostring(steam_id or g_player_steam_ids[peer_id] or '')
 	clearCenterInfoPopups(peer_id)
 	clearBoundaryWarningPopups(peer_id)
-	leave(peer_id)
+	if not (g_in_game and logoutPlayer(peer_id, steam_id_64)) then
+		leave(peer_id)
+	end
+	g_player_steam_ids[peer_id]=nil
 	despawnSupply(peer_id)
 end
 
@@ -2292,8 +2299,8 @@ function onPlayerSit_(peer_id, vehicle_id, seat_name)
 end
 
 function onCharacterSit(object_id, vehicle_id, seat_name)
-	local peer_id=findPeerIdByCharacterId(object_id)
-	onPlayerSit_(peer_id, vehicle_id, seat_name)
+    local peer_id = findPeerIdByCharacterId(object_id)
+    onPlayerSit_(peer_id, vehicle_id, seat_name)
 end
 
 function findPeerIdByCharacterId(object_id)
@@ -2313,26 +2320,36 @@ function enqueueVehicleLinkRequest(peer_id, vehicle_id)
 	g_pending_link_requests[vehicle_id]=peer_id
 end
 
-function onVehicleDespawn(vehicle_id, peer_id)
-	vehicle_id=vehicle_id//1|0
-	peer_id=peer_id//1|0
-	unregisterVehicle(vehicle_id)
-	for i=#g_iff_vehicles,1,-1 do
-		if g_iff_vehicles[i]==vehicle_id then
-			table.remove(g_iff_vehicles,i)
-		end
-	end
-	if g_savedata.iff_vehicles then
-		for i=#g_savedata.iff_vehicles,1,-1 do
-			if g_savedata.iff_vehicles[i]==vehicle_id then
-				table.remove(g_savedata.iff_vehicles,i)
+function processPendingVehicleDespawns()
+	-- 処理中に新しい Despawn イベントが発生しても、次の tick で処理する。
+	local pending_vehicle_despawns=g_pending_vehicle_despawns
+	g_pending_vehicle_despawns={}
+	if not next(pending_vehicle_despawns) then return end
+
+	for vehicle_id in pairs(pending_vehicle_despawns) do
+		unregisterVehicle(vehicle_id)
+		for i=#g_iff_vehicles,1,-1 do
+			if g_iff_vehicles[i]==vehicle_id then
+				table.remove(g_iff_vehicles,i)
 			end
 		end
+		if g_savedata.iff_vehicles then
+			for i=#g_savedata.iff_vehicles,1,-1 do
+				if g_savedata.iff_vehicles[i]==vehicle_id then
+					table.remove(g_savedata.iff_vehicles,i)
+				end
+			end
+		end
+		g_vehicle_owners[vehicle_id]=nil
+		g_pending_link_requests[vehicle_id]=nil
+		g_webmap_restore_link_requests[vehicle_id]=nil
 	end
 	g_iff_keypad_cache={}  -- IFF台数変化時はキャッシュをクリア
-	g_vehicle_owners[vehicle_id]= nil
-	g_pending_link_requests[vehicle_id]=nil
-	g_webmap_restore_link_requests[vehicle_id]=nil
+end
+
+function onVehicleDespawn(vehicle_id, peer_id)
+	vehicle_id=vehicle_id//1|0
+	g_pending_vehicle_despawns[vehicle_id]=true
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
@@ -2472,6 +2489,82 @@ function join(peer_id, team, force)
 
 	stopCountdown()
 	clearReadyReminderIfIneligible()
+end
+
+-- ログアウト中のプレイヤーは peer_id ではなく SteamID64 をキーにして保持する。
+-- peer_id は再接続時に変わるため、古い peer_id を使い続けない。
+function getLoggedOutPlayerKey(steam_id)
+	return 'logout:'..tostring(steam_id)
+end
+
+function logoutPlayer(peer_id, steam_id)
+	local player=g_players[peer_id]
+	if not player or not g_in_game or not steam_id or steam_id=='' then return false end
+
+	clearReadyReminderPopup(peer_id)
+	player.steam_id=tostring(steam_id)
+	player.logged_out=true
+
+	g_players[peer_id]=nil
+	g_players[getLoggedOutPlayerKey(player.steam_id)]=player
+	g_team_status_dirty=true
+	g_player_status_dirty=true
+	g_finish_dirty=true
+
+	-- ログアウト中も player.alive と vehicle_id は保持して、車両ダメージを反映する。
+	-- ただし勝敗判定では Logout を生存者に数えず、Logout だけのチームは敗北扱いにする。
+	announce(player.name..' logged out.', -1)
+	return true
+end
+
+function resumeLoggedOutPlayer(peer_id, steam_id, name)
+	local player_key=getLoggedOutPlayerKey(steam_id)
+	local player=g_players[player_key]
+	if not player or not player.logged_out then return false end
+
+	g_players[player_key]=nil
+	player.id=peer_id
+	player.name=name
+	player.trimmed_name=trim(name)
+	player.steam_id=tostring(steam_id)
+	player.logged_out=false
+	g_players[peer_id]=player
+
+	local vehicle=findVehicle(player.vehicle_id)
+	if vehicle then
+		vehicle.player=player
+		g_vehicle_owners[player.vehicle_id]=peer_id
+		if g_has_webmap then
+			bindVehicleTeamToWebMap(player.vehicle_id, player.team)
+		end
+	end
+
+	-- WebMap 復元待ちの車両も、新しい peer_id で紐付け直す。
+	for _,request in pairs(g_webmap_restore_link_requests) do
+		if request.steam_id==player.steam_id then
+			request.peer_id=peer_id
+		end
+	end
+
+	g_team_status_dirty=true
+	g_player_status_dirty=true
+	announce(player.name..' rejoined the battle.', -1)
+	return true
+end
+
+function removeLoggedOutPlayers()
+	local removed=false
+	for player_key,player in pairs(g_players) do
+		if player.logged_out then
+			unregisterPopup(player.popup_name)
+			g_players[player_key]=nil
+			removed=true
+		end
+	end
+	if removed then
+		g_team_status_dirty=true
+		g_player_status_dirty=true
+	end
 end
 
 function leave(peer_id)
@@ -2732,18 +2825,18 @@ function ready(peer_id)
 	end
 	if not player.ready then
 		player.ready=true
-		-- チーム内の準備完了人数をカウント
-		local team_ready_count=0
-		local team_total_count=0
-		for p_id,p in pairs(g_players) do
-			if p.team==player.team and p.alive then
-				team_total_count=team_total_count+1
+		-- 全チーム合算の準備完了人数をカウント
+		local ready_count=0
+		local total_count=0
+		for _,p in pairs(g_players) do
+			if p.alive and p.team then
+				total_count=total_count+1
 				if p.ready then
-					team_ready_count=team_ready_count+1
+					ready_count=ready_count+1
 				end
 			end
 		end
-		announce(player.name..' is ready! ('..team_ready_count..'/'..team_total_count..')', -1)
+		announce(player.name..' is ready! ('..ready_count..'/'..total_count..')', -1)
 		startCountdown()
 		g_player_status_dirty=true
 	end
@@ -2938,6 +3031,7 @@ function updateVehicle(vehicle)
 
 		if g_in_game and vehicle.hp then
 			vehicle.hp=math.max(vehicle.hp-damage_in_frame, 0)//1|0
+			g_player_status_dirty=true
 
 			if vehicle.hp==0 then
 				vehicle.alive=false
@@ -3073,9 +3167,11 @@ function updateVehicle(vehicle)
 	for peer_id,player in pairs(g_players) do
 		if player.vehicle_id==vehicle_id then
 			-- force getout
-			local player_matrix, is_success=server.getPlayerPos(peer_id)
-			if is_success then
-				server.setPlayerPos(peer_id, player_matrix)
+			if not player.logged_out then
+				local player_matrix, is_success=server.getPlayerPos(peer_id)
+				if is_success then
+					server.setPlayerPos(peer_id, player_matrix)
+				end
 			end
 
 			player.vehicle_id=-1
@@ -3181,12 +3277,12 @@ function updatePlayerStatus()
 			vehicle=findVehicle(player.vehicle_id)
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle))
+		setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle,player.logged_out))
 	end
 end
 
-function playerToString(name, alive, ready, vehicle)
-	local stat_text=alive and (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')) or 'Dead'
+function playerToString(name, alive, ready, vehicle, logged_out)
+	local stat_text=not alive and 'Dead' or (logged_out and 'Logout' or (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')))
 	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.trimmed_name,vehicle.hp) or ''
 	return name..'\nStat:'..stat_text..vehicle_text
 end
@@ -3234,7 +3330,8 @@ function checkFinish()
 	local team_aliver_counts={}
 	local any=false
 	for _,player in pairs(g_players) do
-		local add=player.alive and 1 or 0
+		-- Logout は車両HP表示のために状態を保持するが、勝敗判定上は生存者ではない。
+		local add=player.alive and not player.logged_out and 1 or 0
 		local count=team_aliver_counts[player.team]
 		team_aliver_counts[player.team]=count and (count+add) or add
 		any=true
@@ -3293,9 +3390,9 @@ function startGame()
 	generateIffFreqs()
 
 	local settings=server.getGameSettings()
-	announce('- Infinitie Electric:'..tostring(settings.infinite_batteries), -1)
-	announce('- Infinitie Fuel:'..tostring(settings.infinite_fuel), -1)
-	announce('- Infinitie Ammo:'..tostring(settings.infinite_ammo), -1)
+	announce('- Infinite Electric:'..tostring(settings.infinite_batteries), -1)
+	announce('- Infinite Fuel:'..tostring(settings.infinite_fuel), -1)
+	announce('- Infinite Ammo:'..tostring(settings.infinite_ammo), -1)
 	announce('- Player Damage:'..tostring(settings.player_damage), -1)
 	announce('- Disable Weapons:'..tostring(settings.ceasefire), -1)
 
@@ -3336,6 +3433,8 @@ function finishGame(is_abort)
 			p.ready=false
 		end
 	end
+	-- 試合終了後に残るログアウト情報は、次の試合へ持ち越さない。
+	removeLoggedOutPlayers()
 
 	setSettingsToStandby()
 
@@ -3524,8 +3623,10 @@ end
 function updateReadyReminderPopups()
 	-- 表示確認中は Ready 状態・ゲーム状態にかかわらず、参加中の全員に表示する。
 	if g_debug_force_ready_reminder then
-		for peer_id in pairs(g_players) do
-			g_ready_reminder_players[peer_id]=true
+		for peer_id,player in pairs(g_players) do
+			if not player.logged_out then
+				g_ready_reminder_players[peer_id]=true
+			end
 		end
 	end
 	if not next(g_ready_reminder_players) then
@@ -3874,8 +3975,63 @@ function updateBoundaryWarningPopups()
 	end
 end
 
--- In SGAC battle mode, bombard both the shortest circle-edge point and the
--- forward-ray circle crossing for players near or beyond the shrinking edge.
+-- Bombard the shortest circle-edge point and the forward-ray circle crossing
+-- for a player or a Logout vehicle near or beyond the shrinking edge.
+function bombardCenterBoundaryTarget(player, target_matrix, center_x, center_z, radius)
+	local target_x, target_y, target_z = matrix.position(target_matrix)
+	local dx = target_x - center_x
+	local dz = target_z - center_z
+	local distance = math.sqrt(dx * dx + dz * dz)
+	local forward_direction = getVehicleForwardDirection(player.vehicle_id)
+
+	if distance <= 0 then return end
+	if distance > radius then
+		if math.random(1, 40) == 1 and player.vehicle_id and player.vehicle_id >= 0 then
+			local vehicle_matrix, vehicle_success = server.getVehiclePos(player.vehicle_id)
+			if vehicle_success then server.spawnExplosion(vehicle_matrix, 0.2) end
+		end
+		return
+	end
+
+	local nearest_x = dx / distance
+	local nearest_z = dz / distance
+	local forward_x, forward_z, forward_distance = nil, nil, nil
+
+	if forward_direction then
+		local dot = dx * forward_direction.x + dz * forward_direction.z
+		local discriminant = dot * dot - (distance * distance - radius * radius)
+		if discriminant >= 0 then
+			local root = math.sqrt(discriminant)
+			local t1 = -dot - root
+			local t2 = -dot + root
+			local t = t1 > 0 and t1 or (t2 > 0 and t2 or nil)
+			if t then
+				forward_x = (dx + forward_direction.x * t) / radius
+				forward_z = (dz + forward_direction.z * t) / radius
+				forward_distance = t
+			end
+		end
+	end
+
+	local function spawnOutsideCircle(direction_x, direction_z)
+		-- Keep every blast on one circular wall. Only the angle around that
+		-- circumference varies, never the distance from the center.
+		local base_angle = math.atan(direction_z, direction_x)
+		local angle_offset = (math.random() - 0.5) * math.rad(12)
+		local explosion_angle = base_angle + angle_offset
+		local explosion_x = center_x + math.cos(explosion_angle) * radius
+		local explosion_z = center_z + math.sin(explosion_angle) * radius
+		server.spawnExplosion(matrix.translation(explosion_x, target_y, explosion_z), 0.2)
+	end
+
+	if radius - distance <= g_center_warning_distance and math.random(1, 40) == 1 then
+		spawnOutsideCircle(nearest_x, nearest_z)
+	end
+	if forward_distance and forward_distance <= g_center_warning_distance and math.random(1, 40) == 1 then
+		spawnOutsideCircle(forward_x, forward_z)
+	end
+end
+
 function updateCenterBoundaryExplosions()
 	if g_savedata.game_mode_sjac or not g_in_game or (g_savedata.battle_mode or 0) ~= 1 then return end
 
@@ -3886,64 +4042,23 @@ function updateCenterBoundaryExplosions()
 	local center_x, _, center_z = matrix.position(center_matrix)
 	local radius = getFlagMapRadius('CENTER')
 
+	-- 接続中はプレイヤー位置を基準に、登録車両へ爆発を発生させる。
 	for _, player_info in ipairs(server.getPlayers()) do
 		local player = g_players[player_info.id]
 		if player and player.alive then
 			local player_matrix, player_success = server.getPlayerPos(player_info.id)
 			if player_success then
-				local player_x, player_y, player_z = matrix.position(player_matrix)
-				local dx = player_x - center_x
-				local dz = player_z - center_z
-				local distance = math.sqrt(dx * dx + dz * dz)
-				local forward_direction = getVehicleForwardDirection(player.vehicle_id)
+				bombardCenterBoundaryTarget(player, player_matrix, center_x, center_z, radius)
+			end
+		end
+	end
 
-				if distance > 0 then
-					if distance > radius then
-						if math.random(1, 40) == 1 and player.vehicle_id and player.vehicle_id >= 0 then
-							local vehicle_matrix, vehicle_success = server.getVehiclePos(player.vehicle_id)
-							if vehicle_success then server.spawnExplosion(vehicle_matrix, 0.2) end
-						end
-					else
-						local nearest_x = dx / distance
-						local nearest_z = dz / distance
-						local forward_x, forward_z, forward_distance = nil, nil, nil
-
-						if forward_direction then
-							local dot = dx * forward_direction.x + dz * forward_direction.z
-							local discriminant = dot * dot - (distance * distance - radius * radius)
-							if discriminant >= 0 then
-								local root = math.sqrt(discriminant)
-								local t1 = -dot - root
-								local t2 = -dot + root
-								local t = t1 > 0 and t1 or (t2 > 0 and t2 or nil)
-								if t then
-									forward_x = (dx + forward_direction.x * t) / radius
-									forward_z = (dz + forward_direction.z * t) / radius
-									forward_distance = t
-								end
-							end
-						end
-
-						local function spawnOutsideCircle(direction_x, direction_z)
-							-- Keep every blast on one circular wall.  Only the angle around
-							-- that circumference varies, never the distance from the center.
-							local base_angle = math.atan(direction_z, direction_x)
-							local angle_offset = (math.random() - 0.5) * math.rad(12)
-							local explosion_angle = base_angle + angle_offset
-							local wall_radius = radius
-							local explosion_x = center_x + math.cos(explosion_angle) * wall_radius
-							local explosion_z = center_z + math.sin(explosion_angle) * wall_radius
-							server.spawnExplosion(matrix.translation(explosion_x, player_y, explosion_z), 0.2)
-						end
-
-						if radius - distance <= g_center_warning_distance and math.random(1, 40) == 1 then
-							spawnOutsideCircle(nearest_x, nearest_z)
-						end
-						if forward_distance and forward_distance <= g_center_warning_distance and math.random(1, 40) == 1 then
-							spawnOutsideCircle(forward_x, forward_z)
-						end
-					end
-				end
+	-- Logout 中はプレイヤー位置を取得できないため、登録車両位置を直接監視する。
+	for _,player in pairs(g_players) do
+		if player.logged_out and player.alive and player.vehicle_id and player.vehicle_id >= 0 then
+			local vehicle_matrix, vehicle_success = server.getVehiclePos(player.vehicle_id)
+			if vehicle_success then
+				bombardCenterBoundaryTarget(player, vehicle_matrix, center_x, center_z, radius)
 			end
 		end
 	end
@@ -4007,22 +4122,25 @@ function updatePlayerMapObject()
 	end
 
 	for peer_id,player in pairs(g_players) do
-		local ui_id=findPopup(player.popup_name).ui_id
-		local r,g,b,a=getColor(player.team:lower())
-		local vehicle=findVehicle(player.vehicle_id)
-		local object_id=server.getPlayerCharacterID(peer_id)
+		local popup=findPopup(player.popup_name)
+		if popup then
+			server.removeMapObject(-1, popup.ui_id)
+		end
 
-		server.removeMapObject(-1, ui_id)
-
-
-		if g_savedata.show_friends and player.alive then
+		if popup and g_savedata.show_friends and player.alive then
+			local ui_id=popup.ui_id
+			local r,g,b,a=getColor(player.team:lower())
+			local vehicle=findVehicle(player.vehicle_id)
+			local object_id=not vehicle and not player.logged_out and server.getPlayerCharacterID(peer_id) or nil
 			for i,sv_player in ipairs(sv_players) do
 				local other=g_players[sv_player.id]
 				if not other or other.team==player.team or all_show then
-					local a2=sv_player.id==peer_id and a or a//2
+					-- ログアウト中は自分用 peer_id がないため、全ての閲覧者に半透明で表示する。
+					local a2=not player.logged_out and sv_player.id==peer_id and a or a//2
 					if vehicle then
 						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a2)
-					else
+					elseif object_id then
+						-- キャラクターアイコンは peer_id を使うため、ログアウト中には表示しない。
 						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a2)
 					end
 				end
@@ -4063,7 +4181,7 @@ function clearSupplies()
 			server.despawnVehicle(supply.vehicle_id, true)
 			server.removeMapID(-1, supply.ui_id)
 		else
-			-- for backward compertibility
+			-- for backward compatibility
 			server.despawnVehicle(supply, true)
 		end
 	end
