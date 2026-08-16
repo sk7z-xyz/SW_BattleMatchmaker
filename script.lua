@@ -53,6 +53,7 @@ g_center_radius_last_update = -1
 g_center_popup_ids = {}
 g_center_info_popup_update_timer = 60
 g_center_final_radius = 300
+g_center_altitude_check_distance_limit = 6000
 g_center_warning_distance = 75
 g_boundary_warning_popup_ids = {}
 g_center_popup_warning_distance = 75
@@ -4186,16 +4187,9 @@ function spawnAltitudeChecker(x, z)
 	local check_pos = matrix.translation(x, 10, z)
 	local tile_data, tile_success = server.getTile(check_pos)
 	if not (tile_success and tile_data and tile_data.name and tile_data.name ~= '') then
-		announce(string.format('[AltChecker] Tile unavailable at x=%.1f z=%.1f', x, z), -1)
 		return nil
 	end
-	local check_vehicle_id = spawnAddonVehicle('alt', matrix.translation(x, g_altitude_scan_height, z))
-	if check_vehicle_id then
-		announce(string.format('[AltChecker] Spawned id=%d at x=%.1f z=%.1f', check_vehicle_id, x, z), -1)
-	else
-		announce(string.format('[AltChecker] Spawn failed: name=alt x=%.1f z=%.1f', x, z), -1)
-	end
-	return check_vehicle_id
+	return spawnAddonVehicle('alt', matrix.translation(x, g_altitude_scan_height, z))
 end
 
 function getGroundAltitudeFromChecker(check_vehicle_id)
@@ -4222,7 +4216,6 @@ function spawnFlagAtAdjustedAltitude(peer_id, name, x, z, fallback_y, ground_off
 
 	local check_vehicle_id = spawnAltitudeChecker(x, z)
 	if not check_vehicle_id then
-		announce('[AltChecker] Using fallback altitude for '..name, -1)
 		spawnFlagAt(peer_id, name, x, z, fallback_y, false)
 		return
 	end
@@ -4243,14 +4236,9 @@ function updatePendingCenterFlagSpawns()
 	for i = #g_pending_center_flag_spawns, 1, -1 do
 		local pending = g_pending_center_flag_spawns[i]
 		pending.tries = pending.tries + 1
-		local ground_altitude, dial_value = getGroundAltitudeFromChecker(pending.check_vehicle_id)
+		local ground_altitude = getGroundAltitudeFromChecker(pending.check_vehicle_id)
 		if ground_altitude or pending.tries >= 600 then
 			server.despawnVehicle(pending.check_vehicle_id, true)
-			if ground_altitude then
-				announce(string.format('[AltChecker] %s ready: dial=%.1f ground_y=%.1f (%d ticks)', pending.name, dial_value, ground_altitude, pending.tries), -1)
-			else
-				announce(string.format('[AltChecker] %s timed out after %d ticks; fallback_y=%.1f', pending.name, pending.tries, pending.fallback_y or 0), -1)
-			end
 			local spawn_y = ground_altitude and ground_altitude + pending.ground_offset or pending.fallback_y
 			spawnFlagAt(pending.peer_id, pending.name, pending.x, pending.z, spawn_y, false)
 			table.remove(g_pending_center_flag_spawns, i)
@@ -4279,8 +4267,19 @@ function updateCenterFlag()
 	local x = ((tonumber(red.x) or 0) + (tonumber(blue.x) or 0)) / 2
 	local z = ((tonumber(red.z) or 0) + (tonumber(blue.z) or 0)) / 2
 	local y = ((tonumber(red.y) or 0) + (tonumber(blue.y) or 0)) / 2
-	spawnCenterFlagAtAdjustedAltitude(-1, 'CENTER', x, z, y)
-	g_flag_assignments.CENTER = { idx = -1, name = 'CENTER', x = x, z = z, y = y }
+	local dx = (tonumber(red.x) or 0) - (tonumber(blue.x) or 0)
+	local dz = (tonumber(red.z) or 0) - (tonumber(blue.z) or 0)
+	local flag_distance = math.sqrt(dx * dx + dz * dz)
+	local center_y = y
+
+	if flag_distance >= g_center_altitude_check_distance_limit then
+		cancelPendingCenterFlagSpawns('CENTER')
+		center_y = 0
+		spawnFlagAt(-1, 'CENTER', x, z, center_y, false, 'flag')
+	else
+		spawnCenterFlagAtAdjustedAltitude(-1, 'CENTER', x, z, y)
+	end
+	g_flag_assignments.CENTER = { idx = -1, name = 'CENTER', x = x, z = z, y = center_y }
 end
 
 function spawnFlag(peer_id, name)
@@ -4316,7 +4315,7 @@ function spawnFlag(peer_id, name)
 	end
 end
 
-function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
+function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn, flag_component_name)
 	name = name:upper()
 	if not x or not z then
 		announce('Invalid coordinates for flag spawn.', peer_id)
@@ -4332,13 +4331,15 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
 		altitude = y
 	end
 	local vehicle_matrix = matrix.translation(tonumber(x) or 0, altitude, tonumber(z) or 0)
-	local flag_name = 'flag'
-	if name == 'RED' or string.sub(name, 1, 4) == 'RED_' then
-		flag_name = 'flag_red'
-	elseif name == 'BLUE' or string.sub(name, 1, 5) == 'BLUE_' then
-		flag_name = 'flag_blue'
-	elseif name == 'CENTER' or string.sub(name, 1, 13) == 'DEBUG_CENTER_' then
-		flag_name = 'flag_center'
+	local flag_name = flag_component_name or 'flag'
+	if not flag_component_name then
+		if name == 'RED' or string.sub(name, 1, 4) == 'RED_' then
+			flag_name = 'flag_red'
+		elseif name == 'BLUE' or string.sub(name, 1, 5) == 'BLUE_' then
+			flag_name = 'flag_blue'
+		elseif name == 'CENTER' or string.sub(name, 1, 13) == 'DEBUG_CENTER_' then
+			flag_name = 'flag_center'
+		end
 	end
 	local vehicle_id = spawnAddonVehicle(flag_name, vehicle_matrix)
 

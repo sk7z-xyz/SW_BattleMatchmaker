@@ -298,7 +298,7 @@ hp_step > 0 の場合、推定HPを hp_step 単位で切り捨て
 - 戦域外では、生存プレイヤーの登録車両へ 1 tick あたり 1/40 の確率で威力 `0.2` の爆発を発生させます。
 - Logout 中の生存者はプレイヤー位置の代わりに登録車両位置で監視します。
 
-CENTER の地表高度は `name=alt` の高度チェッカーと `alt` ダイヤルで測定します。600 tick 以内に取得できなければ RED / BLUE 高度の中間値へフォールバックします。`flag_center` のピボット補正として地表から 27 m 上へ配置します。
+CENTER の地表高度は、RED-BLUE 間の水平距離が 6,000 m 未満の場合に `name=alt` の高度チェッカーと `alt` ダイヤルで測定します。600 tick 以内に取得できなければ RED / BLUE 高度の中間値へフォールバックし、`flag_center` のピボット補正として地表から 27 m 上へ配置します。距離が 6,000 m 以上の場合は高度チェックを行わず、汎用の `flag` コンポーネントを CENTER として Y=0 へ直接配置します。
 
 ### 全コマンド仕様
 
@@ -416,8 +416,9 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 #### 旗の仕様と注意
 
 - CENTER の戦闘エリア半径は可変です。`battle_mode=1` では RED-BLUE 間距離から初期半径を計算し、SGAC の試合中は残り時間に合わせて最終半径 300 m まで縮小します。SJAC または試合外では初期半径のまま縮小しません。
-- RED は `flag_red`、BLUE は `flag_blue`、CENTER は `flag_center`、その他は `flag` コンポーネントを使用します。
+- RED は `flag_red`、BLUE は `flag_blue`、CENTER は通常 `flag_center`、その他は `flag` コンポーネントを使用します。
 - RED / BLUE を配置するとチーム割り当て座標を更新し、`battle_mode=1` なら CENTER を再作成します。
+- RED-BLUE 間の水平距離が 6,000 m 以上の場合、CENTER は高度チェックを省略し、`flag_center` ではなく汎用の `flag` コンポーネントを Y=0 へ配置します。6,000 m 未満では従来どおり地表高度を測定して `flag_center` を配置します。
 - `swap_flag` は RED / BLUE の旗車両を互いの位置へ移動し、マップ表示と `tp` 用割り当て座標も同時に交換します。CENTER の中点と半径は変わりません。
 - `tp` は旗車両そのものではなく、チーム割り当て座標を使います。
 - 現行コードの `delete_flag`、`clear_flag`、`clear_supply` 内の `clearFlags()` は旗車両とマップ表示を消しますが、`g_flag_assignments` は消しません。そのため再割り当てまで `tp` が旧座標を参照できる場合があります。
