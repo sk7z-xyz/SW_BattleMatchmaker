@@ -86,6 +86,7 @@
 | Admin | `?mm shuffle2` | `?mm sh2` |
 | Admin | `?mm start` | `?mm s` |
 | Admin | `?mm flag` | `?mm f` |
+| Admin | `?mm swap_flag` | `?mm sf` |
 | Admin | `?mm shuffle` | `?mm sh` |
 | Admin | `?mm shuffle_airbase` | `?mm sa` |
 | Admin | `?mm shuffle_ground_base` | `?mm sg` |
@@ -134,7 +135,7 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 
 ## 2. 開発者・サーバー管理者向け仕様
 
-以下は [`script.lua`](./script.lua) Version 1.6.3 を正本とした詳細仕様です。公開コマンド 40 件、変更可能設定 32 件、状態遷移、アドオン部品、外部連携をコードの実挙動に合わせて記載しています。
+以下は [`script.lua`](./script.lua) Version 1.6.3 を正本とした詳細仕様です。公開コマンド 41 件、変更可能設定 32 件、状態遷移、アドオン部品、外部連携をコードの実挙動に合わせて記載しています。
 
 ### 必要条件とアドオン構成
 
@@ -349,6 +350,7 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 | `?mm reset` | なし | 全プレイヤー・登録車両情報を空にし、補給・旗を削除して終了処理を実行します。 |
 | `?mm clear_supply` | なし | 全補給オブジェクトを削除します。現行実装では同時に全旗も削除します。 |
 | `?mm flag [名前] (x) (z) (y)` | `?mm f [名前] (x) (z) (y)` | 旗を配置します。座標配置は x、z、y の 3 値をすべて指定した場合だけで、それ以外は実行者の正面 8 m・上方 9 mへ配置します。 |
+| `?mm swap_flag` | `?mm sf` | RED と BLUE の旗車両、マップ表示、`tp` 用割り当て座標を互いの位置へ交換します。両方の旗が存在する場合だけ実行します。 |
 | `?mm delete_flag [名前]` | なし | 指定名を大文字化し、その旗車両とマップ表示を削除します。 |
 | `?mm clear_flag` | なし | 全旗車両とマップ表示を削除します。 |
 | `?mm set (設定名) (値)` | なし | 設定を変更します。引数なしで設定名と型の一覧を表示します。 |
@@ -416,6 +418,7 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 - CENTER の戦闘エリア半径は可変です。`battle_mode=1` では RED-BLUE 間距離から初期半径を計算し、SGAC の試合中は残り時間に合わせて最終半径 300 m まで縮小します。SJAC または試合外では初期半径のまま縮小しません。
 - RED は `flag_red`、BLUE は `flag_blue`、CENTER は `flag_center`、その他は `flag` コンポーネントを使用します。
 - RED / BLUE を配置するとチーム割り当て座標を更新し、`battle_mode=1` なら CENTER を再作成します。
+- `swap_flag` は RED / BLUE の旗車両を互いの位置へ移動し、マップ表示と `tp` 用割り当て座標も同時に交換します。CENTER の中点と半径は変わりません。
 - `tp` は旗車両そのものではなく、チーム割り当て座標を使います。
 - 現行コードの `delete_flag`、`clear_flag`、`clear_supply` 内の `clearFlags()` は旗車両とマップ表示を消しますが、`g_flag_assignments` は消しません。そのため再割り当てまで `tp` が旧座標を参照できる場合があります。
 - 自動バトル有効時の通常終了と `shuffle_ground_base` は、専用処理で RED / BLUE / CENTER の割り当ても消去します。
@@ -625,7 +628,7 @@ README の各仕様は、主に次の [`script.lua`](./script.lua) の定義・�
 | UI・マップ・Ready 催促 | `updateTeamStatus`、`updatePlayerStatus`、`updatePlayerMapObject`、`updateReadyReminderPopups` |
 | SJAC / SGAC | `setGameMode`、`enableSJAC`、`enableSGAC`、`setSettingsToBattle`、`setSettingsToStandby` |
 | CENTER 縮小戦域 | `updateCenterFlag`、`getFlagMapRadius`、`updateCenterInfoPopups`、`updateBoundaryWarningPopups`、`updateCenterBoundaryExplosions` |
-| 航空・地上基地と旗 | `airports`、`ground_base`、`assignAirbases`、`assignGroundBase`、`spawnFlagAtAdjustedAltitude`、`spawnFlagAt` |
+| 航空・地上基地と旗 | `airports`、`ground_base`、`assignAirbases`、`assignGroundBase`、`spawnFlagAtAdjustedAltitude`、`spawnFlagAt`、`swapFlagPositions` |
 | 補給・弾薬 | `g_ammo_supply_buttons`、`g_item_supply_buttons`、`onButtonPress`、`spawnSupply` |
 | IFF | `g_iff_spawn_positions`、`generateIffFreqs`、`createIffSender`、`encodeCoords`、`buildNameTokens`、`onTick` 内 IFF 更新 |
 | WebMap | `requestWebMapVehicleCache`、`requestWebMapVehicleRestore`、`handleWebMapCacheEvent`、`bindVehicleTeamToWebMap` |

@@ -958,6 +958,14 @@ g_commands={
 		end,
 	},
 	{
+		name='swap_flag',
+		desc='Swap RED and BLUE flag positions (alias sf)',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			swapFlagPositions(peer_id)
+		end,
+	},
+	{
 		name='pause',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
@@ -1602,6 +1610,7 @@ g_command_aliases={
 	rm='remove',
 	s='start',
 	f='flag',
+	sf='swap_flag',
 	sh='shuffle',
 	sh2='shuffle2',
 	sa='shuffle_airbase',
@@ -4352,6 +4361,73 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn)
 	else
 		announce('Failed to spawn flag "' .. name .. '"', peer_id)
 	end
+end
+
+function refreshFlagMapObjectAt(name, vehicle_matrix)
+	local flag = g_savedata.flag_vehicles[name]
+	if not flag then return end
+
+	local x, _, z = matrix.position(vehicle_matrix)
+	local text = getFlagDisplayText(name)
+	local r, g, b, a = getColor(name)
+	server.removeMapObject(-1, flag.ui_id)
+	server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, text, getFlagMapRadius(name), text, r, g, b, a)
+end
+
+function swapFlagPositions(peer_id)
+	local red_flag = g_savedata.flag_vehicles.RED
+	local blue_flag = g_savedata.flag_vehicles.BLUE
+	if not red_flag or not blue_flag then
+		announce('Both RED and BLUE flags are required.', peer_id)
+		return false
+	end
+
+	local red_matrix, red_success = server.getVehiclePos(red_flag.vehicle_id)
+	local blue_matrix, blue_success = server.getVehiclePos(blue_flag.vehicle_id)
+	if not red_success or not blue_success then
+		announce('Failed to get RED or BLUE flag position.', peer_id)
+		return false
+	end
+
+	local red_x, red_y, red_z = matrix.position(red_matrix)
+	local blue_x, blue_y, blue_z = matrix.position(blue_matrix)
+	local red_assignment = g_flag_assignments.RED
+	local blue_assignment = g_flag_assignments.BLUE
+
+	local red_moved = server.setVehiclePos(red_flag.vehicle_id, blue_matrix)
+	if not red_moved then
+		announce('Failed to move RED flag.', peer_id)
+		return false
+	end
+
+	local blue_moved = server.setVehiclePos(blue_flag.vehicle_id, red_matrix)
+	if not blue_moved then
+		local red_restored = server.setVehiclePos(red_flag.vehicle_id, red_matrix)
+		local restore_status = red_restored and ' RED flag was restored.' or ' Failed to restore RED flag.'
+		announce('Failed to move BLUE flag.'..restore_status, peer_id)
+		return false
+	end
+
+	refreshFlagMapObjectAt('RED', blue_matrix)
+	refreshFlagMapObjectAt('BLUE', red_matrix)
+
+	g_flag_assignments.RED = {
+		idx = blue_assignment and blue_assignment.idx or -1,
+		name = 'RED',
+		x = blue_x,
+		z = blue_z,
+		y = blue_assignment and blue_assignment.y or blue_y,
+	}
+	g_flag_assignments.BLUE = {
+		idx = red_assignment and red_assignment.idx or -1,
+		name = 'BLUE',
+		x = red_x,
+		z = red_z,
+		y = red_assignment and red_assignment.y or red_y,
+	}
+
+	announce('RED and BLUE flag positions swapped.', -1)
+	return true
 end
 
 function despawnFlag(peer_id, name)
