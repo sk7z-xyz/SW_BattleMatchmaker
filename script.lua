@@ -660,6 +660,12 @@ local function heuristic_assign(peer_list, prev_map, pairCounts, teamSizes, team
 
 
 	if not bestAssign then return nil end
+	for t=1,#bestAssign do
+		for i=#bestAssign[t],2,-1 do
+			local j=math.random(i)
+			bestAssign[t][i],bestAssign[t][j]=bestAssign[t][j],bestAssign[t][i]
+		end
+	end
 	local sameCounts = {}
 	for t=1,#bestAssign do
 		local same = 0
@@ -691,6 +697,7 @@ local function setGameMode(is_sjac, peer_id)
 	g_savedata.game_time = is_sjac and 15 or 15
 	g_savedata.damage_popup_max_height = 15
 	g_savedata.nameplate_enabled = is_sjac
+	g_savedata.battle_mode = is_sjac and 0 or 1
 	server.setGameSetting('infinite_batteries', is_sjac)
 	local updated_vehicle_count = reregisterVehicles()
 
@@ -3125,7 +3132,8 @@ function bindVehicleTeamToWebMap(vehicle_id, team)
 	g_webmap_bindings[vehicle_id]=color
 	-- ?wm ct(WebMap_ChangeTeam)command
 	local cmd = '?wm ct ' .. vehicle_id .. ' ' .. color
-	server.command(cmd)
+	-- WebMap 側の車両登録完了を待つため、次 tick で実行する。
+	queueServerCommand(cmd, 1)
 
 end
 
