@@ -18,6 +18,8 @@ g_flag_radius=1000
 -- WebMapAddon
 g_has_webmap=false
 g_webmap_bindings={}
+-- VIP はセッション単位で SteamID64 により管理する。保存データには保持しない。
+g_vip={team='OFF',steam_id=nil,defeated_teams={}}
 -- WebMap のリスポーンキャッシュ登録状態（Bridge と同様に Lua 再起動時に消える）
 g_player_steam_ids={} -- {[peer_id]=steamid64}
 g_webmap_cache_by_steam={} -- {[steamid64]={vehicle_name=string|nil, pending_vehicle_name=string|nil, pending_group_id=number|nil, restore_pending=boolean|nil}}
@@ -71,6 +73,19 @@ function getPlayerSteamId(peer_id)
 			return steam_id
 		end
 	end
+end
+
+function getPlayerSteamIdFromPlayer(player)
+	if not player then return nil end
+	if player.steam_id and player.steam_id~='' then return tostring(player.steam_id) end
+	return player.id and getPlayerSteamId(player.id) or nil
+end
+
+function isVipPlayer(player)
+	return g_vip.team~='OFF'
+		and g_vip.steam_id~=nil
+		and player and player.team==g_vip.team
+		and getPlayerSteamIdFromPlayer(player)==g_vip.steam_id
 end
 
 function findPeerIdBySteamId(steam_id)
@@ -343,10 +358,14 @@ g_item_supply_buttons={
 }
 
 g_settings={}
+g_setting_aliases={
+	vip_hp_m='vip_hp_multiplier',
+}
 local function add_setting(name,key,type,min,max)
 	table.insert(g_settings,{name=name,key=key,type=type,min=min,max=max})
 end
 add_setting('Vehicle HP','vehicle_hp','integer',1)
+add_setting('VIP HP Multiplier','vip_hp_multiplier','number',0.1)
 add_setting('Adaptive HP','adaptive_hp','boolean')
 add_setting('Min HP','min_hp','integer',1)
 add_setting('HP Per Voxel','hp_per_voxel','number',0)
@@ -390,6 +409,7 @@ g_temporary_team='Standby'
 
 g_default_savedata={
 	vehicle_hp			=property.slider("Vehicle HP", 50, 7000, 10, 50),
+	vip_hp_multiplier	=1,
 	adaptive_hp			=property.checkbox("Adaptive HP Enabled", false),
 	min_hp				=property.slider("Min HP", 50, 7000, 10, 2000),
 	hp_per_voxel		=property.slider("HP Per Voxel", 0, 10, 0.1, 3),
@@ -1082,6 +1102,9 @@ g_commands={
 			g_savedata[setting_define.key]=value
 			if setting_define.key=='battle_mode' then
 				updateCenterFlag()
+			elseif setting_define.key=='vip_hp_multiplier' then
+				refreshVipVehicleHp()
+				g_player_status_dirty=true
 			end
 			announce(setting_define.name..' set to '..tostring(value), -1)
 		end,
@@ -1127,6 +1150,60 @@ g_commands={
 		end,
 		args={
 			{name='team_name', type='string', require=true},
+		},
+	},
+	{
+		name='vip',
+		desc='Set VIP: RED (r/re/red) / BLUE (b/bl/blu/blue) [peer_id]. The team loses when its VIP is defeated; OFF disables.',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, team_name, target_peer_id)
+			local vip_team_aliases={
+			r='RED', re='RED', red='RED',
+			b='BLUE', bl='BLUE', blu='BLUE', blue='BLUE',
+			off='OFF',
+			}
+			local team=vip_team_aliases[string.lower(team_name or '')]
+			local old_vip_steam_id=g_vip.steam_id
+			if team=='OFF' then
+				g_vip={team='OFF',steam_id=nil,defeated_teams={}}
+				refreshVehicleHpForSteamId(old_vip_steam_id)
+				refreshIffNameTokens()
+				g_player_status_dirty=true
+				announce('VIP rule disabled.', -1)
+				return
+			end
+			if team~='RED' and team~='BLUE' then
+				announce('VIP team must be RED, BLUE, or OFF.', peer_id)
+				return
+			end
+			if not target_peer_id then
+				announce('Argument not enough. Except [peer_id].', peer_id)
+				return
+			end
+			local target=g_players[target_peer_id]
+			if not target then
+				announce('Joined player not found. peer_id:'..tostring(target_peer_id), peer_id)
+				return
+			end
+			if target.team~=team then
+				announce('VIP player must belong to team '..team..'.', peer_id)
+				return
+			end
+			local steam_id=getPlayerSteamId(target_peer_id)
+			if not steam_id then
+				announce('SteamID64 not found for peer_id:'..tostring(target_peer_id), peer_id)
+				return
+			end
+			g_vip={team=team,steam_id=steam_id,defeated_teams={}}
+			refreshVehicleHpForSteamId(old_vip_steam_id)
+			refreshVehicleHpForSteamId(steam_id)
+			refreshIffNameTokens()
+			g_player_status_dirty=true
+			announce('VIP set: '..target.name..' ('..team..'). '..team..' loses if the VIP is defeated.', -1)
+		end,
+		args={
+			{name='team', type='string', require=true},
+			{name='peer_id', type='integer', require=false},
 		},
 	},
 	{
@@ -1655,6 +1732,7 @@ function findCommand(command)
 end
 
 function findSetting(key)
+	key=g_setting_aliases[key] or key
 	for i,setting_define in ipairs(g_settings) do
 		if setting_define.key==key then
 			return setting_define
@@ -2082,13 +2160,7 @@ function onTick()
 			--server.announce('[VehiclePos]',text,-1)
 		end
 		-- 次サイクルのTXキュー構築
-		g_name_tx={}
-		for peer_id,player in pairs(g_players) do
-			if player.alive and player.vehicle_id>=0 then
-				local tokens=buildNameTokens(player.name)
-				g_name_tx[player.vehicle_id]={tokens=tokens,idx=1}
-			end
-		end
+		refreshIffNameTokens()
 	end
 end
 
@@ -2720,6 +2792,10 @@ function kill(peer_id)
 	local vehicle_id=player.vehicle_id
 	player.alive=false
 	player.vehicle_id=-1
+	if isVipPlayer(player) then
+		g_vip.defeated_teams[player.team]=true
+		notify('VIP Defeated', player.name..' was defeated. Team '..player.team..' loses.', 9, -1)
+	end
 	g_player_status_dirty=true
 
 	if vehicle_id>=0 then
@@ -2817,6 +2893,10 @@ function registerVehicle(vehicle_id,player)
 	if vehicle then
 		--既に存在している場合はプレイヤーを更新する。
 		vehicle.player=player
+		-- 再着席で所有者が変わる場合も、VIP の HP 倍率を反映する。
+		if vehicle.alive then
+			setVehicleMaxHp(vehicle, getVehicleMaxHp(vehicle))
+		end
 		return vehicle
 	end
 
@@ -2876,8 +2956,27 @@ function getVehicleMaxHp(vehicle)
 
 		vehicle_hp = math.max(math.min(estimated_hp ,vehicle_hp), g_savedata.min_hp)
 	end
+	if isVipPlayer(vehicle.player) then
+		vehicle_hp=vehicle_hp*g_savedata.vip_hp_multiplier
+	end
 
 	return math.max(vehicle_hp//1|0,1)
+end
+
+function refreshVehicleHpForSteamId(steam_id)
+	if not steam_id then return 0 end
+	local updated=0
+	for _,vehicle in ipairs(g_vehicles) do
+		if vehicle.alive and getPlayerSteamIdFromPlayer(vehicle.player)==steam_id then
+			setVehicleMaxHp(vehicle, getVehicleMaxHp(vehicle))
+			updated=updated+1
+		end
+	end
+	return updated
+end
+
+function refreshVipVehicleHp()
+	return refreshVehicleHpForSteamId(g_vip.steam_id)
 end
 --max_hpは必ずここで設定すること
 function setVehicleMaxHp(vehicle, max_hp)
@@ -3202,7 +3301,9 @@ function updatePlayerStatus()
 			vehicle=findVehicle(player.vehicle_id)
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle,player.logged_out))
+		-- 接頭辞を含めて trim することで、PopupScreen の表示幅上限を超えないようにする。
+		local display_name=isVipPlayer(player) and trim('[VIP]'..player.trimmed_name) or player.trimmed_name
+		setPopup(player.popup_name, true, playerToString(display_name,player.alive,player.ready,vehicle,player.logged_out))
 	end
 end
 
@@ -3256,7 +3357,9 @@ function checkFinish()
 	local any=false
 	for _,player in pairs(g_players) do
 		-- Logout は車両HP表示のために状態を保持するが、勝敗判定上は生存者ではない。
-		local add=player.alive and not player.logged_out and 1 or 0
+		-- VIP が撃破されたチームも、生存者数 0 として敗北扱いにする。
+		local defeated_by_vip=g_vip.defeated_teams[player.team]
+		local add=player.alive and not player.logged_out and not defeated_by_vip and 1 or 0
 		local count=team_aliver_counts[player.team]
 		team_aliver_counts[player.team]=count and (count+add) or add
 		any=true
@@ -3303,6 +3406,8 @@ function startGame()
 	g_timer=g_savedata.game_time*60*60//1|0
 	g_battle_start_timer=g_timer
 	g_center_radius_last_update=-1
+	-- 前試合での VIP 撃破状態は持ち越さない。VIP 指定自体は維持する。
+	g_vip.defeated_teams={}
 	g_remind_interval=g_timer//4
 
 	for _,player in pairs(g_players) do
@@ -4709,6 +4814,21 @@ function buildNameTokens(name)
 	end
 	tokens[#tokens+1]=NAME_END
 	return tokens
+end
+
+function getIffDisplayName(player)
+	-- IFF の名前プロトコルは英小文字・数字・_ の最大10文字なので、
+	-- PopupScreen と異なり [VIP] は使わず vip_ 接頭辞で識別する。
+	return isVipPlayer(player) and 'vip_'..(player.name or '') or (player.name or '')
+end
+
+function refreshIffNameTokens()
+	g_name_tx={}
+	for _,player in pairs(g_players) do
+		if player.alive and player.vehicle_id>=0 then
+			g_name_tx[player.vehicle_id]={tokens=buildNameTokens(getIffDisplayName(player)),idx=1}
+		end
+	end
 end
 
 function getVehicleSeat(vehicle_id)
