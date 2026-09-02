@@ -41,6 +41,8 @@ g_ready_popup_max_count=8
 g_debug_force_ready_reminder=false
 g_pending_link_requests={} -- {[vehicle_id]=peer_id}
 g_pending_vehicle_despawns={} -- {[vehicle_id]=true}
+g_debug_vehicle_ids={} -- debug1 の対象車両。ロード完了時に BLUE として登録する。
+g_debug_vehicle_players={} -- {[vehicle_id]=擬似プレイヤー}. g_players には混在させない。
 g_pending_server_commands={} -- {{cmd=string, delay=number}, ...}
 g_iff_vehicles={}
 g_iff_freq={[1]=0,[2]=0,[3]=0}
@@ -161,6 +163,11 @@ function requestWebMapVehicleRestore(peer_id)
 end
 
 function tryLinkRestoredVehicle(parent_vehicle_id)
+	-- debug1 で明示的に割り当てた車両は、復元リンクで上書きしない。
+	if g_debug_vehicle_ids[parent_vehicle_id] then
+		g_webmap_restore_link_requests[parent_vehicle_id]=nil
+		return false
+	end
 	local request=g_webmap_restore_link_requests[parent_vehicle_id]
 	if not request then return false end
 
@@ -1062,8 +1069,13 @@ g_commands={
 			for i,player in pairs(g_players) do
 				unregisterPopup(player.popup_name)
 			end
+			for _,debug_player in pairs(g_debug_vehicle_players) do
+				unregisterPopup(debug_player.popup_name)
+			end
 			g_players={}
 			g_vehicles={}
+			g_debug_vehicle_ids={}
+			g_debug_vehicle_players={}
 			g_team_status_dirty=true
 			g_player_status_dirty=true
 			clearSupplies()
@@ -1078,6 +1090,15 @@ g_commands={
 		action=function(peer_id, is_admin, is_auth)
 			renewUiIds()
 			announce('Refresh ui ids.', -1)
+		end,
+	},
+	{
+		name='debug1',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			local assigned, occupied, pending=debugJoinAllVehicles()
+			announce('Debug1: '..assigned..' vehicle(s) assigned to BLUE. '
+				..occupied..' occupied, '..pending..' waiting for load.', peer_id)
 		end,
 	},
 	{
@@ -2303,7 +2324,7 @@ function linkSpawnedVehicle(peer_id, vehicle_id)
 end
 
 function onPlayerSit_(peer_id, vehicle_id, seat_name)
-	if not peer_id then return end
+	if not peer_id or not vehicle_id then return end
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
@@ -2321,8 +2342,10 @@ function onPlayerSit_(peer_id, vehicle_id, seat_name)
 end
 
 function onCharacterSit(object_id, vehicle_id, seat_name)
-    local peer_id = findPeerIdByCharacterId(object_id)
-    onPlayerSit_(peer_id, vehicle_id, seat_name)
+	local peer_id=findPeerIdByCharacterId(object_id)
+	-- NPC など、プレイヤーに紐付かない character の着席イベントは無視する。
+	if not peer_id then return end
+	onPlayerSit_(peer_id, vehicle_id, seat_name)
 end
 
 function findPeerIdByCharacterId(object_id)
@@ -2365,6 +2388,7 @@ function processPendingVehicleDespawns()
 		g_vehicle_owners[vehicle_id]=nil
 		g_pending_link_requests[vehicle_id]=nil
 		g_webmap_restore_link_requests[vehicle_id]=nil
+		clearDebugVehicle(vehicle_id)
 	end
 	g_iff_keypad_cache={}  -- IFF台数変化時はキャッシュをクリア
 end
@@ -2390,17 +2414,27 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 end
 
 function onVehicleLoad(vehicle_id)
-    if tryLinkRestoredVehicle(vehicle_id) then
-        g_pending_link_requests[vehicle_id] = nil
-        return
-    end
+	-- debug1 が BLUE に割り当てた車両は、復元・スポーン元プレイヤーへの
+	-- 自動リンクで直後に上書きされないようにする。
+	if g_debug_vehicle_ids[vehicle_id] then
+		local result=debugJoinVehicle(vehicle_id)
+		if result=='assigned' or result=='pending' then
+			g_pending_link_requests[vehicle_id]=nil
+			return
+		end
+	end
 
-    -- registerVehicleでコンポーネントを取得したいのでロードしてから登録
-    local peer_id = g_pending_link_requests[vehicle_id]
-    if not peer_id then return end
+	if tryLinkRestoredVehicle(vehicle_id) then
+		g_pending_link_requests[vehicle_id]=nil
+		return
+	end
 
-    linkSpawnedVehicle(peer_id, vehicle_id)
-    g_pending_link_requests[vehicle_id] = nil
+	-- registerVehicleでコンポーネントを取得したいのでロードしてから登録
+	local peer_id=g_pending_link_requests[vehicle_id]
+	if not peer_id then return end
+
+	linkSpawnedVehicle(peer_id, vehicle_id)
+	g_pending_link_requests[vehicle_id]=nil
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
@@ -2881,7 +2915,100 @@ function findVehicle(vehicle_id)
 	end
 end
 
+function clearDebugVehicle(vehicle_id)
+	local debug_player=g_debug_vehicle_players[vehicle_id]
+	if not debug_player then return end
+
+	unregisterPopup(debug_player.popup_name)
+	g_debug_vehicle_ids[vehicle_id]=nil
+	g_debug_vehicle_players[vehicle_id]=nil
+	g_team_status_dirty=true
+	g_player_status_dirty=true
+end
+
+-- debug1 用: 実プレイヤーを g_players に追加せず、車両だけを試合管理へ参加させる。
+-- 実プレイヤーが乗っている車両は対象外にする。
+function isVehicleOccupiedByPlayer(vehicle_id)
+	for _,player in pairs(g_players) do
+		if player.vehicle_id==vehicle_id then
+			return true
+		end
+	end
+
+	local component_data,is_success=server.getVehicleComponents(vehicle_id)
+	if not is_success or not component_data then return false end
+	for _,character_id in ipairs(component_data.characters or {}) do
+		if findPeerIdByCharacterId(character_id) then
+			return true
+		end
+	end
+	return false
+end
+
+function debugJoinVehicle(vehicle_id)
+	vehicle_id=vehicle_id//1|0
+	if isVehicleOccupiedByPlayer(vehicle_id) then
+		clearDebugVehicle(vehicle_id)
+		return 'occupied'
+	end
+
+	-- 未ロード車両は onVehicleLoad で再試行する。
+	g_debug_vehicle_ids[vehicle_id]=true
+	local player=g_debug_vehicle_players[vehicle_id]
+	if not player then
+		player={
+			id=-1,
+			name='DEBUG BLUE',
+			trimmed_name='DEBUG BLUE',
+			team='BLUE',
+			alive=true,
+			ready=true,
+			vehicle_id=vehicle_id,
+			popup_name='debug_vehicle_status_'..vehicle_id,
+			is_debug_vehicle_player=true,
+		}
+		g_debug_vehicle_players[vehicle_id]=player
+	end
+
+	local vehicle=registerVehicle(vehicle_id, player)
+	if not vehicle then
+		return 'pending'
+	end
+
+	vehicle.player=player
+	player.vehicle_id=vehicle_id
+	if g_has_webmap then
+		bindVehicleTeamToWebMap(vehicle_id, 'BLUE')
+	end
+	g_team_status_dirty=true
+	g_player_status_dirty=true
+	return 'assigned'
+end
+
+function debugJoinAllVehicles()
+	local vehicle_ids={}
+	for vehicle_id in pairs(g_vehicle_owners) do vehicle_ids[vehicle_id]=true end
+	for _,vehicle in ipairs(g_vehicles) do vehicle_ids[vehicle.vehicle_id]=true end
+
+	local assigned,occupied,pending=0,0,0
+	for vehicle_id in pairs(vehicle_ids) do
+		local result=debugJoinVehicle(vehicle_id)
+		if result=='assigned' then
+			assigned=assigned+1
+		elseif result=='occupied' then
+			occupied=occupied+1
+		else
+			pending=pending+1
+		end
+	end
+	return assigned,occupied,pending
+end
+
 function registerVehicle(vehicle_id,player)
+	-- 実プレイヤーが乗った場合は、debug1 の擬似プレイヤーを必ず解除する。
+	if not player.is_debug_vehicle_player then
+		clearDebugVehicle(vehicle_id)
+	end
 	--まずは既存のプレイヤーのビークルIDを解除する
 	if player.vehicle_id and player.vehicle_id>=0 then
 		local old_vehicle = findVehicle(player.vehicle_id)
@@ -2908,7 +3035,9 @@ function registerVehicle(vehicle_id,player)
 	-- シートのない車両は登録しない
 	if #component_data.components.seats < 1 then return end
 
-	announce("Vehicle registered. Voxels:"..tostring(component_data.voxels//1|0), player.id)
+	if not player.is_debug_vehicle_player then
+		announce("Vehicle registered. Voxels:"..tostring(component_data.voxels//1|0), player.id)
+	end
 
 	local name=data.name=='' and 'Vehicle' or data.name
 	vehicle={
@@ -3241,13 +3370,23 @@ end
 function updateTeamStatus()
 	-- gen map
 	local team_map={}
-	for _,player in pairs(g_players) do
+	local function addToTeam(player)
 		local team_list=team_map[player.team]
 		if not team_list then
 			team_list={player}
 			team_map[player.team]=team_list
 		else
 			table.insert(team_list, player)
+		end
+	end
+	for _,player in pairs(g_players) do
+		addToTeam(player)
+	end
+	-- debug1 の無人車両も左上の BLUE リストへ表示する。
+	for vehicle_id,player in pairs(g_debug_vehicle_players) do
+		local vehicle=findVehicle(vehicle_id)
+		if vehicle and vehicle.player==player then
+			addToTeam(player)
 		end
 	end
 
@@ -3304,6 +3443,12 @@ function updatePlayerStatus()
 		-- 接頭辞を含めて trim することで、PopupScreen の表示幅上限を超えないようにする。
 		local display_name=isVipPlayer(player) and trim('[VIP]'..player.trimmed_name) or player.trimmed_name
 		setPopup(player.popup_name, true, playerToString(display_name,player.alive,player.ready,vehicle,player.logged_out))
+	end
+	for vehicle_id,player in pairs(g_debug_vehicle_players) do
+		local vehicle=findVehicle(vehicle_id)
+		if vehicle and vehicle.player==player then
+			setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle))
+		end
 	end
 end
 
