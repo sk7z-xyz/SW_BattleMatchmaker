@@ -404,6 +404,7 @@ add_setting('Damage Popup Distance','damage_popup_distance','integer',0)
 add_setting('Auto Admin','auto_admin','boolean')
 add_setting('Game Mode SJAC','game_mode_sjac','boolean')
 add_setting('Battle Mode','battle_mode','integer',0,1)
+add_setting('Player Status Display','player_status','integer',0,1)
 
 g_default_teams={
 	'RED',
@@ -453,6 +454,7 @@ g_default_savedata={
 	auto_admin		=property.checkbox("Auto admin", false),
 	game_mode_sjac		=property.checkbox("Game Mode SJAC:True SGAC:False", true),
 	battle_mode			=0,
+	player_status		=0,
 
 }
 
@@ -1125,6 +1127,9 @@ g_commands={
 				updateCenterFlag()
 			elseif setting_define.key=='vip_hp_multiplier' then
 				refreshVipVehicleHp()
+				g_player_status_dirty=true
+			elseif setting_define.key=='player_status' then
+				g_team_status_dirty=true
 				g_player_status_dirty=true
 			end
 			announce(setting_define.name..' set to '..tostring(value), -1)
@@ -2945,6 +2950,22 @@ function isVehicleOccupiedByPlayer(vehicle_id)
 	return false
 end
 
+local debug_player_name_bases={
+	'AoiKaze',
+	'Mizuki',
+	'HarborFox',
+	'SkyLynx',
+	'NavyManta',
+	'SoraKite',
+	'AquaRaven',
+	'BlueOrbit',
+}
+
+function getDebugPlayerName(vehicle_id)
+	local base=debug_player_name_bases[vehicle_id%#debug_player_name_bases+1]
+	return base..string.format('%03d', vehicle_id%1000)
+end
+
 function debugJoinVehicle(vehicle_id)
 	vehicle_id=vehicle_id//1|0
 	if isVehicleOccupiedByPlayer(vehicle_id) then
@@ -2956,10 +2977,11 @@ function debugJoinVehicle(vehicle_id)
 	g_debug_vehicle_ids[vehicle_id]=true
 	local player=g_debug_vehicle_players[vehicle_id]
 	if not player then
+		local name=getDebugPlayerName(vehicle_id)
 		player={
 			id=-1,
-			name='DEBUG BLUE',
-			trimmed_name='DEBUG BLUE',
+			name=name,
+			trimmed_name=trim(name),
 			team='BLUE',
 			alive=true,
 			ready=true,
@@ -3407,11 +3429,23 @@ function updateTeamStatus()
 
 		local popup_x=-1.04+idx*0.18
 		local popup_y=0.9
+		if g_savedata.player_status==1 then
+			-- チーム名だけの1行表示を基準に、プレイヤーの追加行ごとに下げる。
+			local extra_line_count=#player_list
+			popup_y=popup_y-extra_line_count*0.019
+		end
 		registerPopup(team_status.popup_name, popup_x, popup_y)
 
-		for i,player in ipairs(player_list) do
-			local player_popup_y=popup_y-i*0.19
-			registerPopup(player.popup_name, popup_x, player_popup_y)
+		if g_savedata.player_status==0 then
+			setPopup(team_status.popup_name, true, trim(team_name))
+			for i,player in ipairs(player_list) do
+				local player_popup_y=popup_y-i*0.19
+				registerPopup(player.popup_name, popup_x, player_popup_y)
+			end
+		else
+			for _,player in ipairs(player_list) do
+				unregisterPopup(player.popup_name)
+			end
 		end
 	end
 end
@@ -3434,6 +3468,33 @@ function registerTeamStatus(name)
 end
 
 function updatePlayerStatus()
+	if g_savedata.player_status==1 then
+		local team_map={}
+		local function addToTeam(player)
+			if not team_map[player.team] then team_map[player.team]={} end
+			table.insert(team_map[player.team], player)
+		end
+		for _,player in pairs(g_players) do
+			addToTeam(player)
+		end
+		for vehicle_id,player in pairs(g_debug_vehicle_players) do
+			local vehicle=findVehicle(vehicle_id)
+			if vehicle and vehicle.player==player then
+				addToTeam(player)
+			end
+		end
+
+		for team_name,players in pairs(team_map) do
+			table.sort(players, function(a,b) return a.name<b.name end)
+			local lines={trim(team_name)}
+			for _,player in ipairs(players) do
+				lines[#lines+1]=playerToCompactStatusString(player)
+			end
+			setPopup('team_status_'..team_name, true, table.concat(lines, '\n'))
+		end
+		return
+	end
+
 	for _,player in pairs(g_players) do
 		local vehicle
 		if player.vehicle_id>=0 then
@@ -3441,7 +3502,7 @@ function updatePlayerStatus()
 		end
 
 		-- 接頭辞を含めて trim することで、PopupScreen の表示幅上限を超えないようにする。
-		local display_name=isVipPlayer(player) and trim('[VIP]'..player.trimmed_name) or player.trimmed_name
+		local display_name=isVipPlayer(player) and trim('!'..player.trimmed_name) or player.trimmed_name
 		setPopup(player.popup_name, true, playerToString(display_name,player.alive,player.ready,vehicle,player.logged_out))
 	end
 	for vehicle_id,player in pairs(g_debug_vehicle_players) do
@@ -3450,6 +3511,28 @@ function updatePlayerStatus()
 			setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle))
 		end
 	end
+end
+
+function playerToCompactStatusString(player)
+	local vehicle
+	if player.vehicle_id>=0 then
+		vehicle=findVehicle(player.vehicle_id)
+	end
+
+	local display_name=isVipPlayer(player) and '!'..player.trimmed_name or player.trimmed_name
+	local hp_text='-----'
+	if vehicle and vehicle.hp then
+		hp_text=tostring(math.max(vehicle.hp//1|0, 0))
+	end
+	-- PopupScreen の横幅に収めるため、HP 5桁と区切り文字以外を名前に割り当てる。
+	local name_max_width=1000-getWidth(string.byte('|'))-5*getWidth(string.byte('0'))
+	return trimWithTruncationDot(display_name, name_max_width)..'|'..hp_text
+end
+
+function trimWithTruncationDot(str, max_width)
+	if trim(str, max_width)==str then return str end
+	local dot_width=getWidth(string.byte('.'))
+	return trim(str, math.max(max_width-dot_width, 0))..'.'
 end
 
 function playerToString(name, alive, ready, vehicle, logged_out)
