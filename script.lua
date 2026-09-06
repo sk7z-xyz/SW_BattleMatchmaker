@@ -63,6 +63,8 @@ g_boundary_warning_popup_ids = {}
 g_center_popup_warning_distance = 75
 g_auto_battle_state=nil -- {phase='wait_shuffle'|'wait_teleport', timer=ticks}
 g_vehicle_owners={} -- {[vehicle_id]=peer_id}
+g_webmap_battle_area_last_signature=nil
+g_webmap_battle_area_visible=false
 
 -- WebMap のイベントまたは ?mm order が来る前に登録しておく。
 function getPlayerSteamId(peer_id)
@@ -256,6 +258,49 @@ function handleWebMapCacheEvent(event_name, ...)
 		if not cache_state.vehicle_name then
 			g_webmap_cache_by_steam[steam_id]=nil
 		end
+	end
+end
+
+-- WebMapへ渡すのは旗vehicleのIDと、CENTERの現在半径だけ。
+-- 座標・tick・presetは通常vehicleの送信やWebMap表示では使用しない。
+function webMapFlagPosition(flag_vehicle, radius_m)
+	local vehicle_id=flag_vehicle and tonumber(flag_vehicle.vehicle_id) or nil
+	if not vehicle_id then return 'null' end
+	local radius_json=radius_m and (',"radius_m":'..tostring(math.floor(radius_m+0.5))) or ''
+	return '{"vehicle_id":'..tostring(math.floor(vehicle_id))..radius_json..'}'
+end
+
+function getWebMapBattleAreaPayload()
+	local flags=g_savedata.flag_vehicles or {}
+	return '{"RED":'..webMapFlagPosition(flags.RED)..
+		',"BLUE":'..webMapFlagPosition(flags.BLUE)..
+		',"CENTER":'..webMapFlagPosition(flags.CENTER,getFlagMapRadius('CENTER'))..'}'
+end
+
+function sendWebMapBattleArea(force)
+	if not g_has_webmap then return end
+	local payload=getWebMapBattleAreaPayload()
+	if #payload + 16 > 4000 then
+		announce('WebMap battle_area payload exceeds 4000 characters.', -1)
+		return
+	end
+	-- 通常送信は同一状態を抑制し、heartbeat/接続同期の force 送信は再送を許可する。
+	if not force and g_webmap_battle_area_last_signature==payload then
+		return
+	end
+	g_webmap_battle_area_last_signature=payload
+	-- 旗操作中に積まれた古い battle_area は破棄し、最新の1件だけを送る。
+	for i=#g_pending_server_commands,1,-1 do
+		if string.sub(g_pending_server_commands[i].cmd,1,16)=='?wm battle_area ' then
+			table.remove(g_pending_server_commands,i)
+		end
+	end
+	queueServerCommand('?wm battle_area '..payload,1)
+end
+
+function markWebMapBattleAreaVisibleIfComplete()
+	if g_savedata.flag_vehicles.RED and g_savedata.flag_vehicles.BLUE then
+		g_webmap_battle_area_visible=true
 	end
 end
 
@@ -1932,8 +1977,8 @@ function onCreate(is_world_create)
 		announce('Webmap addon not detected. Map display on UI will not work.', 0)
 	else
 		announce('Webmap addon detected. Map display on UI is enabled.', 0)
+		sendWebMapBattleArea(true)
 	end
-
 	-- OnCreate 時に airports テーブルの x,z が未設定（0）のものを解決する
 	resolveAirports()
 end
@@ -1945,12 +1990,12 @@ function queueServerCommand(cmd, delay)
 end
 
 function onDestroy()
-	clearPopups()
-	clearVehiclePopups()
-	clearCenterInfoPopups()
-	clearBoundaryWarningPopups()
-	clearSupplies()
-	clearFlags()
+    clearPopups()
+    clearVehiclePopups()
+    clearCenterInfoPopups()
+    clearBoundaryWarningPopups()
+    clearSupplies()
+    clearFlags()
 end
 
 function onTick()
@@ -2169,6 +2214,10 @@ function onTick()
 	g_tick_count=g_tick_count+1
 	if g_tick_count>=60 then
 		g_tick_count=0
+		-- RED/BLUE 表示中は試合前・pause中も強制heartbeatを送り、WebMapの状態消失を復元する。
+		if g_in_game or g_webmap_battle_area_visible then
+			sendWebMapBattleArea(true)
+		end
 		for team,positions in pairs(team_vehicle_positions) do
 			local text='['..team..']\n'
 			for i,pos in ipairs(positions) do
@@ -3405,12 +3454,12 @@ function updateTeamStatus()
 		addToTeam(player)
 	end
 	-- debug1 の無人車両も左上の BLUE リストへ表示する。
-	for vehicle_id,player in pairs(g_debug_vehicle_players) do
-		local vehicle=findVehicle(vehicle_id)
-		if vehicle and vehicle.player==player then
-			addToTeam(player)
-		end
-	end
+    for vehicle_id, player in pairs(g_debug_vehicle_players) do
+        local vehicle = findVehicle(vehicle_id)
+        if vehicle and vehicle.player == player then
+            addToTeam(player)
+        end
+    end
 
 	-- remove
 	local i=#g_team_stats
@@ -3634,6 +3683,8 @@ function startGame()
 	g_timer=g_savedata.game_time*60*60//1|0
 	g_battle_start_timer=g_timer
 	g_center_radius_last_update=-1
+	g_webmap_battle_area_last_signature=nil
+	sendWebMapBattleArea(true)
 	-- 前試合での VIP 撃破状態は持ち越さない。VIP 指定自体は維持する。
 	g_vip.defeated_teams={}
 	g_remind_interval=g_timer//4
@@ -3673,6 +3724,7 @@ function finishGame(is_abort)
 	g_in_game=false
 	g_in_countdown=false
 	g_pause=false
+	g_webmap_battle_area_visible=false
 	g_player_status_dirty=true
 	setPopup('game_time', false)
 
@@ -3707,6 +3759,8 @@ function finishGame(is_abort)
 	end
 
 	server.command("?cleanup")
+	-- 終了・中止・時間切れを含む全終了経路で表示を即時解除する。
+	sendWebMapBattleArea(true)
 end
 
 function setSettingsToBattle()
@@ -4653,6 +4707,8 @@ function spawnFlag(peer_id, name)
 			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
 		end
 		if name == 'RED' or name == 'BLUE' then updateCenterFlag() end
+		markWebMapBattleAreaVisibleIfComplete()
+		sendWebMapBattleArea(true)
 	end
 end
 
@@ -4700,6 +4756,8 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn, flag_component_na
 			g_flag_assignments.BLUE = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
 		end
 		if name == 'RED' or name == 'BLUE' then updateCenterFlag() end
+		markWebMapBattleAreaVisibleIfComplete()
+		sendWebMapBattleArea(true)
 	else
 		announce('Failed to spawn flag "' .. name .. '"', peer_id)
 	end
@@ -4767,18 +4825,22 @@ function swapFlagPositions(peer_id)
 		z = red_z,
 		y = red_assignment and red_assignment.y or red_y,
 	}
+	sendWebMapBattleArea(true)
 
 	announce('RED and BLUE flag positions swapped.', -1)
 	return true
 end
 
 function despawnFlag(peer_id, name)
+	name=string.upper(name or '')
 	local flag=g_savedata.flag_vehicles[name]
 	if flag then
 		server.despawnVehicle(flag.vehicle_id, true)
 		server.removeMapID(-1, flag.ui_id)
 		g_savedata.flag_vehicles[name]=nil
 	end
+	if name=='RED' or name=='BLUE' then g_webmap_battle_area_visible=false end
+	sendWebMapBattleArea(true)
 end
 
 function clearFlags()
@@ -4789,6 +4851,8 @@ function clearFlags()
 	end
 	g_savedata.flag_vehicles={}
 	g_debug_flag_radii={}
+	g_webmap_battle_area_visible=false
+	sendWebMapBattleArea(true)
 end
 
 -- Utility Functions --
@@ -5045,18 +5109,18 @@ function buildNameTokens(name)
 end
 
 function getIffDisplayName(player)
-	-- IFF の名前プロトコルは英小文字・数字・_ の最大10文字なので、
-	-- PopupScreen と異なり [VIP] は使わず vip_ 接頭辞で識別する。
-	return isVipPlayer(player) and 'vip_'..(player.name or '') or (player.name or '')
+    -- IFF の名前プロトコルは英小文字・数字・_ の最大10文字なので、
+    -- PopupScreen と異なり [VIP] は使わず vip_ 接頭辞で識別する。
+    return isVipPlayer(player) and 'vip_' .. (player.name or '') or (player.name or '')
 end
 
 function refreshIffNameTokens()
-	g_name_tx={}
-	for _,player in pairs(g_players) do
-		if player.alive and player.vehicle_id>=0 then
-			g_name_tx[player.vehicle_id]={tokens=buildNameTokens(getIffDisplayName(player)),idx=1}
-		end
-	end
+    g_name_tx = {}
+    for _, player in pairs(g_players) do
+        if player.alive and player.vehicle_id >= 0 then
+            g_name_tx[player.vehicle_id] = { tokens = buildNameTokens(getIffDisplayName(player)), idx = 1 }
+        end
+    end
 end
 
 function getVehicleSeat(vehicle_id)
