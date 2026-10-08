@@ -49,7 +49,9 @@
 | `Logout` | 試合中にログアウト中 |
 | `Dead` | 死亡・車両撃破済み |
 
-画面にはチーム、プレイヤー名、状態、登録車両名、HP が表示されます。試合中にログアウトしても情報は保持され、同じ Steam アカウントで戻ると試合へ復帰します。ただし、ログアウト中は勝敗判定上の生存者には数えられません。
+既定の通常表示（`player_status=0`）では、チーム、プレイヤー名、状態、登録車両名、HP が表示されます。Admin が `?mm set player_status 1` を実行すると、チーム名と `名前|HP` の一覧を表示するコンパクト表示へ切り替わります。車両がないプレイヤーの HP は `-----` と表示します。
+
+試合中にログアウトしても情報は保持され、同じ Steam アカウントで戻ると試合へ復帰します。ただし、ログアウト中は勝敗判定上の生存者には数えられません。
 
 ### プレイヤーがよく使うコマンド
 
@@ -116,11 +118,11 @@
 
 | モード | プレイヤー向けの違い |
 | --- | --- |
-| SJAC | `?mm sjac` で適用するプリセット。車両 HP は 50、ネームプレートは表示になります。 |
-| SGAC | `?mm sgac` で適用する地上戦向けプリセット。車両 HP は 6000、ネームプレートは非表示になります。 |
-| SGAC + CENTER | SGAC で利用できる追加モードです。中央に安全エリアが作られ、試合中にエリアが徐々に狭くなります。 |
+| SJAC | `?mm sjac` で適用するプリセット。車両の最大 HP は 50、ネームプレートは表示になります。 |
+| SGAC | `?mm sgac` で適用する地上戦向けプリセット。車両の最大 HP はボクセル数に応じて 2000～6000、ネームプレートは非表示になります。 |
+| SGAC + CENTER | SGAC コマンドが選択する CENTER モードです。RED / BLUE 旗の配置時などに中央へ安全エリアを作成し、試合中にエリアが徐々に狭くなります。 |
 
-ネームプレートの違いは SJAC / SGAC コマンドが適用する既定プリセットの差です。Admin が `nameplate_enabled` を変更した場合は、その設定が次回の試合開始時に使われます。
+HP は VIP 倍率を適用する前の値です。ネームプレートの違いは SJAC / SGAC コマンドが適用する既定プリセットの差です。Admin が `nameplate_enabled` を変更した場合は、その設定が次回の試合開始時に使われます。
 
 SGAC + CENTER では、マップの `BattleArea` 円内に留まってください。境界へ近づくと距離警告が表示され、エリア外の登録車両は砲撃を受けます。
 
@@ -135,7 +137,7 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 
 ## 2. 開発者・サーバー管理者向け仕様
 
-以下は [`script.lua`](./script.lua) Version 1.6.3 を正本とした詳細仕様です。公開コマンド 41 件、変更可能設定 32 件、状態遷移、アドオン部品、外部連携をコードの実挙動に合わせて記載しています。
+以下は [`script.lua`](./script.lua) Version 1.6.3 を正本とした詳細仕様です。公開コマンド 43 件、変更可能設定 34 件、状態遷移、アドオン部品、外部連携をコードの実挙動に合わせて記載しています。
 
 ### 必要条件とアドオン構成
 
@@ -148,7 +150,7 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 
 同梱アドオンには、スクリプトが検索する `name=supply`、`name=flag`、`name=flag_red`、`name=flag_blue`、`name=flag_center`、`name=iff_sender`、`name=alt` の各コンポーネントが含まれています。
 
-スクリプト初期化時は、保存済みの補給オブジェクトと旗を削除し、待機中のゲーム設定を適用し、UI を作成し直します。新規ワールド作成時だけ固定 4 地点の IFF 送信機を作成します。その後、WebMap 検出と航空基地座標の解決を行います。
+スクリプト初期化時は、保存済みの補給オブジェクトと旗を削除し、燃料・弾薬無限を含む待機中のゲーム設定を適用し、UI を作成し直します。新規ワールド作成時だけ固定 4 地点の IFF 送信機を作成します。その後、WebMap 検出と航空基地座標の解決を行います。
 
 ### 権限モデル
 
@@ -184,6 +186,7 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 - 参加者の Ready を解除
 - 補給オブジェクトをすべて削除
 - 三人称、ネームプレート、プレイヤーダメージ、標準マップ表示を試合用設定へ変更
+- 燃料を有限に設定（`infinite_fuel=false`、SJAC / SGAC 共通）
 - IFF 周波数を再生成
 - WebMap があれば最大ダメージと SJAC / SGAC 開始イベントを送信
 
@@ -196,10 +199,13 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 - ログアウト中の参加者を削除
 - 三人称、ネームプレート、標準マップ表示を有効化し、車両・プレイヤーダメージを無効化
 - `infinite_ammo` を有効化
+- 通常終了、時間切れ、試合中の `abort` で燃料を無限に設定（`infinite_fuel=true`）
 - `?cleanup` コマンドを発行
 - `auto_battle=true` かつ中止ではない場合、自動バトル準備を予約
 
 本スクリプトは試合開始時に `infinite_ammo` を無効化しないため、待機処理で有効になった値はそのままです。
+
+カウントダウン中の `abort` はカウントダウンを停止するだけで、終了処理を呼ばず、燃料設定も変更しません。
 
 ### 車両管理
 
@@ -228,7 +234,7 @@ hp_step > 0 の場合、推定HPを hp_step 単位で切り捨て
 最終的に 1 以上の整数へ変換
 ```
 
-通常は `vehicle_hp` が Adaptive HP の上限、`min_hp` が下限です。ただし `min_hp > vehicle_hp` の設定では、コード上の計算順により `min_hp` が優先されます。VIP 指定中で車両の所有者が VIP の SteamID64 と一致する場合、計算後の最大 HP に `vip_hp_multiplier` を乗算します。HP 関連設定や弾薬回数を `?mm set` で変更しても、既に登録済みの車両へは通常さかのぼって適用されません。`vip_hp_multiplier` の変更、および VIP の指定・解除は、該当 VIP 車両の最大 HP を即時再計算して全回復させます。`?mm SJAC` / `?mm SGAC` は生存中の登録車両を再計算し、現在 HP も新しい最大 HP まで回復させます。
+通常は `vehicle_hp` が Adaptive HP の上限、`min_hp` が下限です。ただし `min_hp > vehicle_hp` の設定では、コード上の計算順により `min_hp` が優先されます。VIP 指定中で車両の所有者が VIP の SteamID64 と一致する場合、計算後の最大 HP に `vip_hp_multiplier` を乗算します。HP 関連設定や弾薬回数を `?mm set` で変更しても、既に登録済みの車両へは通常さかのぼって適用されません。`vip_hp_multiplier` の変更、VIP の指定・解除、`?mm SJAC` / `?mm SGAC` は、対象となる生存中の登録車両の最大 HP を即時再計算します。待機中は現在 HP も新しい最大 HP になります。試合中は現在 HP を回復させず、新しい最大 HP を超えている場合だけ上限まで切り詰めます。
 
 #### ダメージ・水没・撃破
 
@@ -253,7 +259,7 @@ hp_step > 0 の場合、推定HPを hp_step 単位で切り捨て
 
 - 同じチームの閲覧者には表示します。
 - 自分のアイコンは通常の不透明度、他者は半透明です。
-- Logout 中は車両だけを全閲覧者へ半透明表示します。
+- Logout 中は車両だけを半透明表示します。表示対象は同じチームの閲覧者、未参加の閲覧者、または残り時間が 5 分以下の全閲覧者です。
 - Matchmaker に未参加の閲覧者には全対象が表示されます。
 - 残り時間が 5 分以下になると、敵を含む全対象を表示します。
 
@@ -263,12 +269,15 @@ hp_step > 0 の場合、推定HPを hp_step 単位で切り捨て
 
 #### SJAC / SGAC プリセット
 
-`?mm SJAC` と `?mm SGAC` は、モードフラグだけでなく関連設定と既存車両 HP をまとめて変更します。
+`?mm SJAC` と `?mm SGAC` は、モードフラグだけでなく関連設定と既存車両の最大 HP をまとめて変更します。試合中の現在 HP は回復しません。
 
 | 項目 | SJAC | SGAC |
 | --- | ---: | ---: |
 | `game_mode_sjac` | `true` | `false` |
+| `battle_mode` | 0 | 1 |
 | `vehicle_hp` | 50 | 6000 |
+| `adaptive_hp` | `false` | `true` |
+| `min_hp` | 50 | 2000 |
 | `max_damage` | 1000 | 3000 |
 | `sunk_depth` | 1 | 5 |
 | `game_time` | 15 | 15 |
@@ -277,17 +286,21 @@ hp_step > 0 の場合、推定HPを hp_step 単位で切り捨て
 | `infinite_batteries` | `true` | `false` |
 | WebMap `ground_mode` | `false` | `true` |
 
+`vehicle_hp` は SJAC では固定の最大 HP、SGAC では Adaptive HP の上限です。SGAC の基準最大 HP はボクセル数から計算し、2000～6000 に収めます。VIP 車両には、この値へ `vip_hp_multiplier` を適用します。
+
+モードコマンドは `battle_mode` の値も変更しますが、CENTER 旗の更新処理は呼びません。CENTER 旗の作成・削除を反映するには、`?mm battle_mode 0|1` または `?mm set battle_mode 0|1` を実行するか、RED / BLUE 旗を再配置します。
+
 `?mm set game_mode_sjac true|false` はフラグ 1 個だけを変更し、このプリセット処理は実行しません。通常は `?mm SJAC` / `?mm SGAC` を使用してください。
 
 新規ワールドでアドオンプロパティ `Game Mode SJAC:True SGAC:False` が `false` の場合、初期化時に SGAC プリセットを適用します。
 
 #### Battle Mode 0: 通常
 
-`battle_mode=0` は通常モードです。CENTER 旗は削除され、縮小戦域、境界警告、境界砲撃を使用しません。
+`battle_mode=0` は通常モードです。縮小戦域、境界警告、境界砲撃を使用しません。`?mm battle_mode 0` または `?mm set battle_mode 0` で設定すると、CENTER 旗も削除します。
 
 #### Battle Mode 1: CENTER 縮小戦域
 
-`battle_mode=1` にすると、RED と BLUE の旗の中点へ `CENTER` 旗を配置します。実際の縮小・警告・砲撃は SGAC、試合中、`battle_mode=1` のすべてを満たす場合だけ動作します。
+`?mm battle_mode 1` または `?mm set battle_mode 1` で設定すると、RED / BLUE 両方の旗割り当てがある場合に、その中点へ `CENTER` 旗を配置します。`battle_mode=1` で RED / BLUE 旗を配置した場合も CENTER を更新します。実際の縮小・警告・砲撃は SGAC、試合中、`battle_mode=1` のすべてを満たす場合だけ動作します。
 
 - 初期半径は `max(300, RED-BLUE間距離 ÷ 2 × 1.5)` m です。
 - 試合時間全体を使って 300 m まで線形に縮小します。
@@ -302,7 +315,7 @@ CENTER の地表高度は、RED-BLUE 間の水平距離が 6,000 m 未満の場�
 
 ### 全コマンド仕様
 
-引数表記は `[必須]`、`(任意)` です。`?mm` だけを実行すると、自分が実行可能なコマンド一覧と現在の 32 設定値を表示します。
+引数表記は `[必須]`、`(任意)` です。`?mm` だけを実行すると、自分が実行可能なコマンド一覧と現在の 34 設定値を表示します。
 
 #### 全員が実行可能
 
@@ -349,6 +362,7 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 | `?mm dismiss [チーム名]` | なし | 試合前かつカウントダウン外で、指定名と完全一致するチームの全員を除外します。 |
 | `?mm vip [RED\|BLUE\|OFF] (peer_id)` | なし | RED または BLUE の参加者を VIP に指定します。チーム指定は RED なら `r` / `re` / `red`、BLUE なら `b` / `bl` / `blu` / `blue` も使えます。VIP が撃破されると、その所属チームは敗北扱いになります。VIP のステータスポップアップ名には `[VIP]` を付加します。`OFF` で解除します。VIP 指定は SteamID64 で Lua セッション単位に管理され、初期値は OFF です。 |
 | `?mm reset` | なし | 全プレイヤー・登録車両情報を空にし、補給・旗を削除して終了処理を実行します。 |
+| `?mm debug1` | なし | 管理中の無人車両を BLUE の疑似プレイヤーとして登録し、HP・ステータスを表示します。実プレイヤー乗車中の車両は除外し、未ロード車両はロード時に再試行します。疑似プレイヤーは Ready 判定、勝敗判定、シャッフルの参加者には含めません。 |
 | `?mm clear_supply` | なし | 全補給オブジェクトを削除します。現行実装では同時に全旗も削除します。 |
 | `?mm flag [名前] (x) (z) (y)` | `?mm f [名前] (x) (z) (y)` | 旗を配置します。座標配置は x、z、y の 3 値をすべて指定した場合だけで、それ以外は実行者の正面 8 m・上方 9 mへ配置します。 |
 | `?mm swap_flag` | `?mm sf` | RED と BLUE の旗車両、マップ表示、`tp` 用割り当て座標を互いの位置へ交換します。両方の旗が存在する場合だけ実行します。 |
@@ -525,12 +539,25 @@ VIP は `peer_id` ではなく SteamID64 で識別するため、再接続後も
 - SJAC / SGAC の開始・勝敗終了イベント
 - SJAC / SGAC 切り替え時の ground mode
 - 自分がスポーンした車両と `order` 済み車両の復元キャッシュ
+- RED / BLUE / CENTER の旗車両 ID と CENTER 半径による戦闘エリア同期
 
 WebMap 車両キャッシュは SteamID64 単位です。登録車両が Matchmaker 側に見つからない状態で `?mm order` を実行すると、同じスクリプトセッション中に登録成功したキャッシュだけを使い、正面 8 m・上方 2 mへ復元要求を送ります。Lua 再読み込み前の Bridge 側キャッシュは意図的に使用しません。復元車両は最大 600 tick、ロード完了と親車両の登録を再試行します。
 
 単に車両へ座って紐付けただけでは WebMap キャッシュへ登録されません。
 
 WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利・引き分け時だけ送信します。時間切れ、Admin による中止、参加者 0 件による中断の経路では送信しません。
+
+#### 戦闘エリア同期
+
+`?wm battle_area` へ、RED / BLUE / CENTER の旗車両 ID と CENTER の半径を JSON で送信します。座標は含めず、存在しない旗は `null` とします。`radius_m` は CENTER のみに含め、現在半径を整数へ丸めた値です。
+
+```text
+?wm battle_area {"RED":{"vehicle_id":1},"BLUE":{"vehicle_id":2},"CENTER":{"vehicle_id":3,"radius_m":1500}}
+```
+
+旗の配置・交換・削除、試合開始・終了時に同期します。試合中、または RED / BLUE 両方の旗を配置して表示状態を保持している間は、60 tick ごとに強制再送します。待機中や Pause 中も、この条件を満たす場合は再送します。試合終了・中止時は定期再送を停止し、その時点の旗情報を送信します。
+
+送信は 1 tick 遅延させ、送信待ちの古い `battle_area` は最新の 1 件へ置き換えます。通常送信では同じ内容の再送を抑制し、強制再送では同じ内容でも送信します。
 
 ### 変更可能な設定
 
@@ -544,7 +571,7 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 | `vip_hp_multiplier` | number, 0.1以上 | 1 | VIP の登録車両だけに適用する最大 HP 倍率。`?mm set vip_hp_m <倍率>` を短縮名として使用可能。 |
 | `adaptive_hp` | boolean | `false` | ボクセル数連動 HP を有効化。 |
 | `min_hp` | integer, 1以上 | 2000 | Adaptive HP の下限。 |
-| `hp_per_voxel` | number, 0以上 | 3 | 1 ボクセルあたりの推定 HP。 |
+| `hp_per_voxel` | number, 0以上 | 4 | 1 ボクセルあたりの推定 HP。 |
 | `hp_step` | integer, 0以上 | 500 | 推定 HP の切り捨て単位。0 なら切り捨てなし。 |
 | `max_damage` | integer, 0以上 | 1000 | 1 tick に HP へ反映する最大ダメージ。 |
 | `sunk_depth` | integer, 0以上 | 1 | Y `< -sunk_depth` を撃破扱い。0 で無効。 |
@@ -571,6 +598,7 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 | `order_enabled` | boolean | `true` | 非 Pause の試合中に `order` を許可。試合前と Pause 中は値に関係なく許可。 |
 | `tps_enabled` | boolean | `true` | 試合中のキャラクター・車両三人称視点。 |
 | `nameplate_enabled` | boolean | `true` | 試合中のネームプレート。残り 5 分で強制的に true。 |
+| `player_status` | integer, 0～1 | 0 | 0=通常の詳細表示、1=チーム別の名前・HPコンパクト表示。変更時にステータス UI を更新。 |
 | `player_damage` | boolean | `false` | 試合中のプレイヤーダメージ。 |
 | `show_friends` | boolean | `true` | Matchmaker 独自の味方・終盤全車両マップ表示。 |
 | `auto_standby` | boolean | `true` | 試合終了時に全保持プレイヤーを生存・Wait へ戻す。 |
@@ -587,7 +615,7 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 | `auto_auth` | boolean | `true` | プレイヤー参加時に Auth を自動付与。 |
 | `auto_admin` | boolean | `false` | SteamID64 `76561198925749199`、`76561198024666675`、`76561197994178477` に限り、参加時に Admin を自動付与。 |
 | `game_mode_sjac` | boolean | `true` | SJAC 分岐なら true、SGAC 分岐なら false。`set` では関連プリセットを変更しない。 |
-| `battle_mode` | integer, 0～1 | 0 | 0=通常、1=CENTER 縮小戦域。変更時に CENTER 旗を更新。 |
+| `battle_mode` | integer, 0～1 | 0 | 0=通常、1=CENTER 縮小戦域。`set` で変更した場合に CENTER 旗を更新。 |
 
 ### 現行実装上の注意
 
@@ -647,7 +675,7 @@ README の各仕様は、主に次の [`script.lua`](./script.lua) の定義・�
 | 航空・地上基地と旗 | `airports`、`ground_base`、`assignAirbases`、`assignGroundBase`、`spawnFlagAtAdjustedAltitude`、`spawnFlagAt`、`swapFlagPositions` |
 | 補給・弾薬 | `g_ammo_supply_buttons`、`g_item_supply_buttons`、`onButtonPress`、`spawnSupply` |
 | IFF | `g_iff_spawn_positions`、`generateIffFreqs`、`createIffSender`、`encodeCoords`、`buildNameTokens`、`onTick` 内 IFF 更新 |
-| WebMap | `requestWebMapVehicleCache`、`requestWebMapVehicleRestore`、`handleWebMapCacheEvent`、`bindVehicleTeamToWebMap` |
+| WebMap | `requestWebMapVehicleCache`、`requestWebMapVehicleRestore`、`handleWebMapCacheEvent`、`bindVehicleTeamToWebMap`、`getWebMapBattleAreaPayload`、`sendWebMapBattleArea` |
 | 自動バトル | `scheduleAutoBattle`、`processAutoBattle` |
 
 ### ライセンス

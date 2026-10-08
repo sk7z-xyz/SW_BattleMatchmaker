@@ -465,7 +465,7 @@ g_default_savedata={
 	vip_hp_multiplier	=1,
 	adaptive_hp			=property.checkbox("Adaptive HP Enabled", false),
 	min_hp				=property.slider("Min HP", 50, 7000, 10, 2000),
-	hp_per_voxel		=property.slider("HP Per Voxel", 0, 10, 0.1, 3),
+	hp_per_voxel		=property.slider("HP Per Voxel", 0, 10, 0.1, 4),
 	hp_step				=property.slider("HP Step", 10, 1000, 10, 500),
 	max_damage			=1000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
@@ -756,6 +756,8 @@ end
 -- Helper functions to enable game modes SJAC and SGAC
 local function setGameMode(is_sjac, peer_id)
 	local old_vehicle_hp = g_savedata.vehicle_hp
+	local old_adaptive_hp = g_savedata.adaptive_hp
+	local old_min_hp = g_savedata.min_hp
 	local old_max_damage = g_savedata.max_damage
 	local old_sunk_depth = g_savedata.sunk_depth
 	local old_damage_popup_max_height = g_savedata.damage_popup_max_height
@@ -766,6 +768,8 @@ local function setGameMode(is_sjac, peer_id)
 
 	g_savedata.game_mode_sjac = is_sjac
 	g_savedata.vehicle_hp = is_sjac and 50 or 6000
+	g_savedata.adaptive_hp = not is_sjac
+	g_savedata.min_hp = is_sjac and 50 or 2000
 	g_savedata.max_damage = is_sjac and 1000 or 3000
 	g_savedata.sunk_depth = is_sjac and 1 or 5
 	g_savedata.game_time = is_sjac and 15 or 15
@@ -780,12 +784,14 @@ local function setGameMode(is_sjac, peer_id)
 
 	announce(is_sjac and 'SJAC Enable' or 'SGAC Enable', -1)
 	announce('vehicle_hp: '..tostring(old_vehicle_hp)..' -> '..tostring(g_savedata.vehicle_hp), peer_id)
+	announce('adaptive_hp: '..tostring(old_adaptive_hp)..' -> '..tostring(g_savedata.adaptive_hp), peer_id)
+	announce('min_hp: '..tostring(old_min_hp)..' -> '..tostring(g_savedata.min_hp), peer_id)
 	announce('max_damage: '..tostring(old_max_damage)..' -> '..tostring(g_savedata.max_damage), peer_id)
 	announce('sunk_depth: '..tostring(old_sunk_depth)..' -> '..tostring(g_savedata.sunk_depth), peer_id)
 	announce('damage_popup_max_height: '..tostring(old_damage_popup_max_height)..' -> '..tostring(g_savedata.damage_popup_max_height), peer_id)
 	announce('nameplate_enabled: '..tostring(old_nameplate_enabled)..' -> '..tostring(g_savedata.nameplate_enabled), peer_id)
 	announce('infinite_batteries: '..tostring(old_infinite_batteries)..' -> '..tostring(is_sjac), peer_id)
-	announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles -> '..tostring(g_savedata.vehicle_hp), peer_id)
+	announce('existing_vehicle_hp updated: '..tostring(updated_vehicle_count)..' vehicles', peer_id)
 end
 
 function enableSJAC(peer_id)
@@ -3180,7 +3186,13 @@ function refreshVipVehicleHp()
 end
 --max_hpは必ずここで設定すること
 function setVehicleMaxHp(vehicle, max_hp)
-	vehicle.hp=max_hp
+	-- 試合中の既存車両は、最大HPの再計算で回復させない。
+	-- 最大HPが現在HPを下回った場合だけ、新しい上限まで切り詰める。
+	if g_in_game and vehicle.hp~=nil then
+		vehicle.hp=math.min(vehicle.hp, max_hp)
+	else
+		vehicle.hp=max_hp
+	end
 	vehicle.max_hp=max_hp
 	if g_has_webmap then
     	--WebMapAddonに最大HPを設定する
@@ -3450,9 +3462,9 @@ function updateTeamStatus()
 			table.insert(team_list, player)
 		end
 	end
-	for _,player in pairs(g_players) do
-		addToTeam(player)
-	end
+    for _, player in pairs(g_players) do
+        addToTeam(player)
+    end
 	-- debug1 の無人車両も左上の BLUE リストへ表示する。
     for vehicle_id, player in pairs(g_debug_vehicle_players) do
         local vehicle = findVehicle(vehicle_id)
@@ -3551,7 +3563,7 @@ function updatePlayerStatus()
 		end
 
 		-- 接頭辞を含めて trim することで、PopupScreen の表示幅上限を超えないようにする。
-		local display_name=isVipPlayer(player) and trim('!'..player.trimmed_name) or player.trimmed_name
+		local display_name=isVipPlayer(player) and trim('[VIP]'..player.trimmed_name) or player.trimmed_name
 		setPopup(player.popup_name, true, playerToString(display_name,player.alive,player.ready,vehicle,player.logged_out))
 	end
 	for vehicle_id,player in pairs(g_debug_vehicle_players) do
@@ -3568,7 +3580,7 @@ function playerToCompactStatusString(player)
 		vehicle=findVehicle(player.vehicle_id)
 	end
 
-	local display_name=isVipPlayer(player) and '!'..player.trimmed_name or player.trimmed_name
+	local display_name=isVipPlayer(player) and '[VIP]'..player.trimmed_name or player.trimmed_name
 	local hp_text='-----'
 	if vehicle and vehicle.hp then
 		hp_text=tostring(math.max(vehicle.hp//1|0, 0))
@@ -3771,6 +3783,7 @@ function setSettingsToBattle()
 	server.setGameSetting('player_damage', g_savedata.player_damage)
 	server.setGameSetting('map_show_players', false)
 	server.setGameSetting('map_show_vehicles', false)
+	server.setGameSetting('infinite_fuel', false)
 end
 
 function setSettingsToStandby()
@@ -3782,6 +3795,7 @@ function setSettingsToStandby()
 	server.setGameSetting('map_show_players', true)
     server.setGameSetting('map_show_vehicles', true)
     server.setGameSetting('infinite_ammo', true)
+    server.setGameSetting('infinite_fuel', true)
 end
 
 -- UI
