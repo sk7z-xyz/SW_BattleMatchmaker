@@ -489,6 +489,7 @@ g_default_savedata={
 	auto_auth			=property.checkbox("Auto Auth", true),
 	sunk_depth			=property.slider("Sunk Depth", -100, 200, 1, 1),
 	iff_vehicles		={},
+	aircraft_carrier	={vehicle_ids={}, transforms={}},
 	auto_link_on_spawn	=true,
 	shuffle_history		={},
 	shuffle_history_K	=4,
@@ -988,6 +989,36 @@ g_commands={
 			clearSupplies()
 			clearFlags()
 			announce('All supplies cleared.', -1)
+		end,
+	},
+	{
+		name='carrier',
+		desc='Spawn CVN-78: default 300m ahead, or x z heading(deg) y(origin; default 20m)',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, x, z, heading, y)
+			spawnAircraftCarrier(peer_id,x,z,heading,y)
+		end,
+		args={
+			{name='x', type='number', require=false},
+			{name='z', type='number', require=false},
+			{name='heading', type='number', require=false},
+			{name='y', type='number', require=false},
+		},
+	},
+	{
+		name='carrier_status',
+		desc='Show actual carrier vehicle IDs, positions, simulation state and voxel counts',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			showAircraftCarrierStatus(peer_id)
+		end,
+	},
+	{
+		name='delete_carrier',
+		desc='Remove the three command-spawned CVN-78 sections',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			deleteAircraftCarrier(peer_id)
 		end,
 	},
 	{
@@ -2005,6 +2036,7 @@ function onDestroy()
 end
 
 function onTick()
+	updateAircraftCarrierSpawnCheck()
 	processPendingVehicleDespawns()
 	updateWebMapRestoreLinks()
 	updatePendingCenterFlagSpawns()
@@ -2455,6 +2487,7 @@ end
 
 function onVehicleDespawn(vehicle_id, peer_id)
 	vehicle_id=vehicle_id//1|0
+	forgetAircraftCarrierVehicle(vehicle_id)
 	g_pending_vehicle_despawns[vehicle_id]=true
 end
 
@@ -2474,6 +2507,10 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 end
 
 function onVehicleLoad(vehicle_id)
+	if isAircraftCarrierVehicle(vehicle_id) then
+		alignAircraftCarrierVehicle(vehicle_id)
+		return
+	end
 	-- debug1 が BLUE に割り当てた車両は、復元・スポーン元プレイヤーへの
 	-- 自動リンクで直後に上書きされないようにする。
 	if g_debug_vehicle_ids[vehicle_id] then
@@ -4920,6 +4957,208 @@ function getAheadMatrix(peer_id, y, z)
 	local offset=matrix.translation(0, y, -z)
 	local rotation=matrix.rotationToFaceXZ(-look_x, -look_z)
 	return matrix.multiply(position, matrix.multiply(rotation, offset))
+end
+
+
+-- CVN-78: playlist location "aircraft_carrier", component IDs 13/15/14.
+-- The three XMLs use different local origins. Always place by these offsets,
+-- rather than the approximate arrangement saved in the mission editor.
+g_aircraft_carrier_parts={
+	{component_id=13, z=-112.25, name='stern', spawn_offset={x=.625,y=-.125,z=.375}},
+	{component_id=15, z=-3.75, name='mid', spawn_offset={x=2,y=-.125,z=0}},
+	{component_id=14, z=108.5, name='bow', spawn_offset={x=2,y=-.125,z=-.375}},
+}
+g_aircraft_carrier_check_ticks=0
+g_aircraft_carrier_check_peer=-1
+g_aircraft_carrier_loaded={}
+
+function getAircraftCarrierState()
+	if not g_savedata.aircraft_carrier then
+		g_savedata.aircraft_carrier={vehicle_ids={}, transforms={}}
+	end
+	return g_savedata.aircraft_carrier
+end
+
+function isAircraftCarrierVehicle(vehicle_id)
+	for _,id in ipairs(getAircraftCarrierState().vehicle_ids) do
+		if id==vehicle_id then return true end
+	end
+	return false
+end
+
+function forgetAircraftCarrierVehicle(vehicle_id)
+	local state=getAircraftCarrierState()
+	for i=#state.vehicle_ids,1,-1 do
+		if state.vehicle_ids[i]==vehicle_id then table.remove(state.vehicle_ids,i) end
+	end
+	state.transforms[vehicle_id]=nil
+	g_aircraft_carrier_loaded[vehicle_id]=nil
+end
+
+function alignAircraftCarrierVehicle(vehicle_id)
+	-- Static addon vehicles are placed by the spawn call. Do not teleport them
+	-- from onVehicleLoad; this callback only excludes them from combat linking.
+	g_pending_link_requests[vehicle_id]=nil
+	g_aircraft_carrier_loaded[vehicle_id]=true
+end
+
+function showAircraftCarrierStatus(peer_id)
+	local state=getAircraftCarrierState()
+	if #state.vehicle_ids==0 then
+		announce('No tracked carrier. Spawn: ?mm carrier',peer_id)
+		return
+	end
+	for _,vehicle_id in ipairs(state.vehicle_ids) do
+		local data,exists=server.getVehicleData(vehicle_id)
+		local transform,has_position=server.getVehiclePos(vehicle_id)
+		local simulating,sim_found=server.getVehicleSimulating(vehicle_id)
+		local components,has_components=server.getVehicleComponents(vehicle_id)
+		local text=string.format('Carrier ID=%d exists=%s sim=%s components=%s voxels=%s',vehicle_id,
+			tostring(exists),sim_found and tostring(simulating) or 'unknown',tostring(has_components),
+			tostring(has_components and components and components.voxels or 'unknown'))
+		text=text..' onLoad_seen='..tostring(g_aircraft_carrier_loaded[vehicle_id]==true)
+		if has_position and transform then
+			local x,y,z=matrix.position(transform)
+			text=text..string.format(' actual=(%.2f,%.2f,%.2f)',x,y,z)
+			local target=state.transforms[vehicle_id]
+			if target then
+				local tx,ty,tz=matrix.position(target)
+				text=text..string.format(' delta=(%.2f,%.2f,%.2f)',x-tx,y-ty,z-tz)
+			end
+		else text=text..' actual=unavailable' end
+		announce(text,peer_id)
+	end
+end
+
+function updateAircraftCarrierSpawnCheck()
+	if g_aircraft_carrier_check_ticks>0 then
+		-- Fixed delays from spawn do not guarantee the vehicle has loaded.
+		for _,vehicle_id in ipairs(getAircraftCarrierState().vehicle_ids) do
+			if not g_aircraft_carrier_loaded[vehicle_id] then return end
+		end
+		g_aircraft_carrier_check_ticks=g_aircraft_carrier_check_ticks-1
+		if g_aircraft_carrier_check_ticks==0 then showAircraftCarrierStatus(g_aircraft_carrier_check_peer) end
+	end
+end
+
+function getAircraftCarrierAddonIndex()
+	local addon_index,is_success=server.getAddonIndex()
+	if not is_success then return nil,'Current addon not found.' end
+	local addon_data=server.getAddonData(addon_index)
+	if not addon_data then return nil,'Current addon data not found.' end
+	for location_index=0,addon_data.location_count-1 do
+		local location=server.getLocationData(addon_index,location_index)
+		if location and location.name=='aircraft_carrier' then
+			local found={}
+			for component_index=0,location.component_count-1 do
+				local component=server.getLocationComponentData(addon_index,location_index,component_index)
+				if component and component.type=='vehicle' then found[component.id]=component_index end
+			end
+			for _,part in ipairs(g_aircraft_carrier_parts) do
+				if not found[part.component_id] then
+					return nil,'Carrier component missing: '..part.name..' (ID '..part.component_id..').'
+				end
+			end
+			return addon_index,nil,location_index,found
+		end
+	end
+	return nil,'Playlist location "aircraft_carrier" not found.'
+end
+
+function deleteAircraftCarrier(peer_id, silent)
+	g_aircraft_carrier_check_ticks=0
+	local state=getAircraftCarrierState()
+	local ids=state.vehicle_ids
+	state.vehicle_ids={}
+	local removed=0
+	for _,vehicle_id in ipairs(ids) do
+		local deleted=server.despawnVehicle(vehicle_id,true)
+		local _,exists=server.getVehicleData(vehicle_id)
+		if deleted or not exists then
+			state.transforms[vehicle_id]=nil
+			g_aircraft_carrier_loaded[vehicle_id]=nil
+			g_pending_link_requests[vehicle_id]=nil
+			removed=removed+1
+		else
+			table.insert(state.vehicle_ids,vehicle_id)
+		end
+	end
+	local remaining=#state.vehicle_ids
+	if not silent then
+		if remaining>0 then
+			announce('Carrier removal incomplete: '..remaining..' section(s) remain. Retry ?mm delete_carrier.',peer_id)
+		elseif #ids==0 then
+			announce('No command-spawned carrier to remove.',peer_id)
+		else
+			announce('Carrier removed ('..removed..' sections).',peer_id)
+		end
+	end
+	return remaining==0
+end
+
+function spawnAircraftCarrier(peer_id, x, z, heading, y)
+	for _,value in pairs({x=x,z=z,heading=heading,y=y}) do
+		if type(value)~='number' or value~=value or math.abs(value)==math.huge then
+			announce('Carrier coordinates, heading and height must be finite numbers.',peer_id)
+			return
+		end
+	end
+	if (x==nil)~=(z==nil) then
+		announce('Specify both x and z: ?mm carrier [x z [heading [y]]]',peer_id)
+		return
+	end
+	local state=getAircraftCarrierState()
+	if #state.vehicle_ids>0 then
+		announce('A carrier is already tracked. Use ?mm delete_carrier first.',peer_id)
+		return
+	end
+	local addon_index,reason,location_index,component_indices=getAircraftCarrierAddonIndex()
+	if addon_index==nil then announce(reason,peer_id);return end
+	if x==nil then
+		if peer_id<0 then
+			announce('Server console requires coordinates: ?mm carrier x z [heading [y]]',peer_id)
+			return
+		end
+		local player_transform,is_success=server.getPlayerPos(peer_id)
+		if not is_success then announce('Failed to get player position.',peer_id);return end
+		local look_x,_,look_z=server.getPlayerLookDirection(peer_id)
+		if heading==nil then
+			if look_x and look_z and look_x*look_x+look_z*look_z>0.000001 then
+				heading=math.deg(math.atan(look_x,look_z))
+			else heading=0 end
+		end
+		local px,_,pz=matrix.position(player_transform)
+		x=px+math.sin(math.rad(heading))*300
+		z=pz+math.cos(math.rad(heading))*300
+	end
+	heading=(heading or 0)%360
+	y=y or 20 -- Approximate waterline at sea level; deck at y + 0.127 m.
+	local base=matrix.multiply(matrix.translation(x,y,z),matrix.rotationY(math.rad(heading)))
+	for _,part in ipairs(g_aircraft_carrier_parts) do
+		local transform=matrix.multiply(base,matrix.translation(0,0,part.z))
+		local offset=part.spawn_offset
+		-- The engine adds playlist spawn_local_offset in vehicle-local axes.
+		-- Cancel it before spawning; keep transform as the intended origin.
+		local spawn_transform=matrix.multiply(transform,matrix.translation(-offset.x,-offset.y,-offset.z))
+		-- Follow the bundled game's current addon spawning code: component index
+		-- selects the prefab; vehicle_ids contains actual vehicle IDs, not group IDs.
+		local component,is_success=server.spawnAddonComponent(spawn_transform,addon_index,location_index,component_indices[part.component_id])
+		local vehicle_ids=component and component.vehicle_ids
+		if is_success and component and component.type=='vehicle' and type(vehicle_ids)=='table' and #vehicle_ids>0 then
+			for _,vehicle_id in ipairs(vehicle_ids) do
+				table.insert(state.vehicle_ids,vehicle_id)
+				state.transforms[vehicle_id]=transform
+				g_pending_link_requests[vehicle_id]=nil
+			end
+		else
+			local cleaned=deleteAircraftCarrier(peer_id,true)
+			announce('Carrier spawn failed: '..part.name..'. '..(cleaned and 'Partial spawn removed.' or 'Cleanup incomplete; use ?mm delete_carrier.'),peer_id)
+			return
+		end
+	end
+	g_aircraft_carrier_check_ticks=2
+	g_aircraft_carrier_check_peer=peer_id
+	announce(string.format('CVN-78 spawn requested (3 sections): x=%.2f z=%.2f heading=%.1f y=%.2f. Status after all onVehicleLoad; ?mm carrier_status / ?mm delete_carrier',x,z,heading,y),peer_id)
 end
 
 

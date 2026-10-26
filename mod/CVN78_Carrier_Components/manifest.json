@@ -1,0 +1,91 @@
+{
+  "source_mission": "SW_BattleMatchmaker",
+  "vehicles": {
+    "13": [
+      "sk_cvn78_stern_v1",
+      "sk_cvn78_voxel_panel_127x4_nosurface_v2",
+      "sk_cvn78_voxel_panel_127x64_nosurface_v2",
+      "sk_cvn78_voxel_panel_52x4_nosurface_v2",
+      "sk_cvn78_voxel_panel_52x64_nosurface_v2"
+    ],
+    "15": [
+      "sk_cvn78_mid_v1",
+      "sk_cvn78_voxel_panel_127x35_nosurface_v2",
+      "sk_cvn78_voxel_panel_127x64_nosurface_v2",
+      "sk_cvn78_voxel_panel_63x35_nosurface_v2",
+      "sk_cvn78_voxel_panel_63x64_nosurface_v2"
+    ],
+    "14": [
+      "sk_cvn78_bow_v1",
+      "sk_cvn78_voxel_panel_127x28_nosurface_v2",
+      "sk_cvn78_voxel_panel_127x64_nosurface_v2",
+      "sk_cvn78_voxel_panel_127x6_nosurface_v2",
+      "sk_cvn78_voxel_panel_34x64_nosurface_v2",
+      "sk_cvn78_voxel_panel_34x6_nosurface_v2",
+      "sk_cvn78_voxel_panel_63x28_nosurface_v2",
+      "sk_cvn78_voxel_panel_63x64_nosurface_v2"
+    ]
+  },
+  "definitions": {
+    "sk_cvn78_bow_v1": {
+      "bytes": 26898,
+      "sha256": "10da34f8aac7f4372037d91d61e1faf6d2ee19f81647bb64221edfd4ae1f9121"
+    },
+    "sk_cvn78_mid_v1": {
+      "bytes": 18604,
+      "sha256": "c0b7a0d4701140150510c189d0521d7df822fbc4dc5d79d647d5cff10cf09e71"
+    },
+    "sk_cvn78_stern_v1": {
+      "bytes": 48292,
+      "sha256": "1663299b86b034d51267e5cb31d27ff1e050f10cc2d1ed429e43ea2a9bc0cc6e"
+    },
+    "sk_cvn78_voxel_panel_127x28_nosurface_v2": {
+      "bytes": 180259,
+      "sha256": "35fffd37398876c0983dffe0516d4947a67051642f576d402d180d400102c477"
+    },
+    "sk_cvn78_voxel_panel_127x35_nosurface_v2": {
+      "bytes": 225675,
+      "sha256": "f274a3bcf5ebf7267a01a9653380e4e9c763497ec498c5514bd9ec55555d51dc"
+    },
+    "sk_cvn78_voxel_panel_127x4_nosurface_v2": {
+      "bytes": 25304,
+      "sha256": "073015afaf2074a10ff62a58f6dfe7cf618b1cd20801e401473481c01f9ce355"
+    },
+    "sk_cvn78_voxel_panel_127x64_nosurface_v2": {
+      "bytes": 413827,
+      "sha256": "3bfe39282eb830ff2d2b1778faeb5874ae88fb4b1a82bd1102856467911c9d70"
+    },
+    "sk_cvn78_voxel_panel_127x6_nosurface_v2": {
+      "bytes": 38026,
+      "sha256": "e596af2060b20bb9889ef0507053b61cd36b73e479b2989e6f933bd788319921"
+    },
+    "sk_cvn78_voxel_panel_34x64_nosurface_v2": {
+      "bytes": 110031,
+      "sha256": "7a2979ccbe57b16d908cdab493da7dfbcc243afac2eff1191197ced68da3c20d"
+    },
+    "sk_cvn78_voxel_panel_34x6_nosurface_v2": {
+      "bytes": 10518,
+      "sha256": "d3930bcc5492453e450dfdffa1d7f77633d4008bafa8a51dce051d3f98ef9a31"
+    },
+    "sk_cvn78_voxel_panel_52x4_nosurface_v2": {
+      "bytes": 10642,
+      "sha256": "1657e45ca58a1ff77cc7511cec8a4e7b43792f203b68d5077b7e30ce424ba696"
+    },
+    "sk_cvn78_voxel_panel_52x64_nosurface_v2": {
+      "bytes": 168495,
+      "sha256": "b1fa3a3af012d1642b27ebea404ce10fdfa9c63fb7a0a4fab6080c60b5ea8c4f"
+    },
+    "sk_cvn78_voxel_panel_63x28_nosurface_v2": {
+      "bytes": 89131,
+      "sha256": "3fe44375287bd41e70f6af16677a67d69cd3159d389bee3dd52cf73d9e12122a"
+    },
+    "sk_cvn78_voxel_panel_63x35_nosurface_v2": {
+      "bytes": 111510,
+      "sha256": "49ac100b23e884c296903d36aa19f3333db44b9d070c2ab9d94d6787f7082681"
+    },
+    "sk_cvn78_voxel_panel_63x64_nosurface_v2": {
+      "bytes": 204223,
+      "sha256": "1a13c8129ca538e97a21581e0ad8faf6d949da94bc196bec5eabc5219aa0fcb9"
+    }
+  }
+}

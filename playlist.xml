@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <playlist folder_path="data/missions/SW_BattleMatchmaker" file_store="4" name="Battle Matchmaker_SJAC_Custom">
-	<locations location_id_counter="3" component_id_counter="12">
+	<locations location_id_counter="5" component_id_counter="15">
 		<locations>
 			<l id="1" name="Support Vehicles" is_env_mod="true" env_mod_spawn_num="1">
 				<components>
@@ -80,6 +80,37 @@
 							<max x="0.375" y="0.875" z="0.125"/>
 						</spawn_bounds>
 						<spawn_local_offset y="-0.25"/>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="5" name="aircraft_carrier" env_mod_spawn_num="1">
+				<components>
+					<c component_type="3" id="13" name="aircraft_carrier_sterm" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_name="data/missions_working/vehicle_13.xml" vehicle_file_store="4" vehicle_is_static="true" vehicle_is_show_on_map="true" vehicle_is_component_modded="true">
+						<spawn_transform 30="-41.386372" 31="0.250003" 32="-15.051991"/>
+						<spawn_bounds>
+							<min x="-38.875" y="-0.125" z="-56.875"/>
+							<max x="37.625" y="0.375" z="56.125"/>
+						</spawn_bounds>
+						<spawn_local_offset x="0.625" y="-0.125" z="0.375"/>
+						<graph_links/>
+					</c>
+					<c component_type="3" id="14" name="aircraft_carrier_bow" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_name="data/missions_working/vehicle_14.xml" vehicle_file_store="4" vehicle_is_static="true" vehicle_is_show_on_map="true" vehicle_is_component_modded="true">
+						<spawn_transform 30="-42.292164" 31="0.250002" 32="206.176651"/>
+						<spawn_bounds>
+							<min x="-41.625" y="-0.125" z="-59.875"/>
+							<max x="37.625" y="0.375" z="60.625"/>
+						</spawn_bounds>
+						<spawn_local_offset x="2" y="-0.125" z="-0.375"/>
+						<graph_links/>
+					</c>
+					<c component_type="3" id="15" name="aircraft_carrier_mid" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_name="data/missions_working/vehicle_15.xml" vehicle_file_store="4" vehicle_is_static="true" vehicle_is_show_on_map="true" vehicle_is_component_modded="true">
+						<spawn_transform 30="-42.910686" 31="0.250004" 32="93.798561"/>
+						<spawn_bounds>
+							<min x="-41.625" y="-0.125" z="-52.375"/>
+							<max x="37.625" y="0.375" z="52.375"/>
+						</spawn_bounds>
+						<spawn_local_offset x="2" y="-0.125"/>
 						<graph_links/>
 					</c>
 				</components>
