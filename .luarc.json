@@ -1,0 +1,10 @@
+{
+    "diagnostics.globals": [
+        "server",
+        "matrix",
+        "property"
+    ],
+    "diagnostics.disable": [
+        "lowercase-global"
+    ]
+}

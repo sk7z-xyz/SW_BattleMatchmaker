@@ -272,9 +272,29 @@ end
 
 function getWebMapBattleAreaPayload()
 	local flags=g_savedata.flag_vehicles or {}
+	local hidden,seen,team_ids={},{},{RED={},BLUE={},PINK={},YELLOW={}}
+	if g_savedata.aircraft_carrier then
+		for owner,state in pairs(getAircraftCarrierStates()) do
+			local team=owner~='MANUAL' and owner or state.ciws_team
+			if team=='YLW' or team=='Standby' then team='YELLOW' end
+			for _,id in ipairs(state.vehicle_ids or {}) do
+				if type(id)=='number' and id>=0 and not seen[id] then
+					seen[id]=true;hidden[#hidden+1]=id
+					if team_ids[team] then team_ids[team][#team_ids[team]+1]=id end
+				end
+			end
+		end
+	end
+	table.sort(hidden)
+	local team_json={}
+	for _,team in ipairs({'RED','BLUE','PINK','YELLOW'}) do
+		table.sort(team_ids[team])
+		team_json[#team_json+1]='"'..team..'":['..table.concat(team_ids[team],',')..']'
+	end
 	return '{"RED":'..webMapFlagPosition(flags.RED)..
 		',"BLUE":'..webMapFlagPosition(flags.BLUE)..
-		',"CENTER":'..webMapFlagPosition(flags.CENTER,getFlagMapRadius('CENTER'))..'}'
+		',"CENTER":'..webMapFlagPosition(flags.CENTER,getFlagMapRadius('CENTER'))..
+		',"hidden_vehicle_ids":['..table.concat(hidden,',')..'],"carrier_teams":{'..table.concat(team_json,',')..'}}'
 end
 
 function sendWebMapBattleArea(force)
@@ -423,6 +443,7 @@ add_setting('Min HP','min_hp','integer',1)
 add_setting('HP Per Voxel','hp_per_voxel','number',0)
 add_setting('HP Step','hp_step','integer',0)
 add_setting('Max Vehicle Damage','max_damage','integer',0)
+add_setting('Carrier HP','carrier_hp','integer',1)
 add_setting('Ammo supply Enabled','ammo_supply','boolean')
 add_setting('MG Ammo Count','ammo_mg','integer',-1)
 add_setting('LA Ammo Count','ammo_la','integer',-1)
@@ -468,6 +489,7 @@ g_default_savedata={
 	hp_per_voxel		=property.slider("HP Per Voxel", 0, 10, 0.1, 4),
 	hp_step				=property.slider("HP Step", 10, 1000, 10, 500),
 	max_damage			=1000,
+	carrier_hp			=3000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
 	ammo_mg				=-1,
 	ammo_la				=-1,
@@ -1006,14 +1028,6 @@ g_commands={
 		},
 	},
 	{
-		name='carrier_status',
-		desc='Show actual carrier vehicle IDs, positions, simulation state and voxel counts',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth)
-			showAircraftCarrierStatus(peer_id)
-		end,
-	},
-	{
 		name='delete_carrier',
 		desc='Remove the three command-spawned CVN-78 sections',
 		admin=true,
@@ -1036,7 +1050,11 @@ g_commands={
 				name = 'BLUE'
 			end
 
-			if x and z and y then
+			if (x==nil)~=(z==nil) then
+				announce('Specify both x and z: ?mm flag name [x z [y]]', peer_id)
+				return
+			end
+			if x and z then
 				x = tonumber(x)
 				z = tonumber(z)
 				--yはnilも許容するが、数値なら変換する
@@ -1161,6 +1179,7 @@ g_commands={
 			g_debug_vehicle_ids={}
 			g_debug_vehicle_players={}
 			g_team_status_dirty=true
+			ciwsInvalidateFriendlies()
 			g_player_status_dirty=true
 			clearSupplies()
 			clearFlags()
@@ -1212,6 +1231,7 @@ g_commands={
 				g_player_status_dirty=true
 			elseif setting_define.key=='player_status' then
 				g_team_status_dirty=true
+				ciwsInvalidateFriendlies()
 				g_player_status_dirty=true
 			end
 			announce(setting_define.name..' set to '..tostring(value), -1)
@@ -1450,7 +1470,7 @@ g_commands={
 	},
 	{
 		name='tp',
-		desc='Teleport to your team\'s assigned flag',
+		desc='Teleport to your team\'s carrier bridge, or its assigned flag',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			teleportPlayerToAssignedFlag(peer_id)
@@ -1675,6 +1695,17 @@ function teleportPlayerToAssignedFlag(peer_id)
 		announce('You are not assigned to a team.', peer_id)
 		return false
 	end
+	-- 自チームの空母があれば艦橋の中（前方の窓際）へ移動する。
+	local carrier=getAircraftCarrierState(team)
+	local stern=carrier.ciws_components and carrier.ciws_components['13']
+	local stern_transform=stern and carrier.transforms[stern]
+	if #carrier.vehicle_ids>0 and stern_transform then
+		local offset=g_aircraft_carrier_tp_offset
+		local base=matrix.multiply(stern_transform,matrix.translation(0,0,112.25))
+		server.setPlayerPos(peer_id, matrix.multiply(base,matrix.translation(offset.x,offset.y,offset.z)))
+		announce('Teleported to your carrier bridge.', peer_id)
+		return true
+	end
 	local assigned = getAssignedFlagForTeam(team)
 	if not assigned then
 		announce('No flag assigned for your team.', peer_id)
@@ -1830,6 +1861,8 @@ table.insert(g_commands, {
 	end,
 })
 
+
+
 function findCommand(command)
 	command=g_command_aliases[command] or command
 	for i,command_define in ipairs(g_commands) do
@@ -1946,6 +1979,9 @@ function processAutoBattle()
 	end
 
 	if state.phase=='wait_teleport' then
+		for _,pending in ipairs(g_pending_center_flag_spawns) do
+			if pending.team_placement then return end
+		end
 		for _,vehicle in ipairs(g_vehicles) do
 			if vehicle then
 				vehicle.alive=false
@@ -1966,6 +2002,8 @@ end
 -- Callbacks --
 
 function onCreate(is_world_create)
+	g_savedata.ciws_validation=nil -- Remove retired remote-control state; auto-defence registration is separate.
+	ciwsThreatRestore()
 	for k,v in pairs(g_default_savedata) do
 		if g_savedata[k]==nil then
 			g_savedata[k]=v
@@ -2035,8 +2073,1079 @@ function onDestroy()
     clearFlags()
 end
 
+-- ##################### CIWS Target Link begin #####################
+-- ===================================================================
+-- CIWS Target Link（空母CIWS・登録hostへの目標転送）
+--
+-- addon API（v1.13.4）に server.setVehicleDial / setVehicleButton は
+-- 存在しない。ビークルへの値の書き込みは
+--   server.setVehicleKeypad(vehicle_id, keypad_name, value)
+-- のみ（repo内 IFF / Nav_X 実績あり）。
+--
+-- keypad名契約（契約v3: 6本・各1値。SJAC_AirCareer の ciws/CIWS_TEST.xml の custom_name と完全一致）:
+--   CIWS_TGT_X : 目標X（世界座標m） -> MC複合ch1
+-- 元FCS互換: keypad名と異なり、Zへ高度Y、Yへ水平Zを送る。
+--   CIWS_TGT_Z : 目標Y（鉛直m）     -> ch2 -> FCS TGZ
+--   CIWS_TGT_Y : 目標Z（水平m）     -> ch3 -> FCS TGY
+--   CIWS_VX    : 目標VX（m/s）      -> ch4
+--   CIWS_VZ    : 目標VY（鉛直m/s）  -> ch5 -> FCS vZ
+--   CIWS_VY    : 目標VZ（水平m/s）  -> ch6 -> FCS vY
+-- 独立FOUND信号は廃止。XML側で627のneedleを tgtfound=(gn(1)~=0) に
+-- 置換済みであり、ch1（=CIWS_TGT_X）が非0のあいだ発射判定が有効。
+-- 目標喪失時は6本すべてへ0を書き tgtfound を無効化する。
+--
+-- ===================================================================
+
+g_ciws_manual_hosts={} -- {[vehicle_id]={target_vid=}} 手動登録（?mm ciws）。player不要・脅威度ゲートバイパス
+g_ciws_keypad_cache={} -- {[vid]={[keypad_name]=value}} 差分書込みキャッシュ
+g_ciws_tracks={} -- {[vehicle_id]={x,y,z,vx,vy,vz,vmax,seen_t,hist=}}
+g_ciws_link_state={} -- {[vid]={write_timer=,force_timer=,v_baseline=,found_last=}}
+g_ciws_debug_hosts={} -- {[vehicle_id]=true} in-game announce only
+g_ciws_now=0
+
+local function ciwsRound(value, decimals)
+	local m = 10 ^ decimals
+	return math.floor(value * m + 0.5) / m
+end
+
+-- 差分書込み（g_iff_keypad_cache と同じ社内実績パターン。addon書込みコスト対策）
+-- cacheは実際に書いた値だけを保持し、eps未満の変化が積もっても送信漏れにしない。
+function writeCiwsKeypad(host_vid, cache, name, value, eps, force)
+	if cache[name] == nil or force or math.abs(cache[name] - value) >= eps then
+		server.setVehicleKeypad(host_vid, name, value)
+		cache[name] = value
+	end
+end
+
+-- ゲーム内保存版 CIWS_TEST_20261027_232148 の未変更FCSに合わせる。
+-- trackは世界X/Y(高度)/Zのまま保ち、送信境界だけでY/Zを交換する。
+function writeCiwsTargetKeypads(vid, cache, trk, force)
+	writeCiwsKeypad(vid, cache, 'CIWS_TGT_X', ciwsRound(trk.x, 2), 0.01, force)
+	writeCiwsKeypad(vid, cache, 'CIWS_TGT_Z', ciwsRound(trk.y, 2), 0.01, force)
+	writeCiwsKeypad(vid, cache, 'CIWS_TGT_Y', ciwsRound(trk.z, 2), 0.01, force)
+	writeCiwsKeypad(vid, cache, 'CIWS_VX', ciwsRound(trk.vx, 1), 0.1, force)
+	writeCiwsKeypad(vid, cache, 'CIWS_VZ', ciwsRound(trk.vy, 1), 0.1, force)
+	writeCiwsKeypad(vid, cache, 'CIWS_VY', ciwsRound(trk.vz, 1), 0.1, force)
+end
+
+
+
+-- 標的プールのトラック更新。速度推定は毎tick差分のEMA(vx等)と、
+-- v_baseline tick前のサンプル差分（脅威度vmax用の最大成分速度）の2系統。
+function updateCiwsTracks(host, positions, state, now)
+	for _, pos in ipairs(positions) do
+		local vid = pos.vehicle_id
+		if vid ~= host.vid and vid ~= host.exclude_vid
+			and (not g_ciws_tracks[vid] or now > g_ciws_tracks[vid].seen_t) then
+			local trk = g_ciws_tracks[vid]
+			if not trk then
+				trk = {x=pos.x, y=pos.h, z=pos.y, vx=0, vy=0, vz=0, vmax=0, seen_t=now, hist={}}
+				g_ciws_tracks[vid] = trk
+			else
+				local dt = (now - trk.seen_t) / 60
+				if dt > 0 and dt < 1 then
+					local alpha = state.velocity_alpha or 0.25
+					-- 初回の差分は速度が0から立ち上がらないよう係数1（2回目の判定を遅らせない）
+					if (trk.n or 1) < 2 then alpha = 1 end
+					trk.n = (trk.n or 1) + 1
+					trk.vx = trk.vx + (((pos.x - trk.x) / dt) - trk.vx) * alpha
+					trk.vy = trk.vy + (((pos.h - trk.y) / dt) - trk.vy) * alpha
+					trk.vz = trk.vz + (((pos.y - trk.z) / dt) - trk.vz) * alpha
+				elseif dt >= 1 then
+					-- 観測が途切れた場合は古い速度を引き継がない。
+					trk.vx, trk.vy, trk.vz = 0, 0, 0
+					trk.n = 1
+				end
+				trk.x = pos.x
+				trk.y = pos.h
+				trk.z = pos.y
+				trk.seen_t = now
+			end
+			table.insert(trk.hist, {t=now, x=pos.x, y=pos.h, z=pos.y})
+			while #trk.hist > 40 do
+				table.remove(trk.hist, 1)
+			end
+			local old_idx, best_age = nil, -1
+			for k = 1, #trk.hist do
+				local age = now - trk.hist[k].t
+				if age >= state.v_baseline and age > best_age then
+					best_age = age
+					old_idx = k
+				end
+			end
+			if old_idx then
+				local old = trk.hist[old_idx]
+				local bdt = (now - old.t) / 60
+				if bdt > 0 then
+					trk.vmax = math.max(math.abs((pos.x - old.x) / bdt), math.abs((pos.h - old.y) / bdt), math.abs((pos.y - old.z) / bdt))
+				end
+				for k = 1, old_idx - 1 do
+					table.remove(trk.hist, 1)
+				end
+			end
+		end
+	end
+end
+-- onTickの team_vehicle_positions 収集直後に呼ぶ。
+function updateCiwsTargetLink(team_vehicle_positions)
+	ciwsUpdatePendingSpawns()
+	g_ciws_now = g_ciws_now + 1
+	local now = g_ciws_now
+	ciwsUpdateCarrierDefence(team_vehicle_positions,now)
+	updateCiwsManualHosts(team_vehicle_positions, now)
+end
+
+-- 手動登録host（?mm ciws）の処理。player不要・脅威度ゲート無し。
+-- 目標: target_vid指定時はそれを優先、無指定/喪失時は scan_radius 内の最寄りビークル。
+-- keypad 6本配信は契約v3。
+function ciwsClearManualKeypads(vid)
+	local cache = g_ciws_keypad_cache[vid] or {}
+	for _, name in ipairs({'CIWS_TGT_X','CIWS_TGT_Z','CIWS_TGT_Y','CIWS_VX','CIWS_VZ','CIWS_VY'}) do
+		writeCiwsKeypad(vid, cache, name, 0, 0, true)
+	end
+	g_ciws_keypad_cache[vid] = nil
+	g_ciws_link_state[vid] = nil
+end
+
+function updateCiwsManualHosts(team_vehicle_positions, now)
+	local scan_radius = 800
+	local interval = 4
+	for vid, reg in pairs(g_ciws_manual_hosts) do
+		local host_interval=(reg.mode=='threat' or reg.target_vid) and 1 or interval
+		local htrans, hok = server.getVehiclePos(vid)
+		if not hok then
+			-- hostビークル消滅: keypad 0クリアして登録除去
+			ciwsClearManualKeypads(vid)
+			g_ciws_manual_hosts[vid] = nil
+			if g_savedata.ciws_auto_hosts then g_savedata.ciws_auto_hosts[tostring(vid)]=nil end
+		else
+			local hx, hh, hy = matrix.position(htrans)
+			local state = g_ciws_link_state[vid]
+			if not state then
+				state = {write_timer=interval, force_timer=0, v_baseline=20, found_last=nil}
+				g_ciws_link_state[vid] = state
+			end
+			state.write_timer = state.write_timer + 1
+			state.force_timer = state.force_timer + 1
+			-- 同値でも1秒ごとに再送し、未ロード中などの書込み失敗から復帰する。
+			local force = state.force_timer >= 60
+			-- 全teamのビークルをトラック更新（自動hostと共有プール）
+			for _, positions in pairs(reg.mode~='threat' and team_vehicle_positions or {}) do
+				-- 指定目標は下の直接観測を使い、teamの古い位置との混在を避ける。
+				updateCiwsTracks({vid=vid, exclude_vid=reg.target_vid}, positions, state, now)
+			end
+			-- 明示指定targetはplayer所有で無くても直接pos取得してトラック更新
+			local target_available = false
+			if reg.target_vid and reg.target_vid ~= vid then
+				local ttrans, tok = server.getVehiclePos(reg.target_vid)
+				if tok then
+					target_available = true
+					local tx, th, ty = matrix.position(ttrans)
+					updateCiwsTracks({vid=vid}, {{vehicle_id=reg.target_vid, x=tx, h=th, y=ty}}, state, now)
+				end
+			end
+			local write_now = state.write_timer >= host_interval
+			if write_now then
+				state.write_timer = 0
+				if force then state.force_timer = 0 end
+			end
+			-- 目標選択: 指定target優先、無ければ scan_radius 内最寄り
+			local best_trk = nil
+			local best_vid = nil
+			if target_available then
+				best_trk = g_ciws_tracks[reg.target_vid]
+				best_vid = reg.target_vid
+			end
+			if reg.mode=='threat' then
+				best_trk,best_vid=ciwsSelectThreat(vid,reg,state,hx,hh,hy,now,team_vehicle_positions)
+			end
+			if not best_trk and not reg.target_vid and reg.mode~='threat' then
+				local best_range2 = scan_radius * scan_radius
+				for _, positions in pairs(team_vehicle_positions) do
+					for _, pos in ipairs(positions) do
+						if pos.vehicle_id ~= vid then
+							local trk = g_ciws_tracks[pos.vehicle_id]
+							if trk then
+								local dx = trk.x - hx
+								local dy = trk.y - hh
+								local dz = trk.z - hy
+								local r2 = dx*dx + dy*dy + dz*dz
+								if r2 > 0.25 and r2 < best_range2 then
+									best_range2 = r2
+									best_trk = trk
+									best_vid = pos.vehicle_id
+								end
+							end
+						end
+					end
+				end
+			end
+			if write_now then
+				local cache = g_ciws_keypad_cache[vid]
+				if not cache then
+					cache = {}
+					g_ciws_keypad_cache[vid] = cache
+				end
+				if best_trk then
+					writeCiwsTargetKeypads(vid, cache, best_trk, force)
+					state.found_last = 1
+					if g_ciws_debug_hosts[vid] then
+						state.dbg_timer = (state.dbg_timer or 0) + host_interval
+						if state.dbg_timer >= 60 then
+							state.dbg_timer = 0
+							local ddx = best_trk.x - hx
+							local ddy = best_trk.y - hh
+							local ddz = best_trk.z - hy
+							local dbg = 'CIWS dbg tgt='..tostring(best_vid)..' dist='..ciwsRound(math.sqrt(ddx*ddx+ddy*ddy+ddz*ddz), 1)
+							dbg = dbg..' keypad X='..tostring(cache['CIWS_TGT_X'])..' Z(height)='..tostring(cache['CIWS_TGT_Z'])..' Y(horizontal)='..tostring(cache['CIWS_TGT_Y'])
+							dbg = dbg..' VX='..tostring(cache['CIWS_VX'])..' VZ(vertical)='..tostring(cache['CIWS_VZ'])..' VY(horizontal)='..tostring(cache['CIWS_VY'])..' (m/s; original FCS)'
+							announce(dbg, -1)
+						end
+					end
+				else
+					if state.found_last ~= 0 or force then
+						writeCiwsKeypad(vid, cache, 'CIWS_TGT_X', 0, 0, true)
+						writeCiwsKeypad(vid, cache, 'CIWS_TGT_Z', 0, 0, true)
+						writeCiwsKeypad(vid, cache, 'CIWS_TGT_Y', 0, 0, true)
+						writeCiwsKeypad(vid, cache, 'CIWS_VX', 0, 0, true)
+						writeCiwsKeypad(vid, cache, 'CIWS_VZ', 0, 0, true)
+						writeCiwsKeypad(vid, cache, 'CIWS_VY', 0, 0, true)
+						state.found_last = 0
+					end
+					if g_ciws_debug_hosts[vid] then
+						state.dbg_timer = (state.dbg_timer or 0) + host_interval
+							if state.dbg_timer >= 60 then
+							state.dbg_timer = 0
+							announce('CIWS dbg no target (scan_radius='..tostring(scan_radius)..')', -1)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+-- CIWS threat control begin
+-- Embedded before CIWS Target Link end. World axes: X/Z horizontal, Y altitude.
+g_ciws_contacts = {}
+g_commands = g_commands or {}
+
+function ciwsRememberContact(id, group)
+    g_savedata.ciws_contacts = g_savedata.ciws_contacts or {}
+    local previous=g_ciws_contacts[id]
+    if not previous or previous.group_id~=group then
+        ciwsInvalidateFriendlies(true)
+        if g_ciws_position_cache.values then g_ciws_position_cache.values[id]=nil end
+        for _,runtime in pairs(g_carrier_ciws_runtime) do
+            if runtime.observe_at then runtime.observe_at[id]=nil end
+        end
+    end
+    local record = {group_id=group}
+    g_ciws_contacts[id] = record
+    g_savedata.ciws_contacts[tostring(id)] = record
+end
+
+function ciwsForgetContact(id)
+    if g_ciws_contacts[id] then ciwsInvalidateFriendlies(true) end
+    if g_ciws_position_cache.values then g_ciws_position_cache.values[id]=nil end
+    for _,runtime in pairs(g_carrier_ciws_runtime) do
+        if runtime.observe_at then runtime.observe_at[id]=nil end
+        if runtime.aircraft_seats then runtime.aircraft_seats[id]=nil end
+    end
+    g_ciws_contacts[id] = nil
+    if g_savedata.ciws_contacts then g_savedata.ciws_contacts[tostring(id)] = nil end
+    g_ciws_tracks[id] = nil
+end
+
+function ciwsThreatRestore()
+    for id,record in pairs(g_savedata.ciws_contacts or {}) do
+        g_ciws_contacts[tonumber(id)] = record
+    end
+    for id,config in pairs(g_savedata.ciws_auto_hosts or {}) do
+        g_ciws_manual_hosts[tonumber(id)] = config
+    end
+end
+
+function ciwsEnableAuto(id, radius, miss, speed)
+    radius,miss,speed = radius or 4000,miss or 300,speed or 15
+    if radius<100 or radius>10000 or miss<1 or miss>1000 or speed<1 or speed>2000 then
+        return false,'Invalid limits: radius 100..10000m, miss 1..1000m, speed 1..2000m/s'
+    end
+    local _,ok = server.getVehiclePos(id)
+    if not ok then return false,'CIWS vehicle unavailable' end
+    if type(server.getVehicleData)=='function' then
+        local data,available=server.getVehicleData(id)
+        if available and data then ciwsRememberContact(id,data.group_id) end
+    end
+    ciwsClearManualKeypads(id)
+    local config = {mode='threat',radius=radius,miss=miss,speed=speed}
+    g_ciws_manual_hosts[id] = config
+    g_savedata.ciws_auto_hosts = g_savedata.ciws_auto_hosts or {}
+    g_savedata.ciws_auto_hosts[tostring(id)] = config
+    return true,'CIWS auto '..id..': radius='..radius..'m CPA='..miss..'m min speed='..speed..'m/s; MASTER ARM controls firing'
+end
+
+-- Saved vehicle is read on each command. CIWS_AD supplies constant MASTER ON.
+function ciwsSpawnAtPlayer(peer_id)
+    if peer_id<0 then announce('?mc requires an in-game player.',peer_id);return end
+    local transform,ok=server.getPlayerPos(peer_id)
+    if not ok or not transform then announce('CIWS spawn failed: player position unavailable.',peer_id);return end
+    local x,y,z=matrix.position(transform)
+    local lx,_,lz=server.getPlayerLookDirection(peer_id)
+    if not lx or not lz or lx*lx+lz*lz<0.000001 then lx,lz=transform[9] or 0,transform[11] or 1 end
+    local heading=math.atan(lx,lz)
+    local spawn=matrix.multiply(matrix.translation(x,y,z),matrix.rotationY(heading))
+    local id,success=server.spawnVehicle(spawn,'/CIWS_AD')
+    if type(id)~='number' or id<0 or success==false then
+        announce('CIWS spawn failed: save CIWS_AD in the game vehicles folder.',peer_id);return
+    end
+    g_savedata.ciws_spawned=g_savedata.ciws_spawned or {}
+    g_savedata.ciws_spawned[tostring(id)]={peer_id=peer_id}
+    g_savedata.ciws_pending_spawns=g_savedata.ciws_pending_spawns or {}
+    local player=g_players[peer_id]
+    g_savedata.ciws_pending_spawns[tostring(id)]={peer_id=peer_id,team=player and player.team,ticks=0}
+    announce('CIWS_AD spawned: vehicle '..id..'; enabling auto defence after load.',peer_id)
+end
+
+function ciwsForgetSpawned(id)
+    local key=tostring(id)
+    for _,name in ipairs({'ciws_spawned','ciws_pending_spawns','ciws_auto_hosts'}) do
+        if g_savedata[name] then g_savedata[name][key]=nil end
+    end
+    g_ciws_manual_hosts[id]=nil
+    g_ciws_keypad_cache[id]=nil
+    g_ciws_link_state[id]=nil
+    g_ciws_debug_hosts[id]=nil
+end
+
+-- Bulk cleanup only touches vehicles recorded by ?mc. Explicit IDs also support
+-- registered CIWS spawned before this registry was introduced.
+function ciwsDeleteSpawned(peer_id,explicit_id)
+    local spawned=g_savedata.ciws_spawned or {}
+    local ids={}
+    if explicit_id then
+        if not spawned[tostring(explicit_id)] and not g_ciws_manual_hosts[explicit_id] then
+            announce('Vehicle '..explicit_id..' is not a tracked or registered CIWS.',peer_id);return
+        end
+        ids[1]=explicit_id
+    else
+        for id in pairs(spawned) do ids[#ids+1]=tonumber(id) end
+        table.sort(ids)
+    end
+    local removed,missing,failed=0,0,0
+    for _,id in ipairs(ids) do
+        local _,exists=server.getVehiclePos(id)
+        -- Stop target updates first, including for a vehicle still waiting to load.
+        if exists then ciwsClearManualKeypads(id) end
+        g_ciws_manual_hosts[id]=nil
+        if g_savedata.ciws_pending_spawns then g_savedata.ciws_pending_spawns[tostring(id)]=nil end
+        if g_savedata.ciws_auto_hosts then g_savedata.ciws_auto_hosts[tostring(id)]=nil end
+        if not exists then
+            ciwsForgetSpawned(id);ciwsForgetContact(id);missing=missing+1
+        elseif server.despawnVehicle(id,true)==true then
+            ciwsForgetSpawned(id);ciwsForgetContact(id);removed=removed+1
+        else
+            -- Keep a retryable record if native deletion failed.
+            spawned[tostring(id)]=spawned[tostring(id)] or {peer_id=peer_id}
+            g_savedata.ciws_spawned=spawned
+            failed=failed+1
+        end
+    end
+    announce('CIWS cleanup: removed='..removed..' already absent='..missing..' failed='..failed,peer_id)
+end
+
+function ciwsUpdatePendingSpawns()
+    local pending=g_savedata.ciws_pending_spawns
+    if not pending then return end
+    for key,request in pairs(pending) do
+        request.ticks=(request.ticks or 0)+1
+        if request.ticks%4==0 then
+            local id=tonumber(key)
+            local ready=true
+            if type(server.getVehicleSimulating)=='function' then
+                local sim,ok=server.getVehicleSimulating(id)
+                ready=sim==true and ok~=false
+            end
+            if ready then
+                local ok=ciwsEnableAuto(id)
+                if ok then
+                    g_ciws_manual_hosts[id].team=request.team
+                    announce('CIWS '..id..' auto defence ON (4000m / CPA300m / 15m/s).',request.peer_id)
+                    pending[key]=nil
+                end
+            end
+        end
+        if pending[key] and request.ticks>=600 then
+            announce('CIWS '..key..' auto defence not enabled: load timed out. Retry ?mm ciws_auto '..key,request.peer_id)
+            pending[key]=nil
+        end
+    end
+end
+
+-- Constant relative velocity closest-point-of-approach. No vehicle-name heuristics.
+function ciwsAssessThreat(host, target, config)
+    local dx,dy,dz = target.x-host.x,target.y-host.y,target.z-host.z
+    local vx,vy,vz = target.vx-host.vx,target.vy-host.vy,target.vz-host.vz
+    local r2 = dx*dx+dy*dy+dz*dz
+    local v2 = vx*vx+vy*vy+vz*vz
+    local range = math.sqrt(r2)
+    if range<1 or range>config.radius or v2<config.speed*config.speed then return nil end
+    local dot = dx*vx+dy*vy+dz*vz
+    local closing = -dot/range
+    if closing<config.speed then return nil end
+    local t = -dot/v2
+    if t<=0 or t>20 then return nil end
+    local miss = math.sqrt(math.max(0,r2-dot*dot/v2))
+    if miss>config.miss then return nil end
+    return {score=100/((t+0.2)*(1+miss/config.miss)),ttc=t,miss=miss,closing=closing,range=range}
+end
+
+-- Already-locked target keeps tracking with looser limits (hysteresis), so it does not drop out at the edge.
+function ciwsRelaxedConfig(config)
+    return {radius=config.radius, miss=config.miss*1.5, speed=config.speed*0.6}
+end
+
+-- Refresh only an assigned target between the slower candidate scans.
+function ciwsRefreshTarget(host_id,target_id,state,now)
+    local transform,ok=ciwsGetVehiclePos(target_id,now)
+    if not ok then return nil end
+    local x,y,z=matrix.position(transform)
+    updateCiwsTracks({vid=host_id},{{vehicle_id=target_id,x=x,h=y,y=z}},state,now)
+    return g_ciws_tracks[target_id]
+end
+
+function ciwsSelectThreat(vid, config, state, hx, hh, hz, now, teams)
+    -- Direct observations avoid stale team-position caches. 4 ticks is ~67ms.
+    state.auto_timer = (state.auto_timer or 0)+1
+    if state.auto_timer<4 and state.auto_sample then
+        local target=state.auto_target and ciwsRefreshTarget(vid,state.auto_target,state,now)
+        if not target then state.auto_target=nil;state.threat=nil end
+        return target,state.auto_target
+    end
+    state.auto_timer=0; state.auto_sample=true; state.velocity_alpha=0.75
+    local host = {x=hx,y=hh,z=hz,vx=0,vy=0,vz=0}
+    if state.host_sample then
+        local dt=(now-state.host_sample.t)/60
+        if dt>0 and dt<1 then
+            host.vx=(hx-state.host_sample.x)/dt
+            host.vy=(hh-state.host_sample.y)/dt
+            host.vz=(hz-state.host_sample.z)/dt
+        end
+    end
+    state.host_sample={x=hx,y=hh,z=hz,t=now}
+    local group,host_team=nil,config.team
+    local contact=g_ciws_contacts[vid]
+    if contact then group=contact.group_id end
+    local friendly={}
+    for name,positions in pairs(teams) do
+        for _,pos in ipairs(positions) do if pos.vehicle_id==vid then host_team=name end end
+    end
+    for _,vehicle in ipairs(g_vehicles) do
+        if vehicle.vehicle_id==vid then
+            group=vehicle.group_id or group
+            host_team=vehicle.player and vehicle.player.team or host_team
+        end
+    end
+    for _,pos in ipairs((host_team and teams[host_team]) or {}) do friendly[pos.vehicle_id]=true end
+    for _,vehicle in ipairs(g_vehicles) do
+        if host_team and vehicle.player and vehicle.player.team==host_team then friendly[vehicle.vehicle_id]=true end
+    end
+    local ids={}
+    for id in pairs(g_ciws_contacts) do ids[id]=true end
+    for _,positions in pairs(teams) do for _,pos in ipairs(positions) do ids[pos.vehicle_id]=true end end
+    local best,best_id,best_info
+    local missing={}
+    for id in pairs(ids) do
+        local c=g_ciws_contacts[id]
+        if id~=vid and not g_ciws_manual_hosts[id] and not friendly[id]
+            and not (group and c and c.group_id==group) then
+            local transform,ok=server.getVehiclePos(id)
+            if ok then
+                local x,y,z=matrix.position(transform)
+                if (x-hx)^2+(y-hh)^2+(z-hz)^2<=config.radius^2 then
+                    updateCiwsTracks({vid=vid},{{vehicle_id=id,x=x,h=y,y=z}},state,now)
+                    local trk=g_ciws_tracks[id]
+                    -- Two observations minimum: never infer velocity from spawn position.
+                    local cfg=(id==state.auto_target) and ciwsRelaxedConfig(config) or config
+                    local info=trk and #trk.hist>=2 and ciwsAssessThreat(host,trk,cfg)
+                    if info and (not best_info or info.score>best_info.score or
+                        (info.score==best_info.score and id<best_id)) then
+                        best,best_id,best_info=trk,id,info
+                    end
+                end
+            else missing[#missing+1]=id end
+        end
+    end
+    for _,id in ipairs(missing) do ciwsForgetContact(id) end
+    state.auto_target=best_id; state.threat=best_info
+    if best_id~=state.last_announced_target then
+        local text='CIWS auto '..vid..': '
+        if best_info then
+            text=text..'target='..best_id..' TTC='..ciwsRound(best_info.ttc,2)..'s CPA='..
+                ciwsRound(best_info.miss,1)..'m closing='..ciwsRound(best_info.closing,1)..'m/s'
+        else text=text..'no incoming threat' end
+        announce(text,-1)
+        state.last_announced_target=best_id
+    end
+    return best,best_id
+end
+
+-- CIWS threat control end
+
+-- Carrier CIWS control begin
+-- Generated from V11 platforms and saved CIWS_AD/L/B; outboard support limit with A/B inward correction.
+g_carrier_ciws_mounts={
+    {id='A',component_id=13,x=-31.75,y=-2.25,z=-156.75,side=-1,forward_degrees=180.0,yaw_min=-125.99999999999999,yaw_max=125.99999999999999,pitch_min=-5.3999999999999995,pitch_max=90.0,muzzle_radius=0.6035533905932737},
+    {id='B',component_id=13,x=36.0,y=-2.25,z=-156.75,side=1,forward_degrees=180.0,yaw_min=-125.99999999999999,yaw_max=125.99999999999999,pitch_min=-5.3999999999999995,pitch_max=90.0,muzzle_radius=0.6035533905932737},
+    {id='F',component_id=15,x=-42.5,y=-2.25,z=1.25,side=-1,forward_degrees=-90.0,yaw_min=-125.99999999999999,yaw_max=125.99999999999999,pitch_min=-5.3999999999999995,pitch_max=90.0,muzzle_radius=0.6035533905932737},
+    {id='D',component_id=14,x=-24.0,y=-2.25,z=112.0,side=-1,forward_degrees=0.0,yaw_min=-125.99999999999999,yaw_max=125.99999999999999,pitch_min=-5.3999999999999995,pitch_max=90.0,muzzle_radius=0.6035533905932737},
+    {id='E',component_id=14,x=30.75,y=-2.25,z=95.5,side=1,forward_degrees=0.0,yaw_min=-125.99999999999999,yaw_max=125.99999999999999,pitch_min=-5.3999999999999995,pitch_max=90.0,muzzle_radius=0.6035533905932737},
+}
+
+-- Five integrated mounts, coordinated across the three carrier vehicle IDs.
+g_carrier_ciws_runtime={}
+
+-- Position snapshots are shared by all CIWS and player-root collection in one tick.
+-- Do not seed from old team positions: tracking velocity requires fresh samples.
+g_ciws_position_cache={}
+function ciwsGetVehiclePos(id,now)
+    now=now or g_ciws_now
+    if g_ciws_position_cache.tick~=now then g_ciws_position_cache={tick=now,values={}} end
+    local cache=g_ciws_position_cache.values
+    local value=cache[id]
+    if not value then
+        local transform,ok=server.getVehiclePos(id)
+        value={transform=transform,ok=ok};cache[id]=value
+    end
+    return value.transform,value.ok
+end
+
+-- At <=1000m/s relative speed every tier is observed before reaching the 5km
+-- fast-scan boundary. 4km remains the engagement search range (1km reserve).
+function ciwsCarrierObservationInterval(distance)
+    if distance<=5000 then return 4 end
+    if distance<=8000 then return 32 end
+    if distance<=16000 then return 120 end
+    if distance<=32000 then return 300 end
+    return 600
+end
+
+g_ciws_friend_generation=0
+g_ciws_owner_generation=0
+g_ciws_friend_index=nil
+g_ciws_friend_cache={}
+function ciwsInvalidateFriendlies(contact_only)
+    if not contact_only then g_ciws_owner_generation=g_ciws_owner_generation+1 end
+    g_ciws_friend_generation=g_ciws_friend_generation+1
+    g_ciws_friend_index=nil;g_ciws_friend_cache={}
+end
+
+-- Build the large contact/group index only after membership or contact events.
+function ciwsCarrierFriendIndex()
+    if g_ciws_friend_index then return g_ciws_friend_index end
+    local index={vehicle_groups={},members={},owned={}}
+    for id,contact in pairs(g_ciws_contacts) do index.vehicle_groups[id]=contact.group_id end
+    for _,vehicle in ipairs(g_vehicles) do
+        if vehicle.group_id then index.vehicle_groups[vehicle.vehicle_id]=vehicle.group_id end
+        local team=vehicle.player and vehicle.player.team
+        if team then
+            index.owned[team]=index.owned[team] or {}
+            index.owned[team][vehicle.vehicle_id]=true
+        end
+    end
+    for id,group in pairs(index.vehicle_groups) do
+        index.members[group]=index.members[group] or {}
+        index.members[group][#index.members[group]+1]=id
+    end
+    g_ciws_friend_index=index
+    return index
+end
+
+
+function ciwsCarrierWrite(vid,mount,target,cache,force)
+    local values=target and {target.x,target.y,target.z,target.vx,target.vy,target.vz} or {0,0,0,0,0,0}
+    local suffix={'TGT_X','TGT_Z','TGT_Y','VX','VZ','VY'}
+    for i,name in ipairs(suffix) do
+        writeCiwsKeypad(vid,cache,'CIWS_'..mount.id..'_'..name,ciwsRound(values[i],i<=3 and 2 or 1),i<=3 and .01 or .1,force)
+    end
+end
+
+function ciwsStopCarrier(state)
+    if not state.ciws_components then return end
+    for _,mount in ipairs(g_carrier_ciws_mounts) do
+        local id=state.ciws_components[tostring(mount.component_id)]
+        if id and type(server.setVehicleKeypad)=='function' then
+            local _,exists=server.getVehiclePos(id)
+            if exists then ciwsCarrierWrite(id,mount,nil,{},true) end
+        end
+    end
+    state.ciws_enabled=false
+    state.ciws_assignments={}
+    state.ciws_assisting={}
+    state.ciws_normal_active=0
+    local anchor=state.ciws_components['13']
+    if anchor then g_carrier_ciws_runtime[anchor]=nil end
+end
+
+function ciwsSetCarrierDefence(peer_id,mode,owner)
+    if mode~='on' and mode~='off' then announce('Usage: ?mm carrier_ciws on|off [RED|BLUE|MANUAL]',peer_id);return end
+    if owner and owner~='RED' and owner~='BLUE' and owner~='MANUAL' then announce('Owner must be RED, BLUE or MANUAL.',peer_id);return end
+    local count=0
+    for label,state in pairs(getAircraftCarrierStates()) do
+        if (not owner or label==owner) and state.ciws_components and #state.vehicle_ids>0 then
+            ciwsStopCarrier(state)
+            -- A sunk carrier stays silent; the request applies when its HP is restored.
+            if state.destroyed then state.ciws_resume=mode=='on' else state.ciws_enabled=mode=='on' end
+            count=count+1
+        end
+    end
+    announce('Carrier CIWS '..mode..': '..count..' carrier(s).',peer_id)
+end
+
+-- Maximum distinct-target assignment for <=5 mounts. DP masks enforce one
+-- primary target per mount and one primary mount per target before reinforcement.
+function ciwsAssignCarrierTargets(mounts,targets,eligible,previous,assist_eligible)
+    local dp={[0]={value=0,assign={}}}
+    for _,target in ipairs(targets) do
+        local next_dp={}
+        for mask,entry in pairs(dp) do next_dp[mask]=entry end
+        for mask,entry in pairs(dp) do
+            for i,mount in ipairs(mounts) do
+                local bit=1<<(i-1)
+                local quality=eligible(mount,target)
+                if mask&bit==0 and quality then
+                    local stick=previous and previous[mount.id]==target.id and 1.08 or 1
+                    local value=entry.value+target.info.score*quality*stick
+                    local new_mask=mask|bit
+                    if not next_dp[new_mask] or value>next_dp[new_mask].value then
+                        local assignment={}
+                        for k,v in pairs(entry.assign) do assignment[k]=v end
+                        assignment[mount.id]=target
+                        next_dp[new_mask]={value=value,assign=assignment}
+                    end
+                end
+            end
+        end
+        dp=next_dp
+    end
+    local chosen,count,value={},-1,-1
+    for mask,entry in pairs(dp) do
+        local n=0
+        for i=1,#mounts do if mask&(1<<(i-1))~=0 then n=n+1 end end
+        if n>count or (n==count and entry.value>value) then chosen,count,value=entry.assign,n,entry.value end
+    end
+    local assigned={}
+    for _,target in pairs(chosen) do assigned[target.id]=(assigned[target.id] or 0)+1 end
+    -- Spare mounts reinforce reachable threats, penalizing existing concentration.
+    for _,mount in ipairs(mounts) do
+        if not chosen[mount.id] then
+            local best,best_value
+            for _,target in ipairs(targets) do
+                local quality=eligible(mount,target)
+                if quality then
+                    local score=target.info.score*quality/(1+(assigned[target.id] or 0))
+                    if not best_value or score>best_value then best,best_value=target,score end
+                end
+            end
+            if best then chosen[mount.id]=best;assigned[best.id]=(assigned[best.id] or 0)+1 end
+        end
+    end
+    if assist_eligible then
+        for _,mount in ipairs(mounts) do
+            if not chosen[mount.id] then
+                local best,best_value
+                for _,target in ipairs(targets) do
+                    local quality=assist_eligible(mount,target)
+                    if quality and ciwsCarrierSupportReady(mounts,target,chosen,eligible) then
+                        local score=target.info.score*quality/(1+(assigned[target.id] or 0))
+                        if not best_value or score>best_value then best,best_value=target,score end
+                    end
+                end
+                if best then
+                    chosen[mount.id]={id=best.id,track=best.track,info=best.info,assist=true}
+                    assigned[best.id]=(assigned[best.id] or 0)+1
+                end
+            end
+        end
+    end
+    return chosen
+end
+
+function ciwsCarrierSupportReady(mounts,target,assigned,eligible)
+    local capable=0
+    for _,m in ipairs(mounts) do
+        if eligible(m,target) then
+            capable=capable+1
+            local engaged=assigned[m.id]
+            if not engaged or engaged.assist or not eligible(m,engaged) then return false end
+        end
+    end
+    return capable>0
+end
+
+-- Normal firing: own-side outward 150-degree sector, down to 5 degrees below the
+-- horizon (hardware stop -5.4) so sea-skimmers below the ~18 m mount height qualify.
+-- Outboard low shots meet only water: the hull mesh has no collision.
+-- Support: four {relative inboard bearing, minimum elevation} points per gun.
+-- Linear interpolation deliberately approximates the deck/island silhouette.
+-- These are angle masks, not sampled rays or collision boxes.
+g_carrier_ciws_half_arc=75
+g_carrier_ciws_min_elevation=-5
+g_carrier_ciws_support_profiles={
+    A={{-90,15},{-67,45},{-29,45},{90,15}},
+    B={{-90,15},{60,55},{85,55},{90,15}},
+    F={{-90,30},{38,35},{68,35},{90,30}},
+    D={{-90,35},{67,35},{85,35},{90,35}},
+    E={{-90,30},{-85,30},{-80,30},{90,30}},
+}
+
+function ciwsCarrierSupportElevation(spec,bearing)
+    local points=g_carrier_ciws_support_profiles[spec.id]
+    if not points then return nil end
+    local angle=(bearing+spec.side*90+180)%360-180
+    if angle<points[1][1] or angle>points[4][1] then return nil end
+    for i=2,4 do
+        local left,right=points[i-1],points[i]
+        if angle<=right[1] then
+            return left[2]+(right[2]-left[2])*(angle-left[1])/(right[1]-left[1])
+        end
+    end
+end
+
+function ciwsCarrierEligibility(m,target,base,assist)
+    local spec=m.spec or m
+    local dx,dy,dz=target.track.x-base[13],target.track.y-base[14],target.track.z-base[15]
+    local tx=dx*base[1]+dy*base[2]+dz*base[3]
+    local ty=dx*base[5]+dy*base[6]+dz*base[7]
+    local tz=dx*base[9]+dy*base[10]+dz*base[11]
+    if tx*spec.side==0 then return nil end
+    local opposite=tx*spec.side<0
+    if opposite~=(assist==true) then return nil end
+    local x,z=tx-spec.x,tz-spec.z
+    local horizontal=math.sqrt(x*x+z*z)
+    if horizontal<.1 then return nil end
+    local bearing=math.deg(math.atan(x,z))
+    local minimum=g_carrier_ciws_min_elevation
+    if assist then
+        minimum=ciwsCarrierSupportElevation(spec,bearing)
+        if not minimum then return nil end
+    else
+        local outward=(bearing-spec.side*90+180)%360-180
+        if math.abs(outward)>g_carrier_ciws_half_arc then return nil end
+    end
+    local angle=(bearing-spec.forward_degrees+180)%360-180
+    if angle<spec.yaw_min+.5 or angle>spec.yaw_max-.5 then return nil end
+    local elevation=math.deg(math.atan(ty-spec.y,horizontal))
+    if elevation<math.max(spec.pitch_min,minimum) or elevation>spec.pitch_max then return nil end
+    return 1/(1+horizontal/4000)
+end
+
+table.insert(g_commands,{name='carrier_ciws',admin=true,
+    desc='Integrated carrier CIWS: ?mm carrier_ciws on|off [RED|BLUE|MANUAL]',
+    action=function(peer_id,is_admin,is_auth,mode,owner) ciwsSetCarrierDefence(peer_id,mode,owner) end,
+    args={{name='mode',type='string',require=true},{name='owner',type='string',require=false}}})
+
+-- Team root membership is small; compare IDs, never their changing coordinates.
+-- Event invalidation rebuilds registered owners/groups; flag swaps select a new team.
+function ciwsCarrierFriendlyVehicles(team,teams)
+    if not team then return {} end
+    local index=ciwsCarrierFriendIndex()
+    local seeds={}
+    for _,position in ipairs(teams[team] or {}) do
+        if position.vehicle_id and position.vehicle_id>=0 then seeds[position.vehicle_id]=true end
+    end
+    local cached=g_ciws_friend_cache[team]
+    local same=cached~=nil
+    if same then
+        for id in pairs(seeds) do if not cached.seeds[id] then same=false;break end end
+        if same then for id in pairs(cached.seeds) do if not seeds[id] then same=false;break end end end
+    end
+    if same then return cached.friendly end
+    local friendly,groups={},{}
+    local function add(id)
+        if not id or id<0 then return end
+        friendly[id]=true
+        local group=index.vehicle_groups[id]
+        if group then groups[group]=true end
+    end
+    for id in pairs(seeds) do add(id) end
+    for id in pairs(index.owned[team] or {}) do add(id) end
+    for group in pairs(groups) do
+        for _,id in ipairs(index.members[group] or {}) do friendly[id]=true end
+    end
+    g_ciws_friend_cache[team]={seeds=seeds,friendly=friendly}
+    return friendly
+end
+
+-- Secondary aircraft engagement is deliberately conservative. These projectile
+-- constants match Weapon Type 1 in the five integrated, saved CIWS FCS units.
+g_carrier_aircraft_limits={range=650,max_time=1.0,max_error=6,min_height=8,
+    min_speed=20,max_speed=200,muzzle_speed=1600,drag=1.5,life=2}
+
+-- Linked enemy roots qualify directly. Nearby unregistered contacts additionally
+-- need a seat before they can qualify; flight and ballistic checks still apply.
+function ciwsCarrierAircraftCandidates(team,teams)
+    local ids={}
+    if not team then return ids end
+    for name,positions in pairs(teams) do
+        if name~=team and name~='Standby' then
+            for _,position in ipairs(positions) do ids[position.vehicle_id]=true end
+        end
+    end
+    for _,vehicle in ipairs(g_vehicles) do
+        local owner=vehicle.player and vehicle.player.team
+        if owner and owner~=team and owner~='Standby' and vehicle.alive~=false then ids[vehicle.vehicle_id]=true end
+    end
+    return ids
+end
+
+-- Unknown-team aircraft may have no Matchmaker registration. Inspect seats
+-- only for nearby, non-friendly contacts; cache component queries for five seconds.
+function ciwsCarrierHasAircraftSeat(id,runtime,now)
+    runtime.aircraft_seats=runtime.aircraft_seats or {}
+    local cached=runtime.aircraft_seats[id]
+    if cached and now<cached.expires then return cached.has_seat,cached.reason end
+    local data,ok
+    if type(server.getVehicleComponents)=='function' then data,ok=server.getVehicleComponents(id) end
+    local seats=ok and data and data.components and data.components.seats
+    local has_seat=type(seats)=='table' and next(seats)~=nil
+    local reason=has_seat and 'unregistered crewed aircraft' or (seats and 'no aircraft seat' or 'aircraft seat data unavailable')
+    runtime.aircraft_seats[id]={has_seat=has_seat,reason=reason,expires=now+(ok and 300 or 30)}
+    return has_seat,reason
+end
+
+function ciwsCarrierAircraftShot(host,track,deck_y)
+    local cfg=g_carrier_aircraft_limits
+    if track.y<deck_y+cfg.min_height then return nil,string.format('height %.1fm < %.1fm',track.y-deck_y,cfg.min_height) end
+    local speed=math.sqrt(track.vx^2+track.vy^2+track.vz^2)
+    if speed<cfg.min_speed or speed>cfg.max_speed then return nil,string.format('speed %.1fm/s outside %.0f..%.0f',speed,cfg.min_speed,cfg.max_speed) end
+    local dx,dy,dz=track.x-host.x,track.y-host.y,track.z-host.z
+    local range=math.sqrt(dx*dx+dy*dy+dz*dz)
+    if range<1 or range>cfg.range then return nil,string.format('range %.1fm > %.0fm',range,cfg.range) end
+    -- Compare two independent ~0.1s velocity windows, avoiding noisy one-tick
+    -- acceleration. Need history and reject old/discontinuous observations.
+    local hist=track.hist or {};local newest=hist[#hist];local middle,old
+    if not newest then return nil,'no history' end
+    for i=#hist-1,1,-1 do
+        local sample=hist[i]
+        if not middle and newest.t-sample.t>=6 then middle=sample
+        elseif middle and middle.t-sample.t>=6 then old=sample;break end
+    end
+    if not old or newest.t-middle.t>18 or middle.t-old.t>18 then return nil,'insufficient/discontinuous history' end
+    local dt1,dt0=(newest.t-middle.t)/60,(middle.t-old.t)/60
+    local ax,ay,az,velocity_error=0,0,0,0
+    local accel={}
+    for _,axis in ipairs({'x','y','z'}) do
+        local v1=(newest[axis]-middle[axis])/dt1
+        local v0=(middle[axis]-old[axis])/dt0
+        accel[#accel+1]=(v1-v0)/((dt1+dt0)/2)
+        velocity_error=velocity_error+(track['v'..axis]-v1)^2
+    end
+    ax,ay,az=accel[1],accel[2],accel[3]
+    local acceleration=math.sqrt(ax*ax+ay*ay+az*az)
+    local vx,vy,vz=track.vx-(host.vx or 0),track.vy-(host.vy or 0),track.vz-(host.vz or 0)
+    local time=range/cfg.muzzle_speed;local converged=false
+    for _=1,12 do
+        local drop=30/cfg.drag*(time-(1-math.exp(-cfg.drag*time))/cfg.drag)
+        local x,y,z=dx+vx*time,dy+vy*time+drop,dz+vz*time
+        local required=math.sqrt(x*x+y*y+z*z)
+        local fraction=1-cfg.drag*required/cfg.muzzle_speed
+        if fraction<=0 then return nil,'beyond projectile reach' end
+        local next_time=-math.log(fraction)/cfg.drag
+        if next_time>cfg.max_time or next_time>cfg.life then return nil,string.format('flight %.2fs > %.2fs',next_time,cfg.max_time) end
+        if math.abs(next_time-time)<.001 then time=next_time;converged=true;break end
+        time=next_time
+    end
+    if not converged then return nil,'ballistic iteration not converged' end
+    -- 2m allowance plus maneuver/velocity uncertainty over flight + ~67ms scan.
+    local horizon=time+4/60
+    local uncertainty=2+.5*acceleration*horizon^2+math.sqrt(velocity_error)*horizon
+    if uncertainty>cfg.max_error then return nil,string.format('predicted error %.1fm > %.1fm',uncertainty,cfg.max_error) end
+    local transverse=math.sqrt(math.max(0,(vx*vx+vy*vy+vz*vz)-((dx*vx+dy*vy+dz*vz)/range)^2))
+    if math.deg(transverse/range)>90 then return nil,'angular rate > 90deg/s' end
+    return {score=1/((1+range/300)*(1+uncertainty)),flight_time=time,error=uncertainty,
+        track={x=track.x+track.vx*time,y=track.y+track.vy*time,z=track.z+track.vz*time}}
+end
+
+function ciwsUpdateCarrierDefence(teams,now)
+    if not g_savedata.aircraft_carrier then return end
+    local states=getAircraftCarrierStates()
+    local excluded={}
+    for _,state in pairs(states) do for _,id in ipairs(state.vehicle_ids) do excluded[id]=true end end
+    for _,flag in pairs(g_savedata.flag_vehicles or {}) do if flag.vehicle_id then excluded[flag.vehicle_id]=true end end
+    for label,state in pairs(states) do
+        if state.ciws_enabled and state.ciws_components then
+            local anchor=state.ciws_components['13']
+            local transform,ok
+            if anchor then transform,ok=ciwsGetVehiclePos(anchor,now) end
+            if ok and g_aircraft_carrier_loaded[anchor] then
+                local base=matrix.multiply(transform,matrix.translation(0,0,112.25))
+                local hx,hy,hz=matrix.position(base)
+                local runtime=g_carrier_ciws_runtime[anchor] or {mounts={},velocity_alpha=.75,v_baseline=20}
+                g_carrier_ciws_runtime[anchor]=runtime
+                local host={x=hx,y=hy,z=hz,vx=0,vy=0,vz=0}
+                if runtime.previous then
+                    local dt=(now-runtime.previous.t)/60
+                    if dt>0 and dt<1 then
+                        host.vx=(hx-runtime.previous.x)/dt;host.vy=(hy-runtime.previous.y)/dt;host.vz=(hz-runtime.previous.z)/dt
+                    end
+                end
+                -- A new/teleported reference section must rediscover every contact now.
+                if not runtime.previous or (hx-runtime.previous.x)^2+(hy-runtime.previous.y)^2+(hz-runtime.previous.z)^2>100^2 then
+                    runtime.observe_at={}
+                end
+                runtime.observe_at=runtime.observe_at or {}
+                runtime.previous={x=hx,y=hy,z=hz,t=now}
+                local team=label~='MANUAL' and label or state.ciws_team
+                local friendly=ciwsCarrierFriendlyVehicles(team,teams)
+                local select_now=now%4==0 or not runtime.selected or runtime.team~=team
+                if runtime.owner_generation~=g_ciws_owner_generation or runtime.team~=team then
+                    runtime.observe_at={};runtime.owner_generation=g_ciws_owner_generation
+                end
+                runtime.team=team
+                local targets=runtime.candidates or {}
+                if select_now then
+                    local ids={}
+                    for id in pairs(g_ciws_contacts) do ids[id]=true end
+                    for _,ps in pairs(teams) do for _,p in ipairs(ps) do ids[p.vehicle_id]=true end end
+                    targets={}
+                    state.ciws_diagnostics={}
+                    local aircraft={}
+                    local aircraft_ids=ciwsCarrierAircraftCandidates(team,teams)
+                    for id in pairs(runtime.aircraft_seats or {}) do
+                        if not g_ciws_contacts[id] then runtime.aircraft_seats[id]=nil end
+                    end
+                    for id in pairs(ids) do
+                        if not excluded[id] and not friendly[id] and not g_ciws_manual_hosts[id]
+                            and now>=(runtime.observe_at[id] or 0) then
+                            local t,exists=ciwsGetVehiclePos(id,now)
+                            if exists then
+                                local x,y,z=matrix.position(t)
+                                local distance=math.sqrt((x-hx)^2+(y-hy)^2+(z-hz)^2)
+                                runtime.observe_at[id]=now+ciwsCarrierObservationInterval(distance)
+                                if distance<=4000 then
+                                    updateCiwsTracks({vid=-1},{{vehicle_id=id,x=x,h=y,y=z}},runtime,now)
+                                    local trk=g_ciws_tracks[id]
+                                    local info=#trk.hist>=2 and ciwsAssessThreat(host,trk,{radius=4000,miss=300,speed=15})
+                                    if info then targets[#targets+1]={id=id,track=trk,info=info}
+                                    else
+                                        local known=aircraft_ids[id]
+                                        local near=(x-hx)^2+(y-hy)^2+(z-hz)^2<=g_carrier_aircraft_limits.range^2
+                                        local crewed,seat_reason
+                                        if not known and near then crewed,seat_reason=ciwsCarrierHasAircraftSeat(id,runtime,now) end
+                                        if known or crewed then
+                                            local shot,reason=ciwsCarrierAircraftShot(host,trk,hy)
+                                            state.ciws_diagnostics['target '..id]=reason or (known and 'registered aircraft accepted' or 'unregistered aircraft accepted')
+                                            if shot then aircraft[#aircraft+1]={id=id,track=trk,info=shot} end
+                                        elseif near then state.ciws_diagnostics['target '..id]=seat_reason end
+                                    end
+                                end
+                            else
+                                runtime.observe_at[id]=now+60
+                            end
+                        end
+                    end
+                    runtime.aircraft_mode=#targets==0
+                    state.ciws_target_mode=runtime.aircraft_mode and 'AIRCRAFT' or 'INCOMING'
+                    if runtime.aircraft_mode then targets=aircraft end
+                    table.sort(targets,function(a,b) return a.info.score>b.info.score or (a.info.score==b.info.score and a.id<b.id) end)
+                    while #targets>20 do table.remove(targets) end
+                    runtime.candidates=targets
+                end
+                local mounts={}
+                for _,mount in ipairs(g_carrier_ciws_mounts) do
+                    local id=state.ciws_components[tostring(mount.component_id)]
+                    if id and g_aircraft_carrier_loaded[id] then
+                        local _,exists=ciwsGetVehiclePos(id,now)
+                        if exists then
+                            local m={id=mount.id,side=mount.side,vehicle_id=id,spec=mount}
+                            m.x,m.y,m.z=matrix.position(matrix.multiply(base,matrix.translation(mount.x,mount.y,mount.z)))
+                            mounts[#mounts+1]=m
+                        end
+                    end
+                end
+                -- DP revisits edges; geometry must run only once per mount/target/tick.
+                local quality_cache={}
+                local function quality(m,t,assist)
+                    if friendly[t.id] or excluded[t.id] or g_ciws_manual_hosts[t.id] then return nil end
+                    local key=m.id..':'..t.id..':'..tostring(assist)
+                    if quality_cache[key]==nil then
+                        local value=ciwsCarrierEligibility(m,t,base,assist)
+                        if value and runtime.aircraft_mode then
+                            local shot,reason=ciwsCarrierAircraftShot({x=m.x,y=m.y,z=m.z,vx=host.vx,vy=host.vy,vz=host.vz},t.track,hy)
+                            value=shot and ciwsCarrierEligibility(m,{track=shot.track},base,assist)
+                            state.ciws_diagnostics=state.ciws_diagnostics or {}
+                            state.ciws_diagnostics['mount '..m.id..' target '..t.id]=reason or (value and 'aircraft accepted' or 'predicted position outside firing sector')
+                        end
+                        quality_cache[key]=value or false
+                    end
+                    return quality_cache[key] or nil
+                end
+                local function eligible(m,t) return quality(m,t,false) end
+                local function assist_eligible(m,t) return quality(m,t,true) end
+                local assigned={}
+                if select_now then
+                    assigned=ciwsAssignCarrierTargets(mounts,targets,eligible,state.ciws_assignments,assist_eligible)
+                    runtime.selected={}
+                    runtime.assist_slots={}
+                    state.ciws_assignments={}
+                    for slot,t in pairs(assigned) do runtime.selected[slot]=t.id;runtime.assist_slots[slot]=t.assist;state.ciws_assignments[slot]=t.id end
+                else
+                    -- Deduplicate shared targets: several mounts may reinforce one missile.
+                    local refreshed={}
+                    for _,m in ipairs(mounts) do
+                        local id=runtime.selected[m.id]
+                        if id and (friendly[id] or excluded[id] or g_ciws_manual_hosts[id]) then
+                            runtime.selected[m.id]=nil;state.ciws_assignments[m.id]=nil
+                            if runtime.assist_slots then runtime.assist_slots[m.id]=nil end
+                        elseif id then
+                            if refreshed[id]==nil then refreshed[id]=ciwsRefreshTarget(-1,id,runtime,now) or false end
+                            if refreshed[id] then assigned[m.id]={id=id,track=refreshed[id],assist=runtime.assist_slots and runtime.assist_slots[m.id]}
+                            else runtime.selected[m.id]=nil;state.ciws_assignments[m.id]=nil end
+                        end
+                    end
+                end
+                local normal_active=0
+                for _,m in ipairs(mounts) do
+                    local t=assigned[m.id]
+                    if t and not t.assist and eligible(m,t) then normal_active=normal_active+1 end
+                end
+                state.ciws_normal_active=normal_active
+                state.ciws_assisting={}
+                for _,m in ipairs(mounts) do
+                    local cache=runtime.mounts[m.id] or {};runtime.mounts[m.id]=cache
+                    local force=not cache.sent_at or now-cache.sent_at>=60
+                    local target=assigned[m.id]
+                    if target then
+                        if target.assist then
+                            if not ciwsCarrierSupportReady(mounts,target,assigned,eligible) or not assist_eligible(m,target) then target=nil
+                            else state.ciws_assisting[m.id]=target.id end
+                        elseif not eligible(m,target) then target=nil end
+                    end
+                    if not target then
+                        runtime.selected[m.id]=nil;state.ciws_assignments[m.id]=nil
+                        if runtime.assist_slots then runtime.assist_slots[m.id]=nil end
+                    end
+                    ciwsCarrierWrite(m.vehicle_id,m,target and target.track,cache,force)
+                    if force then cache.sent_at=now end
+                end
+            elseif anchor and g_carrier_ciws_runtime[anchor] and g_carrier_ciws_runtime[anchor].previous then
+                -- Loss of the reference section must not leave the other sections firing.
+                ciwsStopCarrier(state)
+            end
+        end
+    end
+end
+
+-- Carrier CIWS control end
+
+-- ##################### CIWS Target Link end #######################
+
+
+
 function onTick()
 	updateAircraftCarrierSpawnCheck()
+	updateAircraftCarrierHp()
 	processPendingVehicleDespawns()
 	updateWebMapRestoreLinks()
 	updatePendingCenterFlagSpawns()
@@ -2130,7 +3239,7 @@ function onTick()
 				team_vehicle_positions[team]={}
 			end
 			if #team_vehicle_positions[team]<10 then
-				local vehicle_trans,is_success=server.getVehiclePos(player.vehicle_id)
+				local vehicle_trans,is_success=ciwsGetVehiclePos(player.vehicle_id,g_ciws_now+1)
 				if is_success then
 					local x,h,y=matrix.position(vehicle_trans)
 					table.insert(team_vehicle_positions[team],{vehicle_id=player.vehicle_id,x=x,h=h,y=y})
@@ -2139,6 +3248,9 @@ function onTick()
 		end
 	end
 
+
+	-- 空母CIWSなどの目標更新
+	updateCiwsTargetLink(team_vehicle_positions)
 	-- 名前トークン送受信（毎tick）
 	for _,positions in pairs(team_vehicle_positions) do
 		for _,pos in ipairs(positions) do
@@ -2255,6 +3367,9 @@ function onTick()
 		-- RED/BLUE 表示中は試合前・pause中も強制heartbeatを送り、WebMapの状態消失を復元する。
 		if g_in_game or g_webmap_battle_area_visible then
 			sendWebMapBattleArea(true)
+		elseif hasAircraftCarrier() then
+			-- Manual carriers also need reconnect/receiver-reload synchronization.
+			sendWebMapBattleArea(true)
 		end
 		for team,positions in pairs(team_vehicle_positions) do
 			local text='['..team..']\n'
@@ -2278,6 +3393,7 @@ function onTick()
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
+	ciwsInvalidateFriendlies()
 	g_ui_reset_requested=true
 	local steam_id_64=tostring(steam_id)
 	g_player_steam_ids[peer_id]=steam_id_64
@@ -2300,6 +3416,7 @@ function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
+	ciwsInvalidateFriendlies()
 	peer_id=peer_id//1|0
 	local steam_id_64=tostring(steam_id or g_player_steam_ids[peer_id] or '')
 	clearCenterInfoPopups(peer_id)
@@ -2487,12 +3604,15 @@ end
 
 function onVehicleDespawn(vehicle_id, peer_id)
 	vehicle_id=vehicle_id//1|0
+	ciwsForgetSpawned(vehicle_id)
+	ciwsForgetContact(vehicle_id)
 	forgetAircraftCarrierVehicle(vehicle_id)
 	g_pending_vehicle_despawns[vehicle_id]=true
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 	vehicle_id=vehicle_id//1|0
+	ciwsRememberContact(vehicle_id,group_id)
 	peer_id=peer_id//1|0
 	local parent_id=getParentID(group_id, vehicle_id)
 	if not g_group_parents[group_id] then
@@ -2507,6 +3627,8 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 end
 
 function onVehicleLoad(vehicle_id)
+	local ciws_data,ciws_ok=server.getVehicleData(vehicle_id)
+	if ciws_ok and ciws_data then ciwsRememberContact(vehicle_id,ciws_data.group_id) end
 	if isAircraftCarrierVehicle(vehicle_id) then
 		alignAircraftCarrierVehicle(vehicle_id)
 		return
@@ -2539,6 +3661,7 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, 
 	if damage_amount<=0 then return end
 
 	damage_amount=damage_amount//1|0
+	if addAircraftCarrierDamage(vehicle_id, damage_amount) then return end
 
 	local vehicle=findVehicle(vehicle_id)
 	if not vehicle then return end
@@ -2636,6 +3759,8 @@ function join(peer_id, team, force)
 	end
 
 	g_team_status_dirty=true
+
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 
 	announce('You joined to '..team..'.', peer_id)
@@ -2661,6 +3786,7 @@ function logoutPlayer(peer_id, steam_id)
 	g_players[peer_id]=nil
 	g_players[getLoggedOutPlayerKey(player.steam_id)]=player
 	g_team_status_dirty=true
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 	g_finish_dirty=true
 
@@ -2700,6 +3826,8 @@ function resumeLoggedOutPlayer(peer_id, steam_id, name)
 	end
 
 	g_team_status_dirty=true
+
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 	announce(player.name..' rejoined the battle.', -1)
 	return true
@@ -2716,6 +3844,7 @@ function removeLoggedOutPlayers()
 	end
 	if removed then
 		g_team_status_dirty=true
+		ciwsInvalidateFriendlies()
 		g_player_status_dirty=true
 	end
 end
@@ -2727,6 +3856,7 @@ function leave(peer_id)
 	unregisterPopup(player.popup_name)
 	g_players[peer_id]=nil
 	g_team_status_dirty=true
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 	clearReadyReminderIfIneligible()
 
@@ -2776,6 +3906,7 @@ function shuffle(team_count, exec_peer_id)
 	stopCountdown()
 	clearReadyReminderIfIneligible()
 	g_team_status_dirty=true
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 end
 
@@ -2877,6 +4008,7 @@ function shuffle2(team_count, exec_peer_id)
 	stopCountdown()
 	clearReadyReminderIfIneligible()
 	g_team_status_dirty = true
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty = true
 
 	-- save history ()
@@ -2908,6 +4040,7 @@ function dismiss(team, peer_id)
 			g_players[remove_peer_ids[i]]=nil
 		end
 		g_team_status_dirty=true
+		ciwsInvalidateFriendlies()
 		g_player_status_dirty=true
 		clearReadyReminderIfIneligible()
 		announce('Team '..team..' dismissed.', peer_id)
@@ -3020,6 +4153,7 @@ function clearDebugVehicle(vehicle_id)
 	g_debug_vehicle_ids[vehicle_id]=nil
 	g_debug_vehicle_players[vehicle_id]=nil
 	g_team_status_dirty=true
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 end
 
@@ -3095,6 +4229,7 @@ function debugJoinVehicle(vehicle_id)
 		bindVehicleTeamToWebMap(vehicle_id, 'BLUE')
 	end
 	g_team_status_dirty=true
+	ciwsInvalidateFriendlies()
 	g_player_status_dirty=true
 	return 'assigned'
 end
@@ -3119,6 +4254,7 @@ function debugJoinAllVehicles()
 end
 
 function registerVehicle(vehicle_id,player)
+	ciwsInvalidateFriendlies()
 	-- 実プレイヤーが乗った場合は、debug1 の擬似プレイヤーを必ず解除する。
 	if not player.is_debug_vehicle_player then
 		clearDebugVehicle(vehicle_id)
@@ -3239,6 +4375,7 @@ function setVehicleMaxHp(vehicle, max_hp)
 end
 
 function unregisterVehicle(vehicle_id)
+	ciwsInvalidateFriendlies()
 	local vehicle,index=findVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
@@ -3529,13 +4666,13 @@ function updateTeamStatus()
 		local popup_y=0.9
 		if g_savedata.player_status==1 then
 			-- チーム名だけの1行表示を基準に、プレイヤーの追加行ごとに下げる。
-			local extra_line_count=#player_list
+			local extra_line_count=#player_list+(aircraftCarrierHpText(team_name) and 1 or 0)
 			popup_y=popup_y-extra_line_count*0.019
 		end
 		registerPopup(team_status.popup_name, popup_x, popup_y)
 
 		if g_savedata.player_status==0 then
-			setPopup(team_status.popup_name, true, trim(team_name))
+			setPopup(team_status.popup_name, true, teamStatusTitle(team_name))
 			for i,player in ipairs(player_list) do
 				local player_popup_y=popup_y-i*0.19
 				registerPopup(player.popup_name, popup_x, player_popup_y)
@@ -3556,7 +4693,7 @@ function registerTeamStatus(name)
 	end
 	local popup_name='team_status_'..name
 	registerPopup(popup_name, 0, 0)
-	setPopup(popup_name, true, trim(name))
+	setPopup(popup_name, true, teamStatusTitle(name))
 	local team_status={
 		name=name,
 		popup_name=popup_name,
@@ -3584,7 +4721,7 @@ function updatePlayerStatus()
 
 		for team_name,players in pairs(team_map) do
 			table.sort(players, function(a,b) return a.name<b.name end)
-			local lines={trim(team_name)}
+			local lines={teamStatusTitle(team_name)}
 			for _,player in ipairs(players) do
 				lines[#lines+1]=playerToCompactStatusString(player)
 			end
@@ -3729,6 +4866,10 @@ function startGame()
 	g_pause=false
 	g_auto_battle_state=nil
 	g_player_status_dirty=true
+	-- 空母 HP は試合ごとに最大値から始める。
+	for _,state in pairs(getAircraftCarrierStates()) do
+		if #state.vehicle_ids>0 then resetAircraftCarrierHp(state) end
+	end
 	g_timer=g_savedata.game_time*60*60//1|0
 	g_battle_start_timer=g_timer
 	g_center_radius_last_update=-1
@@ -4638,12 +5779,41 @@ function spawnAltitudeChecker(x, z)
 	return spawnAddonVehicle('alt', matrix.translation(x, g_altitude_scan_height, z))
 end
 
-function getGroundAltitudeFromChecker(check_vehicle_id)
+function getGroundAltitudeFromChecker(check_vehicle_id, allow_negative)
 	local data, is_success = server.getVehicleDial(check_vehicle_id, 'alt')
 	if not (is_success and data and data.value and data.value > 0 and data.value < 4000) then
 		return nil
 	end
-	return math.max(0, g_altitude_scan_height - data.value), data.value
+	local altitude = g_altitude_scan_height - data.value
+	return allow_negative and altitude or math.max(0, altitude), data.value
+end
+
+function getFlagPlacementHeading(peer_id)
+	if not peer_id or peer_id < 0 then return 0 end
+	local x, _, z = server.getPlayerLookDirection(peer_id)
+	if not x or not z or x*x+z*z < 0.000001 then return 0 end
+	return math.deg(math.atan(x,z)) % 360
+end
+
+-- Only team flags own carriers; CENTER and debug markers keep their old path.
+function requestTeamFlagPlacement(peer_id, name, x, z, fallback_y, ground_offset, flag_under_spawn)
+	cancelPendingCenterFlagSpawns(name)
+	if fallback_y==nil and ground_offset==nil then ground_offset=10 end
+	local heading = getFlagPlacementHeading(peer_id)
+	local tile, success = server.getTile(matrix.translation(x, 10, z))
+	if success and tile and tile.name == '' then
+		return spawnCarrierFlag(peer_id, name, x, z, heading)
+	end
+	local checker = spawnAltitudeChecker(x, z)
+	if not checker then
+		return spawnFlagAtDirect(peer_id, name, x, z, fallback_y or 0, flag_under_spawn)
+	end
+	table.insert(g_pending_center_flag_spawns, {
+		peer_id=peer_id, name=name, x=x, z=z, fallback_y=fallback_y or 0,
+		ground_offset=ground_offset, flag_under_spawn=flag_under_spawn,
+		check_vehicle_id=checker, tries=0, team_placement=true, heading=heading,
+	})
+	return true
 end
 
 -- Queue a flag until its terrain altitude has been measured.
@@ -4658,6 +5828,10 @@ function cancelPendingCenterFlagSpawns(name)
 end
 
 function spawnFlagAtAdjustedAltitude(peer_id, name, x, z, fallback_y, ground_offset)
+	name = name:upper()
+	if name == 'RED' or name == 'BLUE' then
+		return requestTeamFlagPlacement(peer_id, name, x, z, fallback_y, ground_offset or 0)
+	end
 	cancelPendingCenterFlagSpawns(name)
 
 	local check_vehicle_id = spawnAltitudeChecker(x, z)
@@ -4682,12 +5856,22 @@ function updatePendingCenterFlagSpawns()
 	for i = #g_pending_center_flag_spawns, 1, -1 do
 		local pending = g_pending_center_flag_spawns[i]
 		pending.tries = pending.tries + 1
-		local ground_altitude = getGroundAltitudeFromChecker(pending.check_vehicle_id)
+		local ground_altitude = getGroundAltitudeFromChecker(pending.check_vehicle_id, pending.team_placement)
 		if ground_altitude or pending.tries >= 600 then
 			server.despawnVehicle(pending.check_vehicle_id, true)
-			local spawn_y = ground_altitude and ground_altitude + pending.ground_offset or pending.fallback_y
-			spawnFlagAt(pending.peer_id, pending.name, pending.x, pending.z, spawn_y, false)
 			table.remove(g_pending_center_flag_spawns, i)
+			if pending.team_placement and ground_altitude and ground_altitude < 0 then
+				spawnCarrierFlag(pending.peer_id, pending.name, pending.x, pending.z, pending.heading)
+			else
+				local spawn_y = pending.fallback_y
+				if ground_altitude and pending.ground_offset ~= nil then
+					spawn_y = ground_altitude + pending.ground_offset
+				end
+				spawnFlagAtDirect(pending.peer_id, pending.name, pending.x, pending.z, spawn_y, pending.flag_under_spawn)
+			end
+			-- Spawning RED/BLUE can replace a pending CENTER entry. Resume the
+			-- remaining checks next tick instead of iterating a mutated queue.
+			return
 		end
 	end
 end
@@ -4729,6 +5913,12 @@ function updateCenterFlag()
 end
 
 function spawnFlag(peer_id, name)
+	if name:upper() == 'RED' or name:upper() == 'BLUE' then
+		local _, success = server.getPlayerPos(peer_id)
+		if not success then announce('Failed to get player position.', peer_id); return false end
+		local x,y,z = matrix.position(getAheadMatrix(peer_id, 9, 8))
+		return requestTeamFlagPlacement(peer_id, name:upper(), x, z, y)
+	end
 	name = name:upper()
 	despawnFlag(peer_id, name)
 	local vehicle_matrix=getAheadMatrix(peer_id, 9, 8)
@@ -4767,18 +5957,30 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn, flag_component_na
 	name = name:upper()
 	if not x or not z then
 		announce('Invalid coordinates for flag spawn.', peer_id)
+		return false
+	end
+	if name == 'RED' or name == 'BLUE' then
+		return requestTeamFlagPlacement(peer_id, name, x, z, y, nil, flag_under_spawn)
+	end
+	return spawnFlagAtDirect(peer_id, name, x, z, y, flag_under_spawn, flag_component_name)
+end
+
+function spawnFlagAtDirect(peer_id, name, x, z, y, flag_under_spawn, flag_component_name, carrier_matrix)
+	name = name:upper()
+	if not x or not z then
+		announce('Invalid coordinates for flag spawn.', peer_id)
 		return
 	end
 	-- remove existing flag with same name
-	despawnFlag(peer_id, name)
+	if not despawnFlag(peer_id, name, carrier_matrix ~= nil) then return false end
 	--yが指定されていない場合は-100にする。これにより、地面に埋まる可能性があるが、少なくとも空中に浮かぶことはない。
 	local altitude = 0
 	if flag_under_spawn and y and y > 0 then
 		altitude = -100
 	else
-		altitude = y
+		altitude = y or 0
 	end
-	local vehicle_matrix = matrix.translation(tonumber(x) or 0, altitude, tonumber(z) or 0)
+	local vehicle_matrix = carrier_matrix or matrix.translation(tonumber(x) or 0, altitude, tonumber(z) or 0)
 	local flag_name = flag_component_name or 'flag'
 	if not flag_component_name then
 		if name == 'RED' or string.sub(name, 1, 4) == 'RED_' then
@@ -4789,7 +5991,12 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn, flag_component_na
 			flag_name = 'flag_center'
 		end
 	end
-	local vehicle_id = spawnAddonVehicle(flag_name, vehicle_matrix)
+	local vehicle_id
+	if carrier_matrix then
+		vehicle_id = spawnCarrierFlagVehicle(flag_name, vehicle_matrix)
+	else
+		vehicle_id = spawnAddonVehicle(flag_name, vehicle_matrix)
+	end
 
 	if vehicle_id then
 		local text = getFlagDisplayText(name)
@@ -4800,6 +6007,8 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn, flag_component_na
 		g_savedata.flag_vehicles[name] = {
 			vehicle_id = vehicle_id,
 			ui_id = ui_id,
+			spawn_matrix = vehicle_matrix,
+			on_carrier = carrier_matrix ~= nil,
 		}
 		if name == 'RED' then
 			g_flag_assignments.RED = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
@@ -4809,8 +6018,10 @@ function spawnFlagAt(peer_id, name, x, z ,y, flag_under_spawn, flag_component_na
 		if name == 'RED' or name == 'BLUE' then updateCenterFlag() end
 		markWebMapBattleAreaVisibleIfComplete()
 		sendWebMapBattleArea(true)
+		return vehicle_id
 	else
 		announce('Failed to spawn flag "' .. name .. '"', peer_id)
+		return false
 	end
 end
 
@@ -4823,6 +6034,12 @@ function refreshFlagMapObjectAt(name, vehicle_matrix)
 	local r, g, b, a = getColor(name)
 	server.removeMapObject(-1, flag.ui_id)
 	server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, text, getFlagMapRadius(name), text, r, g, b, a)
+end
+
+-- Spawn a team marker the way the flag previously at this spot was spawned.
+function respawnFlagAtPlacement(component_name, placed_flag, transform)
+	if placed_flag.on_carrier then return spawnCarrierFlagVehicle(component_name, transform) end
+	return (spawnAddonVehicle(component_name, transform))
 end
 
 function swapFlagPositions(peer_id)
@@ -4845,19 +6062,58 @@ function swapFlagPositions(peer_id)
 	local red_assignment = g_flag_assignments.RED
 	local blue_assignment = g_flag_assignments.BLUE
 
-	local red_moved = server.setVehiclePos(red_flag.vehicle_id, blue_matrix)
-	if not red_moved then
-		announce('Failed to move RED flag.', peer_id)
-		return false
+	local red_carrier=getAircraftCarrierState('RED')
+	local blue_carrier=getAircraftCarrierState('BLUE')
+	if #red_carrier.vehicle_ids>0 or #blue_carrier.vehicle_ids>0 then
+		-- Static carrier sections stay in place. Replace the team markers and
+		-- exchange ownership so later deletion removes the correct ship.
+		-- getVehiclePos is not the spawn origin, so respawning from it would
+		-- move the markers on every swap. Reuse the stored placements instead.
+		red_matrix=red_flag.spawn_matrix or red_matrix
+		blue_matrix=blue_flag.spawn_matrix or blue_matrix
+		red_x,red_y,red_z=matrix.position(red_matrix)
+		blue_x,blue_y,blue_z=matrix.position(blue_matrix)
+		local new_red=respawnFlagAtPlacement('flag_red',blue_flag,blue_matrix)
+		local new_blue=respawnFlagAtPlacement('flag_blue',red_flag,red_matrix)
+		if not new_red or not new_blue then
+			if new_red then server.despawnVehicle(new_red,true) end
+			if new_blue then server.despawnVehicle(new_blue,true) end
+			announce('Failed to replace carrier flags; positions unchanged.',peer_id)
+			return false
+		end
+		server.despawnVehicle(red_flag.vehicle_id,true)
+		server.despawnVehicle(blue_flag.vehicle_id,true)
+		red_flag.vehicle_id=new_red
+		blue_flag.vehicle_id=new_blue
+		server.setVehicleTooltip(new_red,getFlagDisplayText('RED'))
+		server.setVehicleTooltip(new_blue,getFlagDisplayText('BLUE'))
+		local root=getAircraftCarrierState()
+		root.flags.RED,root.flags.BLUE=blue_carrier,red_carrier
+		g_aircraft_carrier_checks.RED,g_aircraft_carrier_checks.BLUE=g_aircraft_carrier_checks.BLUE,g_aircraft_carrier_checks.RED
+		-- resetVehicleState briefly removes the ship, so repair here between matches,
+		-- not at match start when vehicles are parked on the deck.
+		repairAircraftCarrier(red_carrier)
+		repairAircraftCarrier(blue_carrier)
+		-- The team status shows each team's carrier HP, which has just changed owner.
+		g_team_status_dirty=true
+		g_player_status_dirty=true
+	else
+		local red_moved = server.setVehiclePos(red_flag.vehicle_id, blue_matrix)
+		if not red_moved then
+			announce('Failed to move RED flag.', peer_id)
+			return false
+		end
+		local blue_moved = server.setVehiclePos(blue_flag.vehicle_id, red_matrix)
+		if not blue_moved then
+			local red_restored = server.setVehiclePos(red_flag.vehicle_id, red_matrix)
+			local restore_status = red_restored and ' RED flag was restored.' or ' Failed to restore RED flag.'
+			announce('Failed to move BLUE flag.'..restore_status, peer_id)
+			return false
+		end
 	end
-
-	local blue_moved = server.setVehiclePos(blue_flag.vehicle_id, red_matrix)
-	if not blue_moved then
-		local red_restored = server.setVehiclePos(red_flag.vehicle_id, red_matrix)
-		local restore_status = red_restored and ' RED flag was restored.' or ' Failed to restore RED flag.'
-		announce('Failed to move BLUE flag.'..restore_status, peer_id)
-		return false
-	end
+	red_flag.spawn_matrix,blue_flag.spawn_matrix=blue_flag.spawn_matrix,red_flag.spawn_matrix
+	red_flag.on_carrier,blue_flag.on_carrier=blue_flag.on_carrier,red_flag.on_carrier
+	cancelPendingCenterFlagSpawns()
 
 	refreshFlagMapObjectAt('RED', blue_matrix)
 	refreshFlagMapObjectAt('BLUE', red_matrix)
@@ -4876,14 +6132,22 @@ function swapFlagPositions(peer_id)
 		z = red_z,
 		y = red_assignment and red_assignment.y or red_y,
 	}
+	updateCenterFlag()
 	sendWebMapBattleArea(true)
 
 	announce('RED and BLUE flag positions swapped.', -1)
 	return true
 end
 
-function despawnFlag(peer_id, name)
+function despawnFlag(peer_id, name, keep_carrier)
 	name=string.upper(name or '')
+	cancelPendingCenterFlagSpawns(name)
+	if not keep_carrier and (name=='RED' or name=='BLUE') then
+		if not deleteAircraftCarrier(peer_id,true,name) then
+			announce('Failed to remove '..name..' carrier. Retry ?mm delete_flag '..name..'.',peer_id)
+			return false
+		end
+	end
 	local flag=g_savedata.flag_vehicles[name]
 	if flag then
 		server.despawnVehicle(flag.vehicle_id, true)
@@ -4891,16 +6155,20 @@ function despawnFlag(peer_id, name)
 		g_savedata.flag_vehicles[name]=nil
 	end
 	if name=='RED' or name=='BLUE' then g_webmap_battle_area_visible=false end
+	if not keep_carrier and (name=='RED' or name=='BLUE') then g_flag_assignments[name]=nil end
 	sendWebMapBattleArea(true)
+	return true
 end
 
 function clearFlags()
 	cancelPendingCenterFlagSpawns()
+	local names={RED=true,BLUE=true}
 	for name,flag in pairs(g_savedata.flag_vehicles) do
-		server.despawnVehicle(flag.vehicle_id, true)
-		server.removeMapID(-1, flag.ui_id)
+		names[name]=true
 	end
-	g_savedata.flag_vehicles={}
+	for name in pairs(names) do
+		despawnFlag(-1,name)
+	end
 	g_debug_flag_radii={}
 	g_webmap_battle_area_visible=false
 	sendWebMapBattleArea(true)
@@ -4968,30 +6236,169 @@ g_aircraft_carrier_parts={
 	{component_id=15, z=-3.75, name='mid', spawn_offset={x=2,y=-.125,z=0}},
 	{component_id=14, z=108.5, name='bow', spawn_offset={x=2,y=-.125,z=-.375}},
 }
-g_aircraft_carrier_check_ticks=0
-g_aircraft_carrier_check_peer=-1
+g_aircraft_carrier_default_y=20
+-- Starboard, aft of the island. Keep the landing lane clear.
+g_aircraft_carrier_flag_offset={x=30, y=0.252, z=-120}
+-- ?mm tp: inside the bridge by the forward windows (floor 21.875 m, 0.5 m above it), facing the bow.
+g_aircraft_carrier_tp_offset={x=18.5, y=22.4, z=-78.5}
+g_aircraft_carrier_checks={}
 g_aircraft_carrier_loaded={}
 
-function getAircraftCarrierState()
+-- 空母 HP: 登録車両と同じくアドオン側で管理する。被弾は試合中だけ数え、
+-- 試合開始時と出現時に g_savedata.carrier_hp へ戻す。0 で撃沈扱い（CIWS 停止）。
+function findAircraftCarrierOwner(vehicle_id)
+	for label,state in pairs(getAircraftCarrierStates()) do
+		for _,id in ipairs(state.vehicle_ids) do
+			if id==vehicle_id then return label,state end
+		end
+	end
+end
+
+-- HP が減った空母だけを元に戻す（リセット中は区画が一瞬消えるため、無傷なら触れない）。
+-- リセット後の keypad を信用せず、次の tick で全基へ書き直す。
+function repairAircraftCarrier(state)
+	if type(server.resetVehicleState)~='function' then return end
+	if not state.hp or state.hp>=state.max_hp then return end
+	for _,id in ipairs(state.vehicle_ids) do
+		server.resetVehicleState(id)
+		server.setVehicleInvulnerable(id,false)
+	end
+	resetAircraftCarrierHp(state)
+	local anchor=state.ciws_components and state.ciws_components['13']
+	local runtime=anchor and g_carrier_ciws_runtime[anchor]
+	if runtime then runtime.mounts={} end
+end
+
+function resetAircraftCarrierHp(state)
+	state.max_hp=math.max((g_savedata.carrier_hp or 3000)//1|0,1)
+	state.hp=state.max_hp
+	state.damage_in_frame=0
+	-- 撃沈で止めた CIWS は、次の試合、修復、再出現で戻す。
+	if state.destroyed then state.destroyed=nil;state.ciws_enabled=state.ciws_resume;state.ciws_assignments={} end
+	g_team_status_dirty=true
+	g_player_status_dirty=true
+end
+
+function addAircraftCarrierDamage(vehicle_id,damage_amount)
+	local _,state=findAircraftCarrierOwner(vehicle_id)
+	if not state then return false end
+	if g_in_game then state.damage_in_frame=(state.damage_in_frame or 0)+damage_amount end
+	return true
+end
+
+function updateAircraftCarrierHp()
+	for label,state in pairs(getAircraftCarrierStates()) do
+		if #state.vehicle_ids>0 and not state.hp then resetAircraftCarrierHp(state) end
+		local damage=state.damage_in_frame or 0
+		if damage>0 then
+			state.damage_in_frame=0
+			if state.hp and state.hp>0 then
+				state.hp=math.max(state.hp-math.min(damage,g_savedata.max_damage or damage),0)//1|0
+				g_team_status_dirty=true
+				g_player_status_dirty=true
+				if state.hp==0 then
+					state.ciws_resume=state.ciws_enabled
+					ciwsStopCarrier(state)
+					state.destroyed=true
+					announce('CVN-78 '..label..' destroyed.',-1)
+				end
+			end
+		end
+	end
+end
+
+-- 左上のチーム表示に、そのチームの空母 HP を 1 行加える。
+function aircraftCarrierHpText(team)
+	local root=g_savedata.aircraft_carrier
+	local state=team and root and root.flags and root.flags[team]
+	if not state or #state.vehicle_ids==0 or not state.hp then return nil end
+	return 'Carrier HP:'..math.max(state.hp//1|0,0)
+end
+
+function teamStatusTitle(team_name)
+	local hp_text=aircraftCarrierHpText(team_name)
+	return hp_text and trim(team_name)..'\n'..hp_text or trim(team_name)
+end
+
+function getAircraftCarrierState(owner)
 	if not g_savedata.aircraft_carrier then
 		g_savedata.aircraft_carrier={vehicle_ids={}, transforms={}}
 	end
-	return g_savedata.aircraft_carrier
+	local root=g_savedata.aircraft_carrier
+	root.flags=root.flags or {}
+	if not owner then return root end
+	if not root.flags[owner] then root.flags[owner]={vehicle_ids={}, transforms={}} end
+	return root.flags[owner]
+end
+
+function getAircraftCarrierStates()
+	return {MANUAL=getAircraftCarrierState(), RED=getAircraftCarrierState('RED'), BLUE=getAircraftCarrierState('BLUE')}
+end
+
+-- g_savedata.aircraft_carrier exists once any carrier helper has run; check the sections.
+function hasAircraftCarrier()
+	for _,state in pairs(getAircraftCarrierStates()) do
+		if #state.vehicle_ids>0 then return true end
+	end
+	return false
+end
+
+-- spawnAddonComponent applies the playlist offset; compensate to place the
+-- flag's physical root just above the deck, rather than burying its base.
+function spawnCarrierFlagVehicle(name, transform)
+	local addon_index,success=server.getAddonIndex()
+	if not success then return nil end
+	local addon=server.getAddonData(addon_index)
+	if not addon then return nil end
+	for location_index=0,addon.location_count-1 do
+		local location=server.getLocationData(addon_index,location_index)
+		for component_index=0,location.component_count-1 do
+			local component=server.getLocationComponentData(addon_index,location_index,component_index)
+			if component and component.type=='vehicle' then
+				for _,tag in pairs(component.tags or {}) do
+					if tag=='name='..name then
+						local spawn_transform=matrix.multiply(transform,matrix.translation(0,9.75,-1.125))
+						local spawned,ok=server.spawnAddonComponent(spawn_transform,addon_index,location_index,component_index)
+						if ok and spawned and spawned.vehicle_ids then return spawned.vehicle_ids[1] end
+						return nil
+					end
+				end
+			end
+		end
+	end
+end
+
+function spawnCarrierFlag(peer_id, name, x, z, heading)
+	if not despawnFlag(peer_id,name) then return false end
+	local base=spawnAircraftCarrier(peer_id,x,z,heading,g_aircraft_carrier_default_y,name)
+	if not base then return false end
+	local offset=g_aircraft_carrier_flag_offset
+	local transform=matrix.multiply(base,matrix.translation(offset.x,offset.y,offset.z))
+	local fx,fy,fz=matrix.position(transform)
+	local flag=spawnFlagAtDirect(peer_id,name,fx,fz,fy,false,nil,transform)
+	if not flag then
+		deleteAircraftCarrier(peer_id,true,name)
+		return false
+	end
+	return flag
 end
 
 function isAircraftCarrierVehicle(vehicle_id)
-	for _,id in ipairs(getAircraftCarrierState().vehicle_ids) do
-		if id==vehicle_id then return true end
+	for _,state in pairs(getAircraftCarrierStates()) do
+		for _,id in ipairs(state.vehicle_ids) do
+			if id==vehicle_id then return true end
+		end
 	end
 	return false
 end
 
 function forgetAircraftCarrierVehicle(vehicle_id)
-	local state=getAircraftCarrierState()
-	for i=#state.vehicle_ids,1,-1 do
-		if state.vehicle_ids[i]==vehicle_id then table.remove(state.vehicle_ids,i) end
+	for _,state in pairs(getAircraftCarrierStates()) do
+		for i=#state.vehicle_ids,1,-1 do
+			if state.vehicle_ids[i]==vehicle_id then table.remove(state.vehicle_ids,i) end
+		end
+		state.transforms[vehicle_id]=nil
 	end
-	state.transforms[vehicle_id]=nil
 	g_aircraft_carrier_loaded[vehicle_id]=nil
 end
 
@@ -5000,44 +6407,24 @@ function alignAircraftCarrierVehicle(vehicle_id)
 	-- from onVehicleLoad; this callback only excludes them from combat linking.
 	g_pending_link_requests[vehicle_id]=nil
 	g_aircraft_carrier_loaded[vehicle_id]=true
-end
-
-function showAircraftCarrierStatus(peer_id)
-	local state=getAircraftCarrierState()
-	if #state.vehicle_ids==0 then
-		announce('No tracked carrier. Spawn: ?mm carrier',peer_id)
-		return
-	end
-	for _,vehicle_id in ipairs(state.vehicle_ids) do
-		local data,exists=server.getVehicleData(vehicle_id)
-		local transform,has_position=server.getVehiclePos(vehicle_id)
-		local simulating,sim_found=server.getVehicleSimulating(vehicle_id)
-		local components,has_components=server.getVehicleComponents(vehicle_id)
-		local text=string.format('Carrier ID=%d exists=%s sim=%s components=%s voxels=%s',vehicle_id,
-			tostring(exists),sim_found and tostring(simulating) or 'unknown',tostring(has_components),
-			tostring(has_components and components and components.voxels or 'unknown'))
-		text=text..' onLoad_seen='..tostring(g_aircraft_carrier_loaded[vehicle_id]==true)
-		if has_position and transform then
-			local x,y,z=matrix.position(transform)
-			text=text..string.format(' actual=(%.2f,%.2f,%.2f)',x,y,z)
-			local target=state.transforms[vehicle_id]
-			if target then
-				local tx,ty,tz=matrix.position(target)
-				text=text..string.format(' delta=(%.2f,%.2f,%.2f)',x-tx,y-ty,z-tz)
-			end
-		else text=text..' actual=unavailable' end
-		announce(text,peer_id)
-	end
+	-- 空母は被弾させ、アドオン側の空母 HP で耐久を管理する。
+	if type(server.setVehicleInvulnerable)=='function' then server.setVehicleInvulnerable(vehicle_id,false) end
 end
 
 function updateAircraftCarrierSpawnCheck()
-	if g_aircraft_carrier_check_ticks>0 then
+	for owner,check in pairs(g_aircraft_carrier_checks) do
 		-- Fixed delays from spawn do not guarantee the vehicle has loaded.
-		for _,vehicle_id in ipairs(getAircraftCarrierState().vehicle_ids) do
-			if not g_aircraft_carrier_loaded[vehicle_id] then return end
+		local loaded=true
+		for _,vehicle_id in ipairs(getAircraftCarrierState(owner~='MANUAL' and owner or nil).vehicle_ids) do
+			if not g_aircraft_carrier_loaded[vehicle_id] then loaded=false; break end
 		end
-		g_aircraft_carrier_check_ticks=g_aircraft_carrier_check_ticks-1
-		if g_aircraft_carrier_check_ticks==0 then showAircraftCarrierStatus(g_aircraft_carrier_check_peer) end
+		if loaded then
+			check.ticks=check.ticks-1
+			if check.ticks==0 then
+				g_aircraft_carrier_checks[owner]=nil
+				announce('CVN-78 '..owner..' loaded.',check.peer_id)
+			end
+		end
 	end
 end
 
@@ -5065,9 +6452,10 @@ function getAircraftCarrierAddonIndex()
 	return nil,'Playlist location "aircraft_carrier" not found.'
 end
 
-function deleteAircraftCarrier(peer_id, silent)
-	g_aircraft_carrier_check_ticks=0
-	local state=getAircraftCarrierState()
+function deleteAircraftCarrier(peer_id, silent, owner)
+	g_aircraft_carrier_checks[owner or 'MANUAL']=nil
+	local state=getAircraftCarrierState(owner)
+	ciwsStopCarrier(state)
 	local ids=state.vehicle_ids
 	state.vehicle_ids={}
 	local removed=0
@@ -5093,10 +6481,14 @@ function deleteAircraftCarrier(peer_id, silent)
 			announce('Carrier removed ('..removed..' sections).',peer_id)
 		end
 	end
+	if remaining==0 then state.hp,state.max_hp,state.damage_in_frame,state.destroyed=nil,nil,nil,nil end
+	g_team_status_dirty=true
+	g_player_status_dirty=true
+	sendWebMapBattleArea(true)
 	return remaining==0
 end
 
-function spawnAircraftCarrier(peer_id, x, z, heading, y)
+function spawnAircraftCarrier(peer_id, x, z, heading, y, owner)
 	for _,value in pairs({x=x,z=z,heading=heading,y=y}) do
 		if type(value)~='number' or value~=value or math.abs(value)==math.huge then
 			announce('Carrier coordinates, heading and height must be finite numbers.',peer_id)
@@ -5107,7 +6499,7 @@ function spawnAircraftCarrier(peer_id, x, z, heading, y)
 		announce('Specify both x and z: ?mm carrier [x z [heading [y]]]',peer_id)
 		return
 	end
-	local state=getAircraftCarrierState()
+	local state=getAircraftCarrierState(owner)
 	if #state.vehicle_ids>0 then
 		announce('A carrier is already tracked. Use ?mm delete_carrier first.',peer_id)
 		return
@@ -5132,8 +6524,10 @@ function spawnAircraftCarrier(peer_id, x, z, heading, y)
 		z=pz+math.cos(math.rad(heading))*300
 	end
 	heading=(heading or 0)%360
-	y=y or 20 -- Approximate waterline at sea level; deck at y + 0.127 m.
+	y=y or g_aircraft_carrier_default_y -- Deck at y + 0.127 m.
 	local base=matrix.multiply(matrix.translation(x,y,z),matrix.rotationY(math.rad(heading)))
+	state.ciws_components={}
+	state.ciws_team=owner or (g_players[peer_id] and g_players[peer_id].team)
 	for _,part in ipairs(g_aircraft_carrier_parts) do
 		local transform=matrix.multiply(base,matrix.translation(0,0,part.z))
 		local offset=part.spawn_offset
@@ -5145,20 +6539,28 @@ function spawnAircraftCarrier(peer_id, x, z, heading, y)
 		local component,is_success=server.spawnAddonComponent(spawn_transform,addon_index,location_index,component_indices[part.component_id])
 		local vehicle_ids=component and component.vehicle_ids
 		if is_success and component and component.type=='vehicle' and type(vehicle_ids)=='table' and #vehicle_ids>0 then
+			state.ciws_components[tostring(part.component_id)]=vehicle_ids[1]
 			for _,vehicle_id in ipairs(vehicle_ids) do
 				table.insert(state.vehicle_ids,vehicle_id)
 				state.transforms[vehicle_id]=transform
 				g_pending_link_requests[vehicle_id]=nil
 			end
 		else
-			local cleaned=deleteAircraftCarrier(peer_id,true)
-			announce('Carrier spawn failed: '..part.name..'. '..(cleaned and 'Partial spawn removed.' or 'Cleanup incomplete; use ?mm delete_carrier.'),peer_id)
+			local cleaned=deleteAircraftCarrier(peer_id,true,owner)
+			local cleanup_command=owner and ('?mm delete_flag '..owner) or '?mm delete_carrier'
+			announce('Carrier spawn failed: '..part.name..'. '..(cleaned and 'Partial spawn removed.' or 'Cleanup incomplete; use '..cleanup_command..'.'),peer_id)
 			return
 		end
 	end
-	g_aircraft_carrier_check_ticks=2
-	g_aircraft_carrier_check_peer=peer_id
-	announce(string.format('CVN-78 spawn requested (3 sections): x=%.2f z=%.2f heading=%.1f y=%.2f. Status after all onVehicleLoad; ?mm carrier_status / ?mm delete_carrier',x,z,heading,y),peer_id)
+	sendWebMapBattleArea(true)
+	state.ciws_enabled=true
+	state.ciws_assignments={}
+	state.destroyed=nil
+	resetAircraftCarrierHp(state)
+	g_aircraft_carrier_checks[owner or 'MANUAL']={ticks=2,peer_id=peer_id}
+	local cleanup_command=owner and ('?mm delete_flag '..owner) or '?mm delete_carrier'
+	announce(string.format('CVN-78 %s spawn requested (3 sections): x=%.2f z=%.2f heading=%.1f y=%.2f. Ready after all onVehicleLoad; cleanup: %s',owner or 'MANUAL',x,z,heading,y,cleanup_command),peer_id)
+	return base
 end
 
 
