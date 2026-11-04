@@ -6007,6 +6007,8 @@ function spawnFlagAtDirect(peer_id, name, x, z, y, flag_under_spawn, flag_compon
 		g_savedata.flag_vehicles[name] = {
 			vehicle_id = vehicle_id,
 			ui_id = ui_id,
+			spawn_matrix = vehicle_matrix,
+			on_carrier = carrier_matrix ~= nil,
 		}
 		if name == 'RED' then
 			g_flag_assignments.RED = { idx = -1, name = name, x = tonumber(x), z = tonumber(z), y = y }
@@ -6034,6 +6036,12 @@ function refreshFlagMapObjectAt(name, vehicle_matrix)
 	server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, text, getFlagMapRadius(name), text, r, g, b, a)
 end
 
+-- Spawn a team marker the way the flag previously at this spot was spawned.
+function respawnFlagAtPlacement(component_name, placed_flag, transform)
+	if placed_flag.on_carrier then return spawnCarrierFlagVehicle(component_name, transform) end
+	return (spawnAddonVehicle(component_name, transform))
+end
+
 function swapFlagPositions(peer_id)
 	local red_flag = g_savedata.flag_vehicles.RED
 	local blue_flag = g_savedata.flag_vehicles.BLUE
@@ -6059,8 +6067,14 @@ function swapFlagPositions(peer_id)
 	if #red_carrier.vehicle_ids>0 or #blue_carrier.vehicle_ids>0 then
 		-- Static carrier sections stay in place. Replace the team markers and
 		-- exchange ownership so later deletion removes the correct ship.
-		local new_red=spawnCarrierFlagVehicle('flag_red',blue_matrix)
-		local new_blue=spawnCarrierFlagVehicle('flag_blue',red_matrix)
+		-- getVehiclePos is not the spawn origin, so respawning from it would
+		-- move the markers on every swap. Reuse the stored placements instead.
+		red_matrix=red_flag.spawn_matrix or red_matrix
+		blue_matrix=blue_flag.spawn_matrix or blue_matrix
+		red_x,red_y,red_z=matrix.position(red_matrix)
+		blue_x,blue_y,blue_z=matrix.position(blue_matrix)
+		local new_red=respawnFlagAtPlacement('flag_red',blue_flag,blue_matrix)
+		local new_blue=respawnFlagAtPlacement('flag_blue',red_flag,red_matrix)
 		if not new_red or not new_blue then
 			if new_red then server.despawnVehicle(new_red,true) end
 			if new_blue then server.despawnVehicle(new_blue,true) end
@@ -6076,6 +6090,10 @@ function swapFlagPositions(peer_id)
 		local root=getAircraftCarrierState()
 		root.flags.RED,root.flags.BLUE=blue_carrier,red_carrier
 		g_aircraft_carrier_checks.RED,g_aircraft_carrier_checks.BLUE=g_aircraft_carrier_checks.BLUE,g_aircraft_carrier_checks.RED
+		-- resetVehicleState briefly removes the ship, so repair here between matches,
+		-- not at match start when vehicles are parked on the deck.
+		repairAircraftCarrier(red_carrier)
+		repairAircraftCarrier(blue_carrier)
 		-- The team status shows each team's carrier HP, which has just changed owner.
 		g_team_status_dirty=true
 		g_player_status_dirty=true
@@ -6093,6 +6111,8 @@ function swapFlagPositions(peer_id)
 			return false
 		end
 	end
+	red_flag.spawn_matrix,blue_flag.spawn_matrix=blue_flag.spawn_matrix,red_flag.spawn_matrix
+	red_flag.on_carrier,blue_flag.on_carrier=blue_flag.on_carrier,red_flag.on_carrier
 	cancelPendingCenterFlagSpawns()
 
 	refreshFlagMapObjectAt('RED', blue_matrix)
@@ -6234,11 +6254,26 @@ function findAircraftCarrierOwner(vehicle_id)
 	end
 end
 
+-- HP が減った空母だけを元に戻す（リセット中は区画が一瞬消えるため、無傷なら触れない）。
+-- リセット後の keypad を信用せず、次の tick で全基へ書き直す。
+function repairAircraftCarrier(state)
+	if type(server.resetVehicleState)~='function' then return end
+	if not state.hp or state.hp>=state.max_hp then return end
+	for _,id in ipairs(state.vehicle_ids) do
+		server.resetVehicleState(id)
+		server.setVehicleInvulnerable(id,false)
+	end
+	resetAircraftCarrierHp(state)
+	local anchor=state.ciws_components and state.ciws_components['13']
+	local runtime=anchor and g_carrier_ciws_runtime[anchor]
+	if runtime then runtime.mounts={} end
+end
+
 function resetAircraftCarrierHp(state)
 	state.max_hp=math.max((g_savedata.carrier_hp or 3000)//1|0,1)
 	state.hp=state.max_hp
 	state.damage_in_frame=0
-	-- 撃沈で止めた CIWS は、次の試合や再出現で戻す。
+	-- 撃沈で止めた CIWS は、次の試合、修復、再出現で戻す。
 	if state.destroyed then state.destroyed=nil;state.ciws_enabled=state.ciws_resume;state.ciws_assignments={} end
 	g_team_status_dirty=true
 	g_player_status_dirty=true
