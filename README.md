@@ -69,7 +69,7 @@
 | `?mm supply` | 自分用の補給所を設置 |
 | `?mm delete_supply` | 自分用の補給所を削除 |
 | `?mm give` | 基本装備を受け取る |
-| `?mm tp` | 自チームに割り当てられた旗へ移動 |
+| `?mm tp` | 自チームの空母があれば艦橋へ、なければ割り当てられた旗へ移動 |
 | `?mm die` | 試合中に自分を死亡状態にする |
 | `?mm reset_ui` | 画面表示を作り直す |
 
@@ -155,7 +155,7 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 
 ### CVN-78 空母
 
-このアドオンには、Admin コマンドでスポーンする CVN-78 空母のアドオンロケーション `aircraft_carrier` が含まれています。スクリプトはロケーション内の車両コンポーネント ID `13`（船尾）、`15`（中央）、`14`（艦首）をそれぞれスポーンし、3 区画の車両 ID を個別に管理します。編成・相対位置は `playlist.xml` と `script.lua` の両方に定義されています。
+このアドオンには、Admin コマンドで単独スポーンする CVN-78 空母と、海上へ配置された RED / BLUE 旗に連動する空母があります。どちらもアドオンロケーション `aircraft_carrier` の車両コンポーネント ID `13`（船尾）、`15`（中央）、`14`（艦首）を使います。区画の編成・相対位置は `playlist.xml` と `script.lua` の両方に定義されています。RED / BLUE は各 1 隻までで、CENTER とデバッグ旗は空母を作りません。
 
 #### 必要なファイル
 
@@ -163,26 +163,63 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 
 - `playlist.xml` と `script.lua`
 - `vehicle_13.xml`、`vehicle_14.xml`、`vehicle_15.xml` と、それぞれに対応する `vehicle_13/`、`vehicle_14/`、`vehicle_15/` フォルダ
-- [`mod/CVN78_Carrier_Components/`](./mod/CVN78_Carrier_Components/) 以下の mod ファイル一式（`mod.xml`、`manifest.json`、`mod.png`、`data/components/`）
+- `CVN78_Carrier_Components` mod 一式（`mod.xml`、`manifest.json`、`mod.png`、`data/components/`）。元ファイルは [SJAC_AirCareer](https://github.com/sk7z-xyz/SJAC_AirCareer) の `runtime-assets/mod/` にあり、本リポジトリには含みません
 
 `playlist.xml` はロケーション `aircraft_carrier` から 3 つの車両 XML を参照します。各車両 XML のコンポーネント名（`c` 要素の `d` 属性）は mod の定義を参照し、manifest は vehicle ID ごとの必要コンポーネントと定義ファイルを対応付けています。同名フォルダ内の `.bin` ファイルも各車両 XML と一緒に必要なアセットです。ファイル名やフォルダ名を変えず、相対構成を保ってください。
 
 このリポジトリだけからは、利用環境での Stormworks の mod・ミッション導入先やインポート手順を確定できません。上記一式を保ったうえで、利用環境で確立済みのアドオン／mod 導入手順に従ってください。特定の導入先パスへのコピーは本書では指定しません。
 
+#### 空母 HP
+
+空母はダメージを受けます（出現時に無敵を解除）。耐久はアドオン側の空母 HP で管理し、最大値は `carrier_hp`（初期値 3000）です。
+
+- 試合中の被弾だけを数えます。1 tick に減る量は `max_damage` が上限です（登録車両と同じ）。
+- 出現時と試合開始時に最大値へ戻ります。
+- 0 になると撃沈扱いになり、その空母の CIWS が止まります。次の試合開始時に HP と CIWS が戻ります。
+- 左上のチーム表示（RED / BLUE）に、そのチームの空母があるあいだ `Carrier HP:…` の行を追加します。
+
 #### Admin コマンドでの操作
 
 | コマンド | 説明 |
 | --- | --- |
-| `?mm carrier` | プレイヤー実行時は約 300 m 前方へスポーン要求を出します。`?mm carrier x z (heading) (y)` では X/Z 座標を指定し、heading は度数（既定値 0）、Y 原点は既定値 20 m です。X と Z は両方指定するか、両方省略します。 |
-| `?mm carrier_status` | 管理中の区画について、車両 ID、存在状態、シミュレーション状態、コンポーネント取得の成否、ボクセル数、ロード通知の有無、取得できる場合は現在位置と目標との差を表示します。 |
-| `?mm delete_carrier` | コマンドでスポーンした空母区画の削除を試みます。削除できず残った区画がある場合は、再実行するよう通知されます。 |
+| `?mm carrier` | チーム旗とは独立した手動スポーンです。プレイヤー実行時は約 300 m 前方へスポーン要求を出します。`?mm carrier x z (heading) (y)` では X/Z 座標を指定し、heading は度数、Y 原点は既定値 20 m です。X と Z は両方指定するか、両方省略します。 |
+| `?mm delete_carrier` | `?mm carrier` で手動スポーンした空母だけを削除します。RED / BLUE 旗に連動する空母は、対応する旗の削除または再配置で管理します。 |
+| `?mm carrier_ciws on\|off (RED\|BLUE\|MANUAL)` | 空母 CIWS を切り替えます。対象は大文字で指定し、省略時はスポーン済みの全空母です。撃沈中の空母へ指定した内容は HP が戻ったときに適用します。 |
 
-これら 3 コマンドは Admin 専用です。サーバーコンソールから `?mm carrier` を実行するときは座標が必要です。座標を省略した場合の向きは、プレイヤーの視線の水平方向を使います。コマンド実行時にスクリプトは指定ロケーションと 3 つのコンポーネント ID を確認し、全区画の `onVehicleLoad` 通知後に状態を表示します。未ロードの区画がある間は自動表示を待つため、必要に応じて `?mm carrier_status` で確認してください。
+これらのコマンドは Admin 専用です。サーバーコンソールから `?mm carrier` を実行するときは座標が必要です。プレイヤーが座標を省略して手動スポーンする場合は、実行者の視線の水平方向を向きに使います。コマンド実行時にスクリプトは指定ロケーションと 3 つのコンポーネント ID を確認し、全区画の `onVehicleLoad` 通知後に `CVN-78 ... loaded.` を実行者へ通知します。未ロードの区画がある間は通知されません。
+
+#### RED / BLUE 旗に連動する空母
+
+RED / BLUE 旗を手動または自動配置する際、配置先のタイル名が空（海タイル）または地表高度が 0 m 未満なら、指定 X/Z を連動空母の原点として空母を配置します。指定 Y は使わず、手動空母と共通の既定 Y 原点 20 m を使います。向きは配置要求時点の水平視線を保持し、コンソールなど実行者の視線がない場合は 0 度です。旗は艦橋より後方・右舷側を暫定配置先とし、現在のローカル X/Z は (30, -120) です。実機での正確な位置関係は未確認です。
+
+海タイル以外では高度チェッカーの結果を待ちます。600 tick で取得できなければ指定 Y へ通常の旗を配置します。X/Z のみ指定した陸上配置では、地表高度 +10 m を旗の配置原点に使います（測定できない場合は Y=0）。マップ表示は甲板上の旗位置を参照し、`?mm tp` は空母の艦橋内へ移動します。
+
+同じチームの旗を再配置すると、そのチームの空母も置き換わります。RED と BLUE はそれぞれ 1 隻を管理し、CENTER 旗やデバッグ旗からは空母を作りません。旗を削除すると対応する連動空母も削除します。`swap_flag` は RED / BLUE の割り当てを交換しますが、空母の位置は移動しません。空母の所有チーム、HP、`tp` 先は旗と一緒に入れ替わります。手動の `?mm carrier` 空母はこの連動管理と別枠です。
+
+アドオンの読み込み時と終了時（`onCreate` / `onDestroy`）にも旗を消去するため、連動空母はワールドの再読み込みをまたいで残りません。手動スポーンの空母は残ります。
+
+#### 空母 CIWS
+
+空母の 5 基の CIWS（A / B: 船尾 `13`、F: 中央 `15`、D / E: 艦首 `14`）は、スクリプトが目標を割り当てて車両の keypad へ書き込みます。スポーン時に自動で有効になり、`?mm carrier_ciws` で切り替えられます。試合状態では止まらないため、待機中も作動します（空母 HP の減少は試合中だけです）。
+
+- **味方の判定**: 連動空母は旗のチーム、手動空母はスポーン時点の実行者のチームを味方とします。味方の車両と同じグループの車両は撃ちません。手動空母をコンソールまたはチーム未所属で出現させると味方チームがなく、登録車両も目標になります。空母の区画と旗は常に対象外です。
+- **飛来物の迎撃**: 空母から 4,000 m 以内、接近速度 15 m/s 以上で、20 秒以内に最接近距離 300 m 以下を通る目標を迎撃します。空母の向きを基準に各基の自舷側へ向いた ±75°、俯角 5° までを通常の射界とします。
+- **目標の割り当て**: できるだけ多くの目標へ別々の基を割り当て、余った基で脅威の高い目標を補強します。反対舷の基は、その目標を撃てる基がすべて交戦中のときだけ、基ごとの仰角条件を満たす範囲で支援します。
+- **航空機への射撃**: 上記の目標がないときだけ行います。甲板より 8 m 以上高く、650 m 以内、速度 20〜200 m/s、弾の飛翔時間 1 秒以内、予測誤差 6 m 以内の目標が条件です。対象は他チーム（Standby を除く）の登録車両と、座席を持つ未登録の車両です。
+- **撃沈時**: HP が 0 になると射撃を止めます。
+
+各基の keypad 名には基の名前が入ります（`CIWS_A_TGT_X` など）。値は発射機側の FCS に合わせて Y / Z を入れ替えています。目標がない基の keypad は 6 つとも 0 にします。
+
+| keypad（A 基の例） | 値 |
+| --- | --- |
+| `CIWS_A_TGT_X` / `CIWS_A_VX` | 目標の世界 X 座標 / X 速度 |
+| `CIWS_A_TGT_Z` / `CIWS_A_VZ` | 目標の高度 / 鉛直速度 |
+| `CIWS_A_TGT_Y` / `CIWS_A_VY` | 目標の世界 Z 座標 / Z 速度 |
 
 #### 注意
 
-- 空母は船尾・中央・艦首の 3 つの静的車両として配置し、区画ごとに状態を保持します。管理中の区画が残っている間は追加スポーンできないため、再配置前に `?mm delete_carrier` で削除してください。
-- スクリプトには座標・向き・Y 原点とスポーン後の車両状態を扱う処理がありますが、ゲーム内のスポーン、接続、衝突、浮力、表示の実動作はこのリポジトリの静的確認では未検証です。
+- 空母は船尾・中央・艦首の 3 つの静的車両として配置し、区画ごとに状態を保持します。手動スポーン空母とチーム連動空母は別に管理します。手動空母を追加する場合は、既存の手動空母を `?mm delete_carrier` で削除してください。
+- 海タイル判定、地表高度判定、視線方向、各旗から空母への相対位置は、ゲーム内でのスポーン・接続・衝突・浮力・表示と合わせて確認が必要です。特に車両の Y 原点と `spawn_local_offset` の実動作は未検証です。ローカル座標 (30, -120) は調整中の値です。
 - スクリプトは空母区画のロード時に通常のプレイヤー車両の自動登録処理をスキップします。
 - `playlist.xml` 内のロケーション名・component ID と `script.lua` の対応表を変える場合は、両方の整合を保ってください。
 
@@ -380,7 +417,7 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 | `?mm sit (vehicle_id)` | なし | 指定車両、または省略時は自分の登録車両の空席へ着席します。名前に `passenger`、`padded`、`harness` を含む座席は除外します。 |
 | `?mm give` | なし | FlashLight、Binoculars、Compass、NightVision、FirstAidKit をスロット 2～6 へ設定します。参加時にも同じ基本装備を自動配布します。 |
 | `?mm airports_list` | なし | 組み込み航空基地の件数、tile、名前、X/Z 座標を表示します。 |
-| `?mm tp` | なし | 所属チームに割り当てられた RED / BLUE 旗座標へテレポートします。生死や試合状態による制限はありません。 |
+| `?mm tp` | なし | 所属チームの空母があれば艦橋内（前方の窓際）へ、なければ割り当てられた旗座標へテレポートします。生死や試合状態による制限はありません。 |
 
 #### Admin コマンド
 
@@ -395,13 +432,13 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 | `?mm shuffle2 (チーム数)` | `?mm sh2 (チーム数)` | 試合前かつカウントダウン外だけ実行できる履歴考慮シャッフルです。省略時は 2。2 未満は 2 に補正し、上限は設けていません。 |
 | `?mm dismiss [チーム名]` | なし | 試合前かつカウントダウン外で、指定名と完全一致するチームの全員を除外します。 |
 | `?mm vip [RED\|BLUE\|OFF] (peer_id)` | なし | RED または BLUE の参加者を VIP に指定します。チーム指定は RED なら `r` / `re` / `red`、BLUE なら `b` / `bl` / `blu` / `blue` も使えます。VIP が撃破されると、その所属チームは敗北扱いになります。VIP のステータスポップアップ名には `[VIP]` を付加します。`OFF` で解除します。VIP 指定は SteamID64 で Lua セッション単位に管理され、初期値は OFF です。 |
-| `?mm reset` | なし | 全プレイヤー・登録車両情報を空にし、補給・旗を削除して終了処理を実行します。 |
+| `?mm reset` | なし | 全プレイヤー・登録車両情報を空にし、補給・旗（連動する空母を含む）を削除して終了処理を実行します。手動スポーンの空母は残ります。 |
 | `?mm debug1` | なし | 管理中の無人車両を BLUE の疑似プレイヤーとして登録し、HP・ステータスを表示します。実プレイヤー乗車中の車両は除外し、未ロード車両はロード時に再試行します。疑似プレイヤーは Ready 判定、勝敗判定、シャッフルの参加者には含めません。 |
 | `?mm clear_supply` | なし | 全補給オブジェクトを削除します。現行実装では同時に全旗も削除します。 |
-| `?mm flag [名前] (x) (z) (y)` | `?mm f [名前] (x) (z) (y)` | 旗を配置します。座標配置は x、z、y の 3 値をすべて指定した場合だけで、それ以外は実行者の正面 8 m・上方 9 mへ配置します。 |
-| `?mm swap_flag` | `?mm sf` | RED と BLUE の旗車両、マップ表示、`tp` 用割り当て座標を互いの位置へ交換します。両方の旗が存在する場合だけ実行します。 |
-| `?mm delete_flag [名前]` | なし | 指定名を大文字化し、その旗車両とマップ表示を削除します。 |
-| `?mm clear_flag` | なし | 全旗車両とマップ表示を削除します。 |
+| `?mm flag [名前] (x) (z) (y)` | `?mm f [名前] (x) (z) (y)` | X/Z は両方指定するか両方省略します。省略時は実行者の正面 8 m・上方 9 mを配置候補とします。RED / BLUE の配置先が海タイルまたは地表高度 0 m 未満なら、空母用高度で連動空母と甲板上の旗を配置します。 |
+| `?mm swap_flag` | `?mm sf` | RED と BLUE の割り当てと `tp` 用座標を交換します。連動する空母の位置は動かしません。両方の旗が存在する場合だけ実行します。 |
+| `?mm delete_flag [名前]` | なし | 指定名を大文字化し、その旗・マップ表示・連動する空母を削除します。 |
+| `?mm clear_flag` | なし | 全旗、マップ表示、および旗に連動する空母を削除します。 |
 | `?mm set (設定名) (値)` | なし | 設定を変更します。引数なしで設定名と型の一覧を表示します。 |
 | `?mm SJAC` | `?mm sjac` | SJAC プリセットを適用します。 |
 | `?mm SGAC` | `?mm sgac` | SGAC プリセットを適用します。 |
@@ -410,9 +447,9 @@ IFF 5 コマンドには、現行 `script.lua` 上で Auth / Admin 条件があ�
 | `?mm shuffle_airbase (範囲m)` | `?mm sa (範囲m)` | RED / BLUE の航空基地を選び、旗を配置します。省略時 20,000 m。 |
 | `?mm shuffle_ground_base` | `?mm sg` | 組み込み地上基地ペアを 1 組選び、RED / BLUE へ割り当てます。 |
 | `?mm debug_ground_base` | `?mm dgb` | デバッグ用。全地上基地点と各ペアの CENTER 円を同時表示します。 |
-| `?mm carrier` | なし | CVN-78 を 3 区画でスポーンします。プレイヤー実行では約 300 m 前方、または `x z (heading) (y)` を指定します。 |
-| `?mm carrier_status` | なし | コマンドで管理中の空母 3 区画の車両 ID と状態を表示します。 |
-| `?mm delete_carrier` | なし | コマンドでスポーンした空母 3 区画の削除を試みます。 |
+| `?mm carrier` | なし | チーム旗とは独立した手動 CVN-78 を 3 区画でスポーンします。プレイヤー実行では約 300 m 前方、または `x z (heading) (y)` を指定します。 |
+| `?mm delete_carrier` | なし | 手動スポーンした空母だけを削除します。旗連動空母は `delete_flag` や旗の再配置で管理します。 |
+| `?mm carrier_ciws on\|off (RED\|BLUE\|MANUAL)` | なし | 空母 CIWS を切り替えます。対象を省略すると全空母が対象です。 |
 
 #### VIP
 
@@ -482,11 +519,11 @@ VIP は `peer_id` ではなく SteamID64 で識別するため、再接続後も
 
 - CENTER の戦闘エリア半径は可変です。`battle_mode=1` では RED-BLUE 間距離から初期半径を計算し、SGAC の試合中は残り時間に合わせて最終半径 300 m まで縮小します。SJAC または試合外では初期半径のまま縮小しません。
 - RED は `flag_red`、BLUE は `flag_blue`、CENTER は通常 `flag_center`、その他は `flag` コンポーネントを使用します。
-- RED / BLUE を配置するとチーム割り当て座標を更新し、`battle_mode=1` なら CENTER を再作成します。
+- RED / BLUE を配置するとチーム割り当て座標を更新し、`battle_mode=1` なら CENTER を再作成します。海タイルまたは地表高度 0 m 未満への配置では、チームごとの空母を旗に連動させます（詳細は「CVN-78 空母」を参照）。
 - RED-BLUE 間の水平距離が 6,000 m 以上の場合、CENTER は高度チェックを省略し、`flag_center` ではなく汎用の `flag` コンポーネントを Y=0 へ配置します。6,000 m 未満では従来どおり地表高度を測定して `flag_center` を配置します。
-- `swap_flag` は RED / BLUE の旗車両を互いの位置へ移動し、マップ表示と `tp` 用割り当て座標も同時に交換します。CENTER の中点と半径は変わりません。
-- `tp` は旗車両そのものではなく、チーム割り当て座標を使います。
-- 現行コードの `delete_flag`、`clear_flag`、`clear_supply` 内の `clearFlags()` は旗車両とマップ表示を消しますが、`g_flag_assignments` は消しません。そのため再割り当てまで `tp` が旧座標を参照できる場合があります。
+- `swap_flag` は RED / BLUE の割り当てと `tp` 用座標を交換します。連動する空母の船体はその場に残ります。CENTER の中点と半径は変わりません。
+- `tp` は旗車両そのものではなく、チーム割り当て座標を使います。ただし自チームの空母がある場合は、空母の艦橋内へ移動します。
+- `delete_flag`、`clear_flag`、`clear_supply` は旗車両とマップ表示に加え、旗に連動する空母も削除します。RED / BLUE の削除が完了すると、そのチームの `tp` 用割り当ても消去します。空母の削除に失敗した区画は追跡を維持し、同じ削除コマンドで再試行できます。
 - 自動バトル有効時の通常終了と `shuffle_ground_base` は、専用処理で RED / BLUE / CENTER の割り当ても消去します。
 
 ### 自動バトル
@@ -586,13 +623,13 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 
 #### 戦闘エリア同期
 
-`?wm battle_area` へ、RED / BLUE / CENTER の旗車両 ID と CENTER の半径を JSON で送信します。座標は含めず、存在しない旗は `null` とします。`radius_m` は CENTER のみに含め、現在半径を整数へ丸めた値です。
+`?wm battle_area` へ、RED / BLUE / CENTER の旗車両 ID と CENTER の半径、空母区画の車両 ID を JSON で送信します。座標は含めず、存在しない旗は `null` とします。`radius_m` は CENTER のみに含め、現在半径を整数へ丸めた値です。`hidden_vehicle_ids` は全空母区画の車両 ID、`carrier_teams` はそのチーム別内訳（RED / BLUE / PINK / YELLOW。YLW と Standby は YELLOW）です。チームのない手動空母は `hidden_vehicle_ids` にだけ含みます。
 
 ```text
-?wm battle_area {"RED":{"vehicle_id":1},"BLUE":{"vehicle_id":2},"CENTER":{"vehicle_id":3,"radius_m":1500}}
+?wm battle_area {"RED":{"vehicle_id":1},"BLUE":{"vehicle_id":2},"CENTER":{"vehicle_id":3,"radius_m":1500},"hidden_vehicle_ids":[11,12,13],"carrier_teams":{"RED":[11,12,13],"BLUE":[],"PINK":[],"YELLOW":[]}}
 ```
 
-旗の配置・交換・削除、試合開始・終了時に同期します。試合中、または RED / BLUE 両方の旗を配置して表示状態を保持している間は、60 tick ごとに強制再送します。待機中や Pause 中も、この条件を満たす場合は再送します。試合終了・中止時は定期再送を停止し、その時点の旗情報を送信します。
+旗の配置・交換・削除、試合開始・終了時に同期します。試合中、RED / BLUE 両方の旗を配置して表示状態を保持している間、または空母が存在する間は、60 tick ごとに強制再送します。待機中や Pause 中も、この条件を満たす場合は再送します。試合終了・中止時は定期再送を停止し、その時点の旗情報を送信します。
 
 送信は 1 tick 遅延させ、送信待ちの古い `battle_area` は最新の 1 件へ置き換えます。通常送信では同じ内容の再送を抑制し、強制再送では同じ内容でも送信します。
 
@@ -611,6 +648,7 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 | `hp_per_voxel` | number, 0以上 | 4 | 1 ボクセルあたりの推定 HP。 |
 | `hp_step` | integer, 0以上 | 500 | 推定 HP の切り捨て単位。0 なら切り捨てなし。 |
 | `max_damage` | integer, 0以上 | 1000 | 1 tick に HP へ反映する最大ダメージ。 |
+| `carrier_hp` | integer, 1以上 | 3000 | 空母（CVN-78）の最大 HP。出現時と試合開始時にこの値へ戻る。 |
 | `sunk_depth` | integer, 0以上 | 1 | Y `< -sunk_depth` を撃破扱い。0 で無効。 |
 | `gc_vehicle` | boolean | `true` | 撃破車両グループを 60 tick 後に自動削除。 |
 | `auto_link_on_spawn` | boolean | `true` | 自分がスポーンした親車両をロード後に自動登録。コードには旧キー `auto_sit_on_spawn` の移行分岐がありますが、現行順序では先に新キーが既定値補完されるため、通常は旧値で上書きされません。 |
@@ -659,7 +697,7 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 - IFF 管理コマンドは全員実行可能です。
 - `join` / `leave` は試合中も実行可能です。
 - `clear_supply` は補給だけでなく旗も削除します。
-- `delete_flag` / `clear_flag` は旗割り当て座標を消さないため、`tp` が旧座標を使う場合があります。
+- RED / BLUE 旗の削除・再配置は、そのチームの連動空母も削除します。手動の `?mm carrier` 空母は別に管理します。
 - `pause` は制限時間だけを止めます。ダメージ、車両 GC、UI、境界砲撃などは継続します。
 - `show_friends` という名前ですが、未参加閲覧者と残り 5 分以下の参加者には敵も表示します。
 - HP・弾薬設定の通常の `set` は登録済み車両へ遡及しません。
@@ -714,7 +752,29 @@ README の各仕様は、主に次の [`script.lua`](./script.lua) の定義・�
 | IFF | `g_iff_spawn_positions`、`generateIffFreqs`、`createIffSender`、`encodeCoords`、`buildNameTokens`、`onTick` 内 IFF 更新 |
 | WebMap | `requestWebMapVehicleCache`、`requestWebMapVehicleRestore`、`handleWebMapCacheEvent`、`bindVehicleTeamToWebMap`、`getWebMapBattleAreaPayload`、`sendWebMapBattleArea` |
 | 自動バトル | `scheduleAutoBattle`、`processAutoBattle` |
+| 空母・旗連動・空母 HP | `g_aircraft_carrier_parts`、`spawnAircraftCarrier`、`deleteAircraftCarrier`、`requestTeamFlagPlacement`、`spawnCarrierFlag`、`updateAircraftCarrierHp` |
+| CIWS | `g_carrier_ciws_mounts`、`ciwsUpdateCarrierDefence`、`ciwsAssignCarrierTargets`、`ciwsCarrierEligibility`、`ciwsCarrierAircraftShot`、`updateCiwsTargetLink` |
+
+### 空母連動のローカルテスト
+
+戦闘エリア同期の回帰試験は本リポジトリで `node scripts/test_battle_area.js` を実行します。
+
+空母・CIWSの検証は移転先の SJAC_AirCareer で `python scripts/check_carrier.py` を実行します（VS Code 拡張 `actboy168.lua-debug` 1.61.0 同梱の Lua 5.3 を使用）。実際の `script.lua` を読み込み、Stormworks API の代替を使って、海判定・RED / BLUE の独立管理・削除と再配置・入れ替え・失敗時の後片付け・CENTER 除外などを検証します。ゲーム内の描画・衝突・艦橋との相対位置は、このテストの対象外です。
 
 ### ライセンス
 
 本リポジトリは [`LICENSE`](./LICENSE) のとおり、The Unlicense によりパブリックドメインへ提供されています。
+
+### 空母の開発資料
+
+空母の設計資料・モデル生成元・検証履歴は、別プロジェクト [SJAC_AirCareer](https://github.com/sk7z-xyz/SJAC_AirCareer) へ移動しました。空母の車両13/14/15と同梱アセット、MODの正本も同プロジェクトの `runtime-assets/` へ移しました。本リポジトリの車両13/14/15は SJAC_AirCareer の `python scripts/deploy_carrier.py` で配備されるコピーです。制御Luaを埋め込んだ `script.lua` と `playlist.xml` は本リポジトリが正本です。
+
+CIWSの元ソース・車両原本・解析資料も [SJAC_AirCareer](https://github.com/sk7z-xyz/SJAC_AirCareer) へ移動しました。ゲーム実行用の埋込み済み `script.lua` は本リポジトリに残しています。
+
+SJAC_AirCareer は非公開リポジトリです。
+
+`playlist.xml` のロケーション `CIWS Validation` と `vehicle_16.xml`、`vehicle_17.xml` は検証用です。環境スポーンせず、`script.lua` からも参照しません。
+
+CIWS単体検証用コマンドと `carrier_status` は検証終了に伴い廃止しました。空母の自動迎撃と `?mm carrier_ciws on|off [RED|BLUE|MANUAL]` は継続します。スポーン後の詳細診断の自動表示も廃止し、ロード完了通知だけを表示します。
+
+空母・CIWSの互換用起動スクリプトと過去の調査用スクリプトは本プロジェクトから撤去しました。生成・検証は `SJAC_AirCareer/scripts/` の正本を直接実行してください。本プロジェクトの `scripts/test_battle_area.js` はBattleMatchmaker本体の戦闘エリア回帰試験です。

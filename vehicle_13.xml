@@ -1,2 +1,5229 @@
-<?xml version='1.0' encoding='utf-8'?>
-<vehicle data_version="3" bodies_id="1"><authors /><bodies><body unique_id="1"><components><c d="sk_cvn78_stern_v1"><o r="1,0,0,0,1,0,0,0,1" bc="7D898F" ac="7D898F" sc="6"><vp x="0" y="1" z="0" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="-227" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="-163" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="-99" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="-35" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="29" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="93" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="157" /></o></c><c d="sk_cvn78_voxel_panel_127x4_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-155" y="0" z="221" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="-227" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="-163" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="-99" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="-35" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="29" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="93" /></o></c><c d="sk_cvn78_voxel_panel_127x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="157" /></o></c><c d="sk_cvn78_voxel_panel_127x4_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="-28" y="0" z="221" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="-227" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="-163" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="-99" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="-35" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="29" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="93" /></o></c><c d="sk_cvn78_voxel_panel_52x64_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="157" /></o></c><c d="sk_cvn78_voxel_panel_52x4_nosurface_v2"><o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0"><vp x="99" y="0" z="221" /></o></c></components></body></bodies><logic_node_links /></vehicle>
+<vehicle data_version="3" bodies_id="5">
+	<authors />
+	<bodies>
+		<body unique_id="1">
+			<components>
+				<c d="sk_cvn78_stern_v1">
+					<o r="1,0,0,0,1,0,0,0,1" bc="7D898F" ac="7D898F" sc="6">
+						<vp x="0" y="1" z="0" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_78x29x2_stern_v11">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-72" y="0" z="-225" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_77x29x2_stern_v11">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="6" y="0" z="-225" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_72x95x1_port_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-142" y="-16" z="-196" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x42x2_port_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-70" y="0" z="-143" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_92x42x2_port_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="57" y="0" z="-143" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-153" y="0" z="-79" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-26" y="0" z="-79" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="101" y="0" z="-79" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-153" y="0" z="-15" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-26" y="0" z="-15" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="101" y="0" z="-15" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-153" y="0" z="49" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-26" y="0" z="49" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="101" y="0" z="49" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-153" y="0" z="113" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-26" y="0" z="113" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x64x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="101" y="0" z="113" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x48x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-153" y="0" z="177" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x48x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-26" y="0" z="177" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="101" y="0" z="177" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x49x2_stern_v11">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-70" y="0" z="-196" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_39x49x2_stern_v11">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="57" y="0" z="-196" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x4x2_stern_v11">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-70" y="0" z="-147" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_92x4x2_stern_v11">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="57" y="0" z="-147" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_53x49x1_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="96" y="-16" z="-196" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x12x1_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="148" y="-16" z="-45" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x24x1_weapons_v10">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="52" y="-32" z="-243" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x22x2_port_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-152" y="0" z="-101" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_127x22x2_port_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-25" y="0" z="-101" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_47x22x2_port_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="102" y="0" z="-101" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_52x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="72" y="32" z="-11" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_52x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="72" y="32" z="53" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_52x40x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="72" y="32" z="117" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_8x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="64" y="32" z="1" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_8x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="64" y="32" z="65" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_8x16x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="64" y="32" z="129" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_62x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="66" y="87" z="25" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_62x60x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="66" y="87" z="89" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_62x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="66" y="100" z="25" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_62x60x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="66" y="100" z="89" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x64x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="76" y="120" z="41" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x32x1_island_v12">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="76" y="120" z="105" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-2" z="-101" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-2" z="-37" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-2" z="27" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-2" z="91" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-2" z="155" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x6x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-2" z="219" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-17" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x50x76_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-82" y="-17" z="-151" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="-151" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="-87" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="-23" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="41" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="105" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x56x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="-2" z="169" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_64x4x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-72" y="-2" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_64x4x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-8" y="-2" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_23x4x91_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="56" y="-2" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_6x4x76_hull_v13">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-78" y="-17" z="-215" />
+					</o>
+				</c>
+				<c d="multibody_velocity_pivot_a">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="21" gear_ratio="5" input_velocity="1">
+						<vp x="-127" y="-12" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="1,0,0,0,1,0,0,0,1" sc="5">
+						<vp x="-127" y="-12" z="-180" />
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="0,0,-1,0,1,0,1,0,0" sc="5">
+						<vp y="-12" x="-129" z="-178" />
+					</o>
+				</c>
+				<c d="02_wedge" t="4">
+					<o r="0,0,-1,0,1,0,1,0,0" sc="5">
+						<vp x="-125" y="-12" z="-178" />
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5">
+						<vp x="-127" y="-12" z="-176" />
+					</o>
+				</c>
+				<c d="microprocessor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="26">
+						<microprocessor_definition name="Fire Rate Controller" width="6" length="1" id_counter="45" id_counter_node="8">
+							<nodes>
+								<n id="1" component_id="1">
+									<node label="Trigger" mode="1" description="The input signal to be processed." />
+								</n>
+								<n id="2" component_id="8">
+									<node label="Trigger 1" description="The input signal to be processed.">
+										<position x="1" />
+									</node>
+								</n>
+								<n id="3" component_id="9">
+									<node label="Trigger 2" description="The input signal to be processed.">
+										<position x="2" />
+									</node>
+								</n>
+								<n id="4" component_id="10">
+									<node label="Trigger 3" description="The input signal to be processed.">
+										<position x="3" />
+									</node>
+								</n>
+								<n id="5" component_id="11">
+									<node label="Trigger 4" description="The input signal to be processed.">
+										<position x="4" />
+									</node>
+								</n>
+								<n id="8" component_id="44">
+									<node label="Loaded" description="The input signal to be processed.">
+										<position x="5" />
+									</node>
+								</n>
+							</nodes>
+							<group>
+								<data type="1702129269">
+									<inputs />
+									<outputs />
+								</data>
+								<components>
+									<c type="2">
+										<object id="14">
+											<pos x="1.25" y="-1" />
+											<in1 component_id="1" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="15">
+											<pos x="1.25" y="-1.75" />
+											<in1 component_id="14" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="16">
+											<pos x="1.25" y="-2.5" />
+											<in1 component_id="15" />
+										</object>
+									</c>
+									<c type="37">
+										<object id="39">
+											<pos x="2.5" y="0.5" />
+											<in1 component_id="1" />
+											<in3 component_id="41" />
+											<r text="0" />
+											<i text="1" value="1" />
+											<min text="0" />
+											<max text="0" />
+										</object>
+									</c>
+									<c>
+										<object id="40">
+											<pos x="6.25" y="1" />
+											<in1 component_id="42" />
+										</object>
+									</c>
+									<c>
+										<object id="41">
+											<pos x="1.25" y="0.5" />
+											<in1 component_id="1" />
+										</object>
+									</c>
+									<c type="42">
+										<object id="42">
+											<pos x="5" y="0.75" />
+											<in1 component_id="45" />
+											<e text="0.0001" value="0.0001" />
+										</object>
+									</c>
+									<c type="45">
+										<object id="45" e="x%4">
+											<pos x="3.75" y="1" />
+											<in1 component_id="39" />
+										</object>
+									</c>
+								</components>
+								<components_bridge>
+									<c>
+										<object id="1" />
+									</c>
+									<c type="1">
+										<object id="8">
+											<pos x="7.5" />
+											<in1 component_id="1" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="9">
+											<pos x="7.5" y="-0.75" />
+											<in1 component_id="14" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="10">
+											<pos x="7.5" y="-1.5" />
+											<in1 component_id="15" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="11">
+											<pos x="7.5" y="-2.25" />
+											<in1 component_id="16" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="44">
+											<pos x="7.5" y="1" />
+											<in1 component_id="40" />
+										</object>
+									</c>
+								</components_bridge>
+								<groups />
+							</group>
+						</microprocessor_definition>
+						<vp x="-123" y="-15" z="-180" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="microprocessor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="88">
+						<microprocessor_definition name="CIWS AD - Addon FCS" description="Addon XYZ + velocity; ballistic calculation and gun control; no radar tracking." width="8" length="4" id_counter="661" id_counter_node="72" sym15="1">
+							<nodes>
+								<n id="22" component_id="115">
+									<node label="Gun Yaw" mode="1" type="1" description="The input signal to be processed.">
+										<position x="4" z="2" />
+									</node>
+								</n>
+								<n id="24" component_id="121">
+									<node label="Gun Pitch" mode="1" type="1" description="The input signal to be processed.">
+										<position x="5" z="3" />
+									</node>
+								</n>
+								<n id="27" component_id="137">
+									<node label="Yaw Set Speed" type="1" description="The input signal to be processed.">
+										<position x="5" />
+									</node>
+								</n>
+								<n id="29" component_id="141">
+									<node label="MASTER ARM" mode="1" description="The input signal to be processed." />
+								</n>
+								<n id="33" component_id="157">
+									<node label="Trigger" description="The input signal to be processed.">
+										<position x="4" z="1" />
+									</node>
+								</n>
+								<n id="34" component_id="161">
+									<node label="Pitch Set Point" type="1" description="The input signal to be processed.">
+										<position x="4" />
+									</node>
+								</n>
+								<n id="48" component_id="360">
+									<node label="Pitch ROT" mode="1" type="1" description="The input signal to be processed.">
+										<position x="5" z="2" />
+									</node>
+								</n>
+								<n id="49" component_id="375">
+									<node label="Gunnner Seat" mode="1" type="5" description="The input signal to be processed.">
+										<position x="3" z="2" />
+									</node>
+								</n>
+								<n id="50" component_id="411">
+									<node label="physics sensor barrel" mode="1" type="5" description="The input signal to be processed.">
+										<position x="1" z="1" />
+									</node>
+								</n>
+								<n id="51" component_id="413">
+									<node label="physics sensor base" mode="1" type="5" description="The input signal to be processed.">
+										<position z="1" />
+									</node>
+								</n>
+								<n id="52" component_id="440">
+									<node label="psensor ballel base" mode="1" type="5" description="The input signal to be processed.">
+										<position x="3" z="1" />
+									</node>
+								</n>
+								<n id="53" component_id="441">
+									<node label="psensor ballel yaw" mode="1" type="5" description="The input signal to be processed.">
+										<position x="2" z="1" />
+									</node>
+								</n>
+								<n id="54" component_id="488">
+									<node label="physics sensor position" mode="1" type="5" description="Gun world position for addon-fed ballistic calculation; required without radar.">
+										<position x="3" z="3" />
+									</node>
+								</n>
+								<n id="57" component_id="492">
+									<node label="distance sensor" mode="1" type="1" description="The input signal to be processed.">
+										<position x="4" z="3" />
+									</node>
+								</n>
+								<n id="67" component_id="628">
+									<node label="TG X" mode="1" type="1" description="The input signal to be processed.">
+										<position x="2" />
+									</node>
+								</n>
+								<n id="68" component_id="629">
+									<node label="TG Z" mode="1" type="1" description="The input signal to be processed.">
+										<position x="3" />
+									</node>
+								</n>
+								<n id="69" component_id="630">
+									<node label="TG Y" mode="1" type="1" description="The input signal to be processed.">
+										<position x="6" />
+									</node>
+								</n>
+								<n id="70" component_id="631">
+									<node label="V X" mode="1" type="1" description="The input signal to be processed.">
+										<position x="7" />
+									</node>
+								</n>
+								<n id="71" component_id="632">
+									<node label="V Z" mode="1" type="1" description="The input signal to be processed.">
+										<position x="7" z="1" />
+									</node>
+								</n>
+								<n id="72" component_id="633">
+									<node label="V Y" mode="1" type="1" description="The input signal to be processed.">
+										<position x="6" z="2" />
+									</node>
+								</n>
+							</nodes>
+							<group>
+								<data type="-1132218152">
+									<inputs />
+									<outputs />
+								</data>
+								<components>
+									<c type="20">
+										<object id="148" name="Weapon Type" v="1">
+											<pos x="-2.75" y="-2.75" />
+											<items>
+												<i l="Machine Gun">
+													<v text="1" value="1" />
+												</i>
+												<i l="Light AC">
+													<v text="2" value="2" />
+												</i>
+												<i l="Rotary AC">
+													<v text="3" value="3" />
+												</i>
+												<i l="Heavy AC">
+													<v text="4" value="4" />
+												</i>
+												<i l="Battle Cannon">
+													<v text="5" value="5" />
+												</i>
+												<i l="Artillery Cannon">
+													<v text="6" value="6" />
+												</i>
+												<i l="Bertha Cannon">
+													<v text="7" value="7" />
+												</i>
+											</items>
+										</object>
+									</c>
+									<c type="34">
+										<object id="177" n="safedist">
+											<pos x="-4" y="-2.75" />
+											<v text="20" value="20" />
+										</object>
+									</c>
+									<c type="40">
+										<object id="293">
+											<pos x="3.5" y="-6.75" />
+											<in1 component_id="628" />
+											<in2 component_id="629" />
+											<in3 component_id="630" />
+											<in4 component_id="631" />
+											<in5 component_id="632" />
+											<in6 component_id="633" />
+											<in7 />
+											<in8 />
+											<in9 />
+											<in10 />
+											<in11 />
+											<in12 />
+											<in13 />
+											<in14 />
+											<in15 />
+											<in16 component_id="617" />
+											<in17 component_id="619" />
+											<in18 component_id="618" />
+											<in19 component_id="294" />
+											<in20 component_id="295" />
+											<in21 component_id="296" />
+											<in22 component_id="121" />
+											<in23 component_id="115" />
+											<in24 component_id="417" />
+											<in25 component_id="418" />
+											<in26 component_id="419" />
+											<in27 component_id="360" />
+											<in28 component_id="381" />
+											<in29 component_id="382" />
+											<in30 component_id="439" />
+											<in31 component_id="450" />
+											<in32 component_id="571" />
+										</object>
+									</c>
+									<c type="35">
+										<object id="294">
+											<pos x="1" y="-2.75" />
+											<in1 component_id="421" />
+										</object>
+									</c>
+									<c type="35">
+										<object id="295">
+											<pos x="1" y="-3" />
+											<in1 component_id="423" />
+										</object>
+									</c>
+									<c type="35">
+										<object id="296">
+											<pos x="1" y="-3.25" />
+											<in1 component_id="422" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="381" i="8">
+											<pos x="1" y="-5.5" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="382" i="9">
+											<pos x="1" y="-5.75" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="383" n="YAW MAX">
+											<pos x="-4" y="-3.5" />
+											<v text="0.35" value="0.35" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="384" n="YAW MIN">
+											<pos x="-4" y="-4.25" />
+											<v text="-0.35" value="-0.35" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="385" n="ELV MAX">
+											<pos x="-4" y="-5" />
+											<v text="0.25" value="0.25" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="386" n="ELV MIN">
+											<pos x="-4" y="-5.75" />
+											<v text="-0.015" value="-0.015" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="417" i="3">
+											<pos x="1" y="-4" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="418" i="4">
+											<pos x="1" y="-4.25" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="419" i="5">
+											<pos x="1" y="-4.5" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="421">
+											<pos x="-0.25" y="-2.75" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="422" i="1">
+											<pos x="-0.25" y="-3.25" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="423" i="2">
+											<pos x="-0.25" y="-3" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="431" i="3">
+											<pos x="-2.75" y="-10" />
+											<in1 component_id="440" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="432" i="4">
+											<pos x="-2.75" y="-10.25" />
+											<in1 component_id="440" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="433" i="5">
+											<pos x="-2.75" y="-10.5" />
+											<in1 component_id="440" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="434" i="3">
+											<pos x="-2.75" y="-10.75" />
+											<in1 component_id="411" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="435" i="4">
+											<pos x="-2.75" y="-11" />
+											<in1 component_id="411" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="436" i="5">
+											<pos x="-2.75" y="-11.25" />
+											<in1 component_id="411" />
+										</object>
+									</c>
+									<c type="40">
+										<object id="437" count="6">
+											<pos x="-1.5" y="-11.25" />
+											<in1 component_id="431" />
+											<in2 component_id="432" />
+											<in3 component_id="433" />
+											<in4 component_id="434" />
+											<in5 component_id="435" />
+											<in6 component_id="436" />
+										</object>
+									</c>
+									<c type="56">
+										<object id="438" script="p,i,o=property,input,output&#10;pN=p.getNumber&#10;iN=i.getNumber&#10;iB=i.getBool&#10;oN=o.setNumber&#10;oB=o.setBool&#10;&#10;m=math&#10;pi2=m.pi*2&#10;sin=m.sin&#10;cos=m.cos&#10;atan=m.atan&#10;&#10;Scale=-1/pi2&#10;&#10;function onTick()&#10;&#09;local x,y,z=trans(0,0,1,iN(4),iN(5),iN(6))&#10;&#09;x,y,z=itrans(x,y,z,iN(1),iN(2),iN(3))&#10;&#09;local angle=atan(x,z)*Scale&#10;&#09;oN(1,angle)&#10;&#09;&#10;&#09;&#10;--&#09;oB(1,(angle-CeaseMin)%1&gt;=(CeaseMax-CeaseMin))&#10;end&#10;&#10;function trans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x,y*xc-z*xs,z*xc+y*xs&#10;&#09;x,y,z=x*yc+z*ys,y,z*yc-x*ys&#10;&#09;x,y,z=x*zc-y*zs,y*zc+x*zs,z&#10;&#09;return x,y,z&#10;end&#10;function itrans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x*zc+y*zs,y*zc-x*zs,z&#10;&#09;x,y,z=x*yc-z*ys,y,z*yc+x*ys&#10;&#09;x,y,z=x,y*xc+z*xs,z*xc-y*xs&#10;&#09;return x,y,z&#10;end">
+											<pos x="-0.25" y="-10" />
+											<in1 component_id="437" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="439">
+											<pos x="1" y="-9.75" />
+											<in1 component_id="438" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="442" i="3">
+											<pos x="-2.75" y="-12.25" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="443" i="4">
+											<pos x="-2.75" y="-12.5" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="444" i="5">
+											<pos x="-2.75" y="-12.75" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="445" i="3">
+											<pos x="-2.75" y="-13" />
+											<in1 component_id="441" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="446" i="4">
+											<pos x="-2.75" y="-13.25" />
+											<in1 component_id="441" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="447" i="5">
+											<pos x="-2.75" y="-13.5" />
+											<in1 component_id="441" />
+										</object>
+									</c>
+									<c type="40">
+										<object id="448" count="6">
+											<pos x="-1.5" y="-13.5" />
+											<in1 component_id="442" />
+											<in2 component_id="443" />
+											<in3 component_id="444" />
+											<in4 component_id="445" />
+											<in5 component_id="446" />
+											<in6 component_id="447" />
+										</object>
+									</c>
+									<c type="56">
+										<object id="449" script="p,i,o=property,input,output&#10;pN=p.getNumber&#10;iN=i.getNumber&#10;iB=i.getBool&#10;oN=o.setNumber&#10;oB=o.setBool&#10;&#10;m=math&#10;pi2=m.pi*2&#10;sin=m.sin&#10;cos=m.cos&#10;atan=m.atan&#10;&#10;Scale=1/pi2&#10;&#10;function onTick()&#10;&#09;local x,y,z=trans(0,0,1,iN(4),iN(5),iN(6))&#10;&#09;x,y,z=itrans(x,y,z,iN(1),iN(2),iN(3))&#10;&#09;local angle=atan(x,z)*Scale&#10;&#09;oN(1,angle)&#10;&#09;&#10;&#09;&#10;--&#09;oB(1,(angle-CeaseMin)%1&gt;=(CeaseMax-CeaseMin))&#10;end&#10;&#10;function trans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x,y*xc-z*xs,z*xc+y*xs&#10;&#09;x,y,z=x*yc+z*ys,y,z*yc-x*ys&#10;&#09;x,y,z=x*zc-y*zs,y*zc+x*zs,z&#10;&#09;return x,y,z&#10;end&#10;function itrans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x*zc+y*zs,y*zc-x*zs,z&#10;&#09;x,y,z=x*yc-z*ys,y,z*yc+x*ys&#10;&#09;x,y,z=x,y*xc+z*xs,z*xc-y*xs&#10;&#09;return x,y,z&#10;end">
+											<pos x="-0.25" y="-12.25" />
+											<in1 component_id="448" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="450">
+											<pos x="1" y="-12" />
+											<in1 component_id="449" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="453" i="2">
+											<pos x="6" y="0.75" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="454">
+											<pos x="6" y="1.25" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="29">
+										<object id="461">
+											<pos x="6" y="-0.25" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="26">
+										<object id="462" ct="0.2" dt="0.5">
+											<pos x="6" y="-0.75" />
+											<in1 component_id="461" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="463">
+											<pos x="7.25" y="-0.5" />
+											<in1 component_id="461" />
+											<in2 component_id="462" />
+										</object>
+									</c>
+									<c type="29">
+										<object id="399" i="30">
+											<pos x="-0.25" y="-7.25" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="29">
+										<object id="400" i="31">
+											<pos x="-0.25" y="-7" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="41">
+										<object id="569" count="4" offset="2">
+											<pos x="1" y="-8" />
+											<in1 component_id="141" />
+											<in2 component_id="400" />
+											<in3 component_id="399" />
+											<in4 component_id="572" />
+										</object>
+									</c>
+									<c type="55">
+										<object id="571">
+											<pos x="2.25" y="-6.75" />
+											<in1 component_id="569" />
+										</object>
+									</c>
+									<c type="17">
+										<object id="572">
+											<pos x="-1.5" y="-7.75" />
+											<in1 component_id="492" />
+											<in2 component_id="177" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="590" n="delay(remote)">
+											<pos x="-2.75" y="-4.25" />
+											<v text="9" value="9" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="597" i="29">
+											<pos x="6" y="-1.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="598" l="value">
+											<pos x="7.25" y="-1.75" />
+											<in1 component_id="597" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="599" i="30">
+											<pos x="6" y="-2.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="600" l="value">
+											<pos x="7.25" y="-2.75" />
+											<in1 component_id="599" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="617">
+											<pos x="1" y="-1.5" />
+											<in1 component_id="488" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="618" i="1">
+											<pos x="1" y="-2" />
+											<in1 component_id="488" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="619" i="2">
+											<pos x="1" y="-1.75" />
+											<in1 component_id="488" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="620" n="P Gain">
+											<pos x="-6.5" y="-2.75" />
+											<v text="50" value="50" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="621" n="I Gain">
+											<pos x="-6.5" y="-3.5" />
+											<v text="0.1" value="0.1" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="622" n="D Gain">
+											<pos x="-6.5" y="-4.25" />
+											<v text="2" value="2" />
+										</object>
+									</c>
+									<c type="56">
+										<object id="627" script="it=input&#10;ot=output&#10;gn=it.getNumber&#10;gb=it.getBool&#10;sn=ot.setNumber&#10;sb=ot.setBool&#10;pn=property.getNumber&#10;sdt=screen.drawText&#10;m=math&#10;pi=m.pi&#10;sin=m.sin&#10;cos=m.cos&#10;tan=m.tan&#10;asin=m.asin&#10;atan=m.atan&#10;AT=m.atan&#10;abs=m.abs&#10;pi2=2*pi&#10;CalcTime=1 DBGCIWS=1&#10;safedist=pn(&quot;safedist&quot;)&#10;delayremote=pn(&quot;delay(remote)&quot;)&#10;&#10;YMAX=pn(&quot;YAW MAX&quot;)&#10;YMIN=pn(&quot;YAW MIN&quot;)&#10;EMAX=pn(&quot;ELV MAX&quot;)&#10;EMIN=pn(&quot;ELV MIN&quot;)&#10;type=pn('Weapon Type')//1|0&#10;&#10;&#10;PID={}&#10;PID.new=function(P,I,D)&#10;    local o={}&#10;    o.P,o.I,o.D,o.integral,o.delta,o.active=P,I,D,0,0,false&#10;    o.state=function(self,state)&#10;        self.active=state&#10;    end&#10;    o.update=function(self,err,dt)&#10;        dt=1/60&#10;        if self.active then&#10;            self.integral=self.integral+(self.delta+err)/2*dt&#10;        end&#10;        local p=P*err&#10;        local i=I*self.integral&#10;        local d=D*(err-self.delta)/dt&#10;        self.delta=err&#10;        return p+i+d&#10;    end&#10;    return o&#10;end&#10;&#10;PGain=property.getNumber('P Gain')&#10;IGain=property.getNumber('I Gain')&#10;DGain=property.getNumber('D Gain')&#10;&#10;YawPID=PID.new(PGain,IGain,DGain)&#10;&#10;params={&#10;&#09;{1600,0.025,120,39.5},&#10;&#09;{1000,0.02,150,49.5},&#10;&#09;{1000,0.01,300,99.5},&#10;&#09;{900,0.005,600,199.5},&#10;&#09;{800,0.002,1500,499.5},&#10;&#09;{700,0.001,2400,999.5},&#10;&#09;{600,0.0005,2400,1999.5},&#10;}&#10;type=type&lt;1 and 1 or type&gt;#params and #params or type&#10;vel=params[type][1]&#10;drag=params[type][2]*60&#10;lifeSpan=params[type][3]/60&#10;C=params[type][4]&#10;R=1-drag/60&#10;g=30&#10;error=0.1&#10;Er,cc,dcc=0.15,0,-0.2&#10;Timer=0&#10;B={}&#10;function onTick()&#10;    int=string.unpack(&quot;I4&quot;,string.pack(&quot;f&quot;,gn(32)))&#10;&#09;for i=0,31 do B[1+i]=(int&amp;(1&lt;&lt;i))&gt;0 end&#10;&#10;&#09;tgtfound=(gn(1)~=0)&#10;&#09;MASTER=B[3]&#10;    SEAT=B[4]&#10;&#09;MANTRI=B[5]&#10;    SAFETY=B[6]&#10;    &#10;&#09;&#10;&#09;TGX=gn(1)&#10;&#09;TGY=gn(3)&#10;&#09;TGZ=gn(2)&#10;&#09;vX=gn(4)/60 &#10;&#09;vY=gn(6)/60&#10;&#09;vZ=gn(5)/60&#10;&#10;&#10;&#10;&#10;&#10;&#10;&#09;aX,aY,aZ=gn(7)/60,gn(9)/60,gn(8)/60&#10;&#09;GunX=gn(16)&#10;&#09;GunY=gn(17)&#10;&#09;GunZ=gn(18)&#10;&#09;dx=gn(19)&#10;&#09;dy=gn(20)&#10;&#09;dz=gn(21)&#10;&#09;GPIn=gn(22)&#10;&#09;GYIn=gn(23)&#10;&#09;EX=gn(24)--X&#10;&#09;EY=gn(25)--Z&#10;&#09;EZ=gn(26)--Y&#10;&#09;&#10;&#09;V=D3(vX,vY,vZ)*60&#10;&#10;&#09;RotP=gn(27)/60&#10;&#09;LookX=gn(28)&#10;&#09;LookY=gn(29)&#10;&#09;&#10;&#09;psP=gn(30)&#10;&#09;psY=gn(31)&#10;&#10;    delay=delayremote&#10;&#09;GYOut,GPOut=0,0.01/2&#10;&#09;Sready,Aready,inrange,Trigger=false,false,false,false&#10;&#09;DD=0&#10;&#09;Stab=false&#10;&#09;&#10;&#09;local gunElv,time,dist,t1&#10;&#09;&#10;&#09;&#10;&#09;if MASTER and SEAT then&#10;&#09;&#09;Trigger=MANTRI&#10;&#09;&#09;GYOut,GPOut=LookX,LookY&#10;&#09;&#09;Stab=true&#10;&#09;elseif tgtfound and MASTER then&#10;&#09;&#09;&#10;&#09;&#09;TGRX,TGRY,TGRZ=TGX-GunX+(vX-dx)*delay,TGY-GunY+(vY-dy)*delay,TGZ-GunZ+(vZ-dz)*delay&#10;&#09;&#09;DD=D3(TGRX,TGRY,TGRZ)&#10;&#09;&#09;RelVel=Dot3(TGRX/DD,TGRY/DD,TGRZ/DD,vX,vY,vZ)&#10;&#09;&#09;sn(30,DD/(vel/60+RelVel))&#10;&#09;&#09;&#10;        -- c no syokichi ha chanto settei suruto yoi yo&#10;        -- soushinaito shatei gai dato omoi komu kara&#10;        -- dekireba DD/(vel + soutai sokudo) dato yoi ne&#10;&#09;&#09;local time,c=0,(DD/(vel/60+RelVel))*1.5&#10;        if c~=c then c=0 end&#10;&#09;&#09;ddx,ddy,ddz,wx,wy=dx,dy,dz,0,0&#10;&#09;&#09;winX,winY=0,0&#10;&#10;&#10;        -- koko no double loop ha jitsu ha sake rareru&#10;&#09;&#09;for i=1,20 do&#10;&#09;&#09;&#09;local CC=(R^c)/m.log(R)+C&#10;&#09;&#09;&#09;if CC~=CC then CC=0 end&#10;&#09;&#09;&#09;ddx,ddy,ddz,wx,wy=dx*CC,dy*CC,dz*CC,winX*(c-CC),winY*(c-CC)&#10;&#10;&#09;&#09;&#09;ETGX=TGRX+vX*c+(aX^2)/2*c-ddx+wx&#10;&#09;&#09;&#09;ETGY=TGRY+vY*c+(aY^2)/2*c-ddy+wy&#10;&#09;&#09;&#09;ETGZ=TGRZ+vZ*c+(aZ^2)/2*c-ddz&#10;&#09;&#09;&#09;dist=(ETGX^2+ETGY^2+ETGZ^2)^0.5&#10;&#09;&#09;&#09;elv=atan(ETGZ/(ETGX^2+ETGY^2)^0.5)&#10;&#10;&#09;&#09;&#09;gunElv,t1,inrange=calc(dist,elv)&#09;&#10;&#10;&#09;&#09;&#09;if inrange then time=t1*60 end&#10;&#09;&#09;&#09;c=time&#10;&#09;&#09;&#09;&#10;&#09;&#09;end&#10;&#10;&#09;&#09;sn(31,time)&#10;&#09;&#09;&#10;&#09;&#09;if inrange then ETGZ=tan(gunElv)*(ETGX^2+ETGY^2)^0.5 end&#10;&#10;&#09;&#09;rr=AT(Er,dist)/pi2&#10;&#09;&#09;rrx,rry=rr*cos(cc*pi2),rr*sin(cc*pi2)&#10;&#09;&#09;cc=cc+dcc&#10;&#10;&#09;&#09;if MASTER then&#10;&#09;&#09;&#09;GYOut,GPOut=GtoDir(ETGX+GunX,ETGY+GunY,m.max(ETGZ+GunZ,-10))&#10;&#09;&#09;&#09;GYOut,GPOut=GYOut+rrx,GPOut+rry&#10;&#09;&#09;end&#10;&#10;&#09;&#09;GYOut=GYOut/pi2&#10;&#09;&#09;GPOut=GPOut/pi2-RotP*5&#10;&#09;&#09;&#10;&#09;&#09;if inrange and Timer&gt;CalcTime then Sready=true end&#10;&#09;&#09;if Sready then Trigger=true end&#10;&#09;&#09;&#10;&#09;&#09;Stab=true&#10;&#09;&#09;Timer=Timer+1&#10;&#09;else&#10;&#09;&#09;Timer=0&#10;&#09;end&#10;&#09;if inrange and DD&lt;500 then sb(3,true) else sb(3,false) end&#10;&#09;local lim,A,B,C,D=GYOut-GYIn,false,false,false,false&#10;&#10;&#09;lim=m.max(lim^2*100,0.02)&#10;&#09;GYOut,A=clamp(GYOut,YMIN,YMAX)&#10;&#09;GYOut2=CLMP((GYOut-GYIn)*100,2)&#10;&#09;GYOut=clamp(GYOut,GYIn-lim,GYIn+lim)&#10;&#09;&#10;&#09;psY,C=clamp(psY,YMIN,YMAX)&#10;&#10;    YawPID:state(tgtfound and Trigger)&#10;    if tgtfound and Trigger then &#10;        GYOut2=YawPID:update((GYOut-GYIn), 1/60)&#10;    end&#10;&#10;&#09;GPOut,B=clamp(GPOut,EMIN,EMAX)&#10;&#09;&#10;&#09;psP,D=clamp(psP,EMIN,EMAX)&#10;&#09;tri=true&#10;&#09;if abs(GYOut)&gt;0.40 then GPOut,tri=clamp(GPOut,0.25/3,EMAX)&#10;&#09;elseif abs(GYOut)&gt;0.45 then GPOut,tri=clamp(GPOut,2/3/4,EMAX) end&#10;&#10;    -- koko ha Tritter=A and B and tri de yoi desu ne&#10;&#09;if C==false or D==false or tri==false then Trigger=false end&#10;&#10;&#09;sb(1,Trigger and SAFETY)&#10;&#09;sb(2,Stab)&#10;&#09;sn(1,GYOut2)&#10;&#09;sn(2,GYIn)&#10;&#09;sn(3,GPOut*4)&#10;&#09;sn(4,GPIn)&#10;&#09;sn(5,RotY or 0)&#10;&#09;sn(6,RotP)&#10;&#09;-- Debug-only numeric channels 7..20 feed vehicle tooltips.&#10;&#09;sn(7,MASTER and 1 or 0)&#10;&#09;sn(8,SEAT and 1 or 0)&#10;&#09;sn(9,SAFETY and 1 or 0)&#10;&#09;sn(10,Trigger and 1 or 0)&#10;&#09;sn(11,(Trigger and SAFETY) and 1 or 0)&#10;&#09;sn(12,tgtfound and 1 or 0)&#10;&#09;sn(13,inrange and 1 or 0)&#10;&#09;sn(14,(tgtfound and DD) or 0)&#10;&#09;sn(15,TGX)&#10;&#09;sn(16,TGZ)&#10;&#09;sn(17,TGY)&#10;&#09;sn(18,vX*60)&#10;&#09;sn(19,vZ*60)&#10;&#09;sn(20,vY*60)&#10;&#10;end&#10;&#10;function onDraw()&#10;    if DBGCIWS&gt;0 then&#10;        screen.setColor(255,255,255)&#10;        sdt(0,0,&quot;MA &quot;..(MASTER and 1 or 0)..&quot; SE &quot;..(SEAT and 1 or 0)..&quot; SA &quot;..(SAFETY and 1 or 0)..&quot; TR &quot;..(Trigger and 1 or 0))&#10;        sdt(0,10,&quot;TGX &quot;..((TGX or 0)//1)..&quot; D &quot;..((DD or 0)//1)..&quot; INR &quot;..(inrange and 1 or 0))&#10;        sdt(0,20,&quot;VX &quot;..((vX or 0)*60//1)..&quot; VZ &quot;..((vZ or 0)*60//1)..&quot; VY &quot;..((vY or 0)*60//1))&#10;    end&#10;end&#10;&#10;function GtoDir(x,y,z)&#10;&#09;x,y,z=x-GunX,y-GunY,z-GunZ&#10;&#09;x,y,z=rotZ(x,y,z,-EZ)&#10;&#09;x,y,z=rotY(x,y,z,-EY)&#10;&#09;x,y,z=rotX(x,y,z,-EX)&#10;&#09;x,y,z=x,y,z-0.25&#10;&#09;yaw,pitch=AT(x,y),AT(z/(x^2+y^2)^0.5)&#10;&#09;return yaw,pitch&#10;end&#10;function rotX(x,y,z,EX) x,y,z=x,y*cos(-EX)-z*sin(-EX),y*sin(-EX)+z*cos(-EX) return x,y,z end&#10;function rotY(x,y,z,EY) x,y,z=x*cos(-EY)-y*sin(-EY),x*sin(-EY)+y*cos(-EY),z return x,y,z end&#10;function rotZ(x,y,z,EZ) x,y,z=x*cos(EZ)-z*sin(EZ),y,x*sin(EZ)+z*cos(EZ) return x,y,z end&#10;function D3(x,y,z) return (x*x+y*y+z*z)^0.5 end&#10;function Dot3(x,y,z,a,b,c) return x*a+y*b+z*c end&#10;function getY(v,t) return -g*t/drag+(g/drag+v)*(1-m.exp(-drag*t))/drag end&#10;function getTime(v,x) return -m.log(1-drag*x/v)/drag end&#10;function calc(D,E)&#10;&#09;local t,a,w,h=0,E,D*cos(E),D*sin(E)&#10;&#09;for i=1,10 do&#10;&#09;&#09;local vx,vy=vel*cos(a),vel*sin(a)&#10;&#09;&#09;t=getTime(vx,w)&#10;&#09;&#09;if t&gt;lifeSpan then a=E return a,t,false end&#10;&#09;&#09;y=getY(vy,t)&#10;&#09;&#09;if y&gt;=h-error then return a,t,true end&#10;&#09;&#09;&#10;&#09;&#09;a=a+E-atan(y,w)&#10;&#09;end&#10;&#09;a=E&#10;&#09;return a,t,false&#10;end&#10;function clamp(a,mn,mx) tf=false if a&gt;=mn and a&lt;=mx then tf=true end return m.min(m.max(a,mn),mx),tf end &#10;function CLMP(a,b) return m.min(m.max(a,-b),b) end">
+											<pos x="4.75" y="0.25" />
+											<in1 component_id="293" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="634" i="6">
+											<pos x="6" y="-14" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="635" l="CIWS DBG MASTER">
+											<pos x="7.25" y="-14" />
+											<in1 component_id="634" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="636" i="7">
+											<pos x="6" y="-14.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="637" l="CIWS DBG SEAT">
+											<pos x="7.25" y="-14.5" />
+											<in1 component_id="636" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="638" i="8">
+											<pos x="6" y="-15" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="639" l="CIWS DBG SAFETY">
+											<pos x="7.25" y="-15" />
+											<in1 component_id="638" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="640" i="9">
+											<pos x="6" y="-15.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="641" l="CIWS DBG TRIGGER">
+											<pos x="7.25" y="-15.5" />
+											<in1 component_id="640" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="642" i="10">
+											<pos x="6" y="-16" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="643" l="CIWS DBG FIRE">
+											<pos x="7.25" y="-16" />
+											<in1 component_id="642" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="644" i="11">
+											<pos x="6" y="-16.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="645" l="CIWS DBG FOUND">
+											<pos x="7.25" y="-16.5" />
+											<in1 component_id="644" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="646" i="12">
+											<pos x="6" y="-17" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="647" l="CIWS DBG INRANGE">
+											<pos x="7.25" y="-17" />
+											<in1 component_id="646" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="648" i="13">
+											<pos x="6" y="-17.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="649" l="CIWS DBG DIST">
+											<pos x="7.25" y="-17.5" />
+											<in1 component_id="648" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="650" i="14">
+											<pos x="6" y="-18" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="651" l="CIWS DBG TGT_X">
+											<pos x="7.25" y="-18" />
+											<in1 component_id="650" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="652" i="15">
+											<pos x="6" y="-18.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="653" l="CIWS DBG TGT_Z">
+											<pos x="7.25" y="-18.5" />
+											<in1 component_id="652" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="654" i="16">
+											<pos x="6" y="-19" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="655" l="CIWS DBG TGT_Y">
+											<pos x="7.25" y="-19" />
+											<in1 component_id="654" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="656" i="17">
+											<pos x="6" y="-19.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="657" l="CIWS DBG VX">
+											<pos x="7.25" y="-19.5" />
+											<in1 component_id="656" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="658" i="18">
+											<pos x="6" y="-20" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="659" l="CIWS DBG VZ">
+											<pos x="7.25" y="-20" />
+											<in1 component_id="658" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="660" i="19">
+											<pos x="6" y="-20.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="661" l="CIWS DBG VY">
+											<pos x="7.25" y="-20.5" />
+											<in1 component_id="660" />
+										</object>
+									</c>
+								</components>
+								<components_bridge>
+									<c type="2">
+										<object id="115">
+											<pos x="-1.5" y="-4" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="121">
+											<pos x="-1.5" y="-3.75" />
+										</object>
+									</c>
+									<c type="3">
+										<object id="137">
+											<pos x="7.25" y="1.25" />
+											<in1 component_id="454" />
+										</object>
+									</c>
+									<c>
+										<object id="141">
+											<pos x="-0.25" y="-6.75" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="157">
+											<pos x="8.5" y="-0.25" />
+											<in1 component_id="463" />
+										</object>
+									</c>
+									<c type="3">
+										<object id="161">
+											<pos x="7.25" y="0.75" />
+											<in1 component_id="453" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="360">
+											<pos x="1" y="-5" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="375">
+											<pos x="-0.25" y="-5.5" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="411">
+											<pos x="-4" y="-10.75" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="413">
+											<pos x="-0.25" y="-4" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="440">
+											<pos x="-4" y="-10" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="441">
+											<pos x="-4" y="-13" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="488">
+											<pos x="1" y="8.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="492">
+											<pos x="-2.75" y="-5.75" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="628">
+											<pos x="-6.5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="629">
+											<pos x="-6" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="630">
+											<pos x="-5.5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="631">
+											<pos x="-5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="632">
+											<pos x="-4.5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="633">
+											<pos x="-4" y="-13.25" />
+										</object>
+									</c>
+								</components_bridge>
+								<groups />
+							</group>
+						</microprocessor_definition>
+						<vp x="-123" y="-15" z="-176" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-15" z="-175" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-15" z="-182" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-15" z="-182" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="-127" y="-14" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-124" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-126" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-128" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-175" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-176" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-177" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" x="-129" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-179" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-180" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-182" x="-129" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-130" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-13" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-13" x="-129" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-13" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-127" y="-13" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-123" y="-15" z="-182" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_A_TGT_X">
+						<vp x="-130" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_A_TGT_Z">
+						<vp y="-14" z="-181" x="-129" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_A_TGT_Y">
+						<vp x="-128" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_A_VX">
+						<vp x="-127" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_A_VZ">
+						<vp x="-126" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_A_VY">
+						<vp x="-125" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="battery_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="2">
+						<vp x="-123" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="6">
+						<vp x="-123" y="-15" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="6">
+						<vp x="-124" y="-15" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-179" />
+					</o>
+				</c>
+				<c d="gate_bool_constant">
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="1" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp y="-15" z="-180" x="-129" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-131" y="-15" z="-180" />
+					</o>
+				</c>
+				<c d="button_push">
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="5" hold_duration="1">
+						<vp x="-130" y="-14" z="-180" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="0" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="multibody_velocity_pivot_a">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="21" gear_ratio="5" input_velocity="1">
+						<vp x="144" y="-12" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="1,0,0,0,1,0,0,0,1" sc="5">
+						<vp x="144" y="-12" z="-180" />
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="0,0,-1,0,1,0,1,0,0" sc="5">
+						<vp y="-12" x="142" z="-178" />
+					</o>
+				</c>
+				<c d="02_wedge" t="4">
+					<o r="0,0,-1,0,1,0,1,0,0" sc="5">
+						<vp x="146" y="-12" z="-178" />
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5">
+						<vp x="144" y="-12" z="-176" />
+					</o>
+				</c>
+				<c d="microprocessor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="26">
+						<microprocessor_definition name="Fire Rate Controller" width="6" length="1" id_counter="45" id_counter_node="8">
+							<nodes>
+								<n id="1" component_id="1">
+									<node label="Trigger" mode="1" description="The input signal to be processed." />
+								</n>
+								<n id="2" component_id="8">
+									<node label="Trigger 1" description="The input signal to be processed.">
+										<position x="1" />
+									</node>
+								</n>
+								<n id="3" component_id="9">
+									<node label="Trigger 2" description="The input signal to be processed.">
+										<position x="2" />
+									</node>
+								</n>
+								<n id="4" component_id="10">
+									<node label="Trigger 3" description="The input signal to be processed.">
+										<position x="3" />
+									</node>
+								</n>
+								<n id="5" component_id="11">
+									<node label="Trigger 4" description="The input signal to be processed.">
+										<position x="4" />
+									</node>
+								</n>
+								<n id="8" component_id="44">
+									<node label="Loaded" description="The input signal to be processed.">
+										<position x="5" />
+									</node>
+								</n>
+							</nodes>
+							<group>
+								<data type="1702129269">
+									<inputs />
+									<outputs />
+								</data>
+								<components>
+									<c type="2">
+										<object id="14">
+											<pos x="1.25" y="-1" />
+											<in1 component_id="1" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="15">
+											<pos x="1.25" y="-1.75" />
+											<in1 component_id="14" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="16">
+											<pos x="1.25" y="-2.5" />
+											<in1 component_id="15" />
+										</object>
+									</c>
+									<c type="37">
+										<object id="39">
+											<pos x="2.5" y="0.5" />
+											<in1 component_id="1" />
+											<in3 component_id="41" />
+											<r text="0" />
+											<i text="1" value="1" />
+											<min text="0" />
+											<max text="0" />
+										</object>
+									</c>
+									<c>
+										<object id="40">
+											<pos x="6.25" y="1" />
+											<in1 component_id="42" />
+										</object>
+									</c>
+									<c>
+										<object id="41">
+											<pos x="1.25" y="0.5" />
+											<in1 component_id="1" />
+										</object>
+									</c>
+									<c type="42">
+										<object id="42">
+											<pos x="5" y="0.75" />
+											<in1 component_id="45" />
+											<e text="0.0001" value="0.0001" />
+										</object>
+									</c>
+									<c type="45">
+										<object id="45" e="x%4">
+											<pos x="3.75" y="1" />
+											<in1 component_id="39" />
+										</object>
+									</c>
+								</components>
+								<components_bridge>
+									<c>
+										<object id="1" />
+									</c>
+									<c type="1">
+										<object id="8">
+											<pos x="7.5" />
+											<in1 component_id="1" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="9">
+											<pos x="7.5" y="-0.75" />
+											<in1 component_id="14" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="10">
+											<pos x="7.5" y="-1.5" />
+											<in1 component_id="15" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="11">
+											<pos x="7.5" y="-2.25" />
+											<in1 component_id="16" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="44">
+											<pos x="7.5" y="1" />
+											<in1 component_id="40" />
+										</object>
+									</c>
+								</components_bridge>
+								<groups />
+							</group>
+						</microprocessor_definition>
+						<vp x="148" y="-15" z="-180" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="microprocessor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="88">
+						<microprocessor_definition name="CIWS AD - Addon FCS" description="Addon XYZ + velocity; ballistic calculation and gun control; no radar tracking." width="8" length="4" id_counter="661" id_counter_node="72" sym15="1">
+							<nodes>
+								<n id="22" component_id="115">
+									<node label="Gun Yaw" mode="1" type="1" description="The input signal to be processed.">
+										<position x="4" z="2" />
+									</node>
+								</n>
+								<n id="24" component_id="121">
+									<node label="Gun Pitch" mode="1" type="1" description="The input signal to be processed.">
+										<position x="5" z="3" />
+									</node>
+								</n>
+								<n id="27" component_id="137">
+									<node label="Yaw Set Speed" type="1" description="The input signal to be processed.">
+										<position x="5" />
+									</node>
+								</n>
+								<n id="29" component_id="141">
+									<node label="MASTER ARM" mode="1" description="The input signal to be processed." />
+								</n>
+								<n id="33" component_id="157">
+									<node label="Trigger" description="The input signal to be processed.">
+										<position x="4" z="1" />
+									</node>
+								</n>
+								<n id="34" component_id="161">
+									<node label="Pitch Set Point" type="1" description="The input signal to be processed.">
+										<position x="4" />
+									</node>
+								</n>
+								<n id="48" component_id="360">
+									<node label="Pitch ROT" mode="1" type="1" description="The input signal to be processed.">
+										<position x="5" z="2" />
+									</node>
+								</n>
+								<n id="49" component_id="375">
+									<node label="Gunnner Seat" mode="1" type="5" description="The input signal to be processed.">
+										<position x="3" z="2" />
+									</node>
+								</n>
+								<n id="50" component_id="411">
+									<node label="physics sensor barrel" mode="1" type="5" description="The input signal to be processed.">
+										<position x="1" z="1" />
+									</node>
+								</n>
+								<n id="51" component_id="413">
+									<node label="physics sensor base" mode="1" type="5" description="The input signal to be processed.">
+										<position z="1" />
+									</node>
+								</n>
+								<n id="52" component_id="440">
+									<node label="psensor ballel base" mode="1" type="5" description="The input signal to be processed.">
+										<position x="3" z="1" />
+									</node>
+								</n>
+								<n id="53" component_id="441">
+									<node label="psensor ballel yaw" mode="1" type="5" description="The input signal to be processed.">
+										<position x="2" z="1" />
+									</node>
+								</n>
+								<n id="54" component_id="488">
+									<node label="physics sensor position" mode="1" type="5" description="Gun world position for addon-fed ballistic calculation; required without radar.">
+										<position x="3" z="3" />
+									</node>
+								</n>
+								<n id="57" component_id="492">
+									<node label="distance sensor" mode="1" type="1" description="The input signal to be processed.">
+										<position x="4" z="3" />
+									</node>
+								</n>
+								<n id="67" component_id="628">
+									<node label="TG X" mode="1" type="1" description="The input signal to be processed.">
+										<position x="2" />
+									</node>
+								</n>
+								<n id="68" component_id="629">
+									<node label="TG Z" mode="1" type="1" description="The input signal to be processed.">
+										<position x="3" />
+									</node>
+								</n>
+								<n id="69" component_id="630">
+									<node label="TG Y" mode="1" type="1" description="The input signal to be processed.">
+										<position x="6" />
+									</node>
+								</n>
+								<n id="70" component_id="631">
+									<node label="V X" mode="1" type="1" description="The input signal to be processed.">
+										<position x="7" />
+									</node>
+								</n>
+								<n id="71" component_id="632">
+									<node label="V Z" mode="1" type="1" description="The input signal to be processed.">
+										<position x="7" z="1" />
+									</node>
+								</n>
+								<n id="72" component_id="633">
+									<node label="V Y" mode="1" type="1" description="The input signal to be processed.">
+										<position x="6" z="2" />
+									</node>
+								</n>
+							</nodes>
+							<group>
+								<data type="-1132218152">
+									<inputs />
+									<outputs />
+								</data>
+								<components>
+									<c type="20">
+										<object id="148" name="Weapon Type" v="1">
+											<pos x="-2.75" y="-2.75" />
+											<items>
+												<i l="Machine Gun">
+													<v text="1" value="1" />
+												</i>
+												<i l="Light AC">
+													<v text="2" value="2" />
+												</i>
+												<i l="Rotary AC">
+													<v text="3" value="3" />
+												</i>
+												<i l="Heavy AC">
+													<v text="4" value="4" />
+												</i>
+												<i l="Battle Cannon">
+													<v text="5" value="5" />
+												</i>
+												<i l="Artillery Cannon">
+													<v text="6" value="6" />
+												</i>
+												<i l="Bertha Cannon">
+													<v text="7" value="7" />
+												</i>
+											</items>
+										</object>
+									</c>
+									<c type="34">
+										<object id="177" n="safedist">
+											<pos x="-4" y="-2.75" />
+											<v text="20" value="20" />
+										</object>
+									</c>
+									<c type="40">
+										<object id="293">
+											<pos x="3.5" y="-6.75" />
+											<in1 component_id="628" />
+											<in2 component_id="629" />
+											<in3 component_id="630" />
+											<in4 component_id="631" />
+											<in5 component_id="632" />
+											<in6 component_id="633" />
+											<in7 />
+											<in8 />
+											<in9 />
+											<in10 />
+											<in11 />
+											<in12 />
+											<in13 />
+											<in14 />
+											<in15 />
+											<in16 component_id="617" />
+											<in17 component_id="619" />
+											<in18 component_id="618" />
+											<in19 component_id="294" />
+											<in20 component_id="295" />
+											<in21 component_id="296" />
+											<in22 component_id="121" />
+											<in23 component_id="115" />
+											<in24 component_id="417" />
+											<in25 component_id="418" />
+											<in26 component_id="419" />
+											<in27 component_id="360" />
+											<in28 component_id="381" />
+											<in29 component_id="382" />
+											<in30 component_id="439" />
+											<in31 component_id="450" />
+											<in32 component_id="571" />
+										</object>
+									</c>
+									<c type="35">
+										<object id="294">
+											<pos x="1" y="-2.75" />
+											<in1 component_id="421" />
+										</object>
+									</c>
+									<c type="35">
+										<object id="295">
+											<pos x="1" y="-3" />
+											<in1 component_id="423" />
+										</object>
+									</c>
+									<c type="35">
+										<object id="296">
+											<pos x="1" y="-3.25" />
+											<in1 component_id="422" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="381" i="8">
+											<pos x="1" y="-5.5" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="382" i="9">
+											<pos x="1" y="-5.75" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="383" n="YAW MAX">
+											<pos x="-4" y="-3.5" />
+											<v text="0.35" value="0.35" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="384" n="YAW MIN">
+											<pos x="-4" y="-4.25" />
+											<v text="-0.35" value="-0.35" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="385" n="ELV MAX">
+											<pos x="-4" y="-5" />
+											<v text="0.25" value="0.25" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="386" n="ELV MIN">
+											<pos x="-4" y="-5.75" />
+											<v text="-0.015" value="-0.015" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="417" i="3">
+											<pos x="1" y="-4" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="418" i="4">
+											<pos x="1" y="-4.25" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="419" i="5">
+											<pos x="1" y="-4.5" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="421">
+											<pos x="-0.25" y="-2.75" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="422" i="1">
+											<pos x="-0.25" y="-3.25" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="423" i="2">
+											<pos x="-0.25" y="-3" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="431" i="3">
+											<pos x="-2.75" y="-10" />
+											<in1 component_id="440" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="432" i="4">
+											<pos x="-2.75" y="-10.25" />
+											<in1 component_id="440" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="433" i="5">
+											<pos x="-2.75" y="-10.5" />
+											<in1 component_id="440" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="434" i="3">
+											<pos x="-2.75" y="-10.75" />
+											<in1 component_id="411" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="435" i="4">
+											<pos x="-2.75" y="-11" />
+											<in1 component_id="411" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="436" i="5">
+											<pos x="-2.75" y="-11.25" />
+											<in1 component_id="411" />
+										</object>
+									</c>
+									<c type="40">
+										<object id="437" count="6">
+											<pos x="-1.5" y="-11.25" />
+											<in1 component_id="431" />
+											<in2 component_id="432" />
+											<in3 component_id="433" />
+											<in4 component_id="434" />
+											<in5 component_id="435" />
+											<in6 component_id="436" />
+										</object>
+									</c>
+									<c type="56">
+										<object id="438" script="p,i,o=property,input,output&#10;pN=p.getNumber&#10;iN=i.getNumber&#10;iB=i.getBool&#10;oN=o.setNumber&#10;oB=o.setBool&#10;&#10;m=math&#10;pi2=m.pi*2&#10;sin=m.sin&#10;cos=m.cos&#10;atan=m.atan&#10;&#10;Scale=-1/pi2&#10;&#10;function onTick()&#10;&#09;local x,y,z=trans(0,0,1,iN(4),iN(5),iN(6))&#10;&#09;x,y,z=itrans(x,y,z,iN(1),iN(2),iN(3))&#10;&#09;local angle=atan(x,z)*Scale&#10;&#09;oN(1,angle)&#10;&#09;&#10;&#09;&#10;--&#09;oB(1,(angle-CeaseMin)%1&gt;=(CeaseMax-CeaseMin))&#10;end&#10;&#10;function trans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x,y*xc-z*xs,z*xc+y*xs&#10;&#09;x,y,z=x*yc+z*ys,y,z*yc-x*ys&#10;&#09;x,y,z=x*zc-y*zs,y*zc+x*zs,z&#10;&#09;return x,y,z&#10;end&#10;function itrans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x*zc+y*zs,y*zc-x*zs,z&#10;&#09;x,y,z=x*yc-z*ys,y,z*yc+x*ys&#10;&#09;x,y,z=x,y*xc+z*xs,z*xc-y*xs&#10;&#09;return x,y,z&#10;end">
+											<pos x="-0.25" y="-10" />
+											<in1 component_id="437" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="439">
+											<pos x="1" y="-9.75" />
+											<in1 component_id="438" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="442" i="3">
+											<pos x="-2.75" y="-12.25" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="443" i="4">
+											<pos x="-2.75" y="-12.5" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="444" i="5">
+											<pos x="-2.75" y="-12.75" />
+											<in1 component_id="413" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="445" i="3">
+											<pos x="-2.75" y="-13" />
+											<in1 component_id="441" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="446" i="4">
+											<pos x="-2.75" y="-13.25" />
+											<in1 component_id="441" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="447" i="5">
+											<pos x="-2.75" y="-13.5" />
+											<in1 component_id="441" />
+										</object>
+									</c>
+									<c type="40">
+										<object id="448" count="6">
+											<pos x="-1.5" y="-13.5" />
+											<in1 component_id="442" />
+											<in2 component_id="443" />
+											<in3 component_id="444" />
+											<in4 component_id="445" />
+											<in5 component_id="446" />
+											<in6 component_id="447" />
+										</object>
+									</c>
+									<c type="56">
+										<object id="449" script="p,i,o=property,input,output&#10;pN=p.getNumber&#10;iN=i.getNumber&#10;iB=i.getBool&#10;oN=o.setNumber&#10;oB=o.setBool&#10;&#10;m=math&#10;pi2=m.pi*2&#10;sin=m.sin&#10;cos=m.cos&#10;atan=m.atan&#10;&#10;Scale=1/pi2&#10;&#10;function onTick()&#10;&#09;local x,y,z=trans(0,0,1,iN(4),iN(5),iN(6))&#10;&#09;x,y,z=itrans(x,y,z,iN(1),iN(2),iN(3))&#10;&#09;local angle=atan(x,z)*Scale&#10;&#09;oN(1,angle)&#10;&#09;&#10;&#09;&#10;--&#09;oB(1,(angle-CeaseMin)%1&gt;=(CeaseMax-CeaseMin))&#10;end&#10;&#10;function trans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x,y*xc-z*xs,z*xc+y*xs&#10;&#09;x,y,z=x*yc+z*ys,y,z*yc-x*ys&#10;&#09;x,y,z=x*zc-y*zs,y*zc+x*zs,z&#10;&#09;return x,y,z&#10;end&#10;function itrans(x,y,z,ex,ey,ez)&#10;&#09;local xs,xc,ys,yc,zs,zc=sin(ex),cos(ex),sin(ey),cos(ey),sin(ez),cos(ez)&#10;&#09;x,y,z=x*zc+y*zs,y*zc-x*zs,z&#10;&#09;x,y,z=x*yc-z*ys,y,z*yc+x*ys&#10;&#09;x,y,z=x,y*xc+z*xs,z*xc-y*xs&#10;&#09;return x,y,z&#10;end">
+											<pos x="-0.25" y="-12.25" />
+											<in1 component_id="448" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="450">
+											<pos x="1" y="-12" />
+											<in1 component_id="449" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="453" i="2">
+											<pos x="6" y="0.75" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="454">
+											<pos x="6" y="1.25" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="29">
+										<object id="461">
+											<pos x="6" y="-0.25" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="26">
+										<object id="462" ct="0.2" dt="0.5">
+											<pos x="6" y="-0.75" />
+											<in1 component_id="461" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="463">
+											<pos x="7.25" y="-0.5" />
+											<in1 component_id="461" />
+											<in2 component_id="462" />
+										</object>
+									</c>
+									<c type="29">
+										<object id="399" i="30">
+											<pos x="-0.25" y="-7.25" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="29">
+										<object id="400" i="31">
+											<pos x="-0.25" y="-7" />
+											<in1 component_id="375" />
+										</object>
+									</c>
+									<c type="41">
+										<object id="569" count="4" offset="2">
+											<pos x="1" y="-8" />
+											<in1 component_id="141" />
+											<in2 component_id="400" />
+											<in3 component_id="399" />
+											<in4 component_id="572" />
+										</object>
+									</c>
+									<c type="55">
+										<object id="571">
+											<pos x="2.25" y="-6.75" />
+											<in1 component_id="569" />
+										</object>
+									</c>
+									<c type="17">
+										<object id="572">
+											<pos x="-1.5" y="-7.75" />
+											<in1 component_id="492" />
+											<in2 component_id="177" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="590" n="delay(remote)">
+											<pos x="-2.75" y="-4.25" />
+											<v text="9" value="9" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="597" i="29">
+											<pos x="6" y="-1.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="598" l="value">
+											<pos x="7.25" y="-1.75" />
+											<in1 component_id="597" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="599" i="30">
+											<pos x="6" y="-2.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="600" l="value">
+											<pos x="7.25" y="-2.75" />
+											<in1 component_id="599" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="617">
+											<pos x="1" y="-1.5" />
+											<in1 component_id="488" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="618" i="1">
+											<pos x="1" y="-2" />
+											<in1 component_id="488" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="619" i="2">
+											<pos x="1" y="-1.75" />
+											<in1 component_id="488" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="620" n="P Gain">
+											<pos x="-6.5" y="-2.75" />
+											<v text="50" value="50" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="621" n="I Gain">
+											<pos x="-6.5" y="-3.5" />
+											<v text="0.1" value="0.1" />
+										</object>
+									</c>
+									<c type="34">
+										<object id="622" n="D Gain">
+											<pos x="-6.5" y="-4.25" />
+											<v text="2" value="2" />
+										</object>
+									</c>
+									<c type="56">
+										<object id="627" script="it=input&#10;ot=output&#10;gn=it.getNumber&#10;gb=it.getBool&#10;sn=ot.setNumber&#10;sb=ot.setBool&#10;pn=property.getNumber&#10;sdt=screen.drawText&#10;m=math&#10;pi=m.pi&#10;sin=m.sin&#10;cos=m.cos&#10;tan=m.tan&#10;asin=m.asin&#10;atan=m.atan&#10;AT=m.atan&#10;abs=m.abs&#10;pi2=2*pi&#10;CalcTime=1 DBGCIWS=1&#10;safedist=pn(&quot;safedist&quot;)&#10;delayremote=pn(&quot;delay(remote)&quot;)&#10;&#10;YMAX=pn(&quot;YAW MAX&quot;)&#10;YMIN=pn(&quot;YAW MIN&quot;)&#10;EMAX=pn(&quot;ELV MAX&quot;)&#10;EMIN=pn(&quot;ELV MIN&quot;)&#10;type=pn('Weapon Type')//1|0&#10;&#10;&#10;PID={}&#10;PID.new=function(P,I,D)&#10;    local o={}&#10;    o.P,o.I,o.D,o.integral,o.delta,o.active=P,I,D,0,0,false&#10;    o.state=function(self,state)&#10;        self.active=state&#10;    end&#10;    o.update=function(self,err,dt)&#10;        dt=1/60&#10;        if self.active then&#10;            self.integral=self.integral+(self.delta+err)/2*dt&#10;        end&#10;        local p=P*err&#10;        local i=I*self.integral&#10;        local d=D*(err-self.delta)/dt&#10;        self.delta=err&#10;        return p+i+d&#10;    end&#10;    return o&#10;end&#10;&#10;PGain=property.getNumber('P Gain')&#10;IGain=property.getNumber('I Gain')&#10;DGain=property.getNumber('D Gain')&#10;&#10;YawPID=PID.new(PGain,IGain,DGain)&#10;&#10;params={&#10;&#09;{1600,0.025,120,39.5},&#10;&#09;{1000,0.02,150,49.5},&#10;&#09;{1000,0.01,300,99.5},&#10;&#09;{900,0.005,600,199.5},&#10;&#09;{800,0.002,1500,499.5},&#10;&#09;{700,0.001,2400,999.5},&#10;&#09;{600,0.0005,2400,1999.5},&#10;}&#10;type=type&lt;1 and 1 or type&gt;#params and #params or type&#10;vel=params[type][1]&#10;drag=params[type][2]*60&#10;lifeSpan=params[type][3]/60&#10;C=params[type][4]&#10;R=1-drag/60&#10;g=30&#10;error=0.1&#10;Er,cc,dcc=0.15,0,-0.2&#10;Timer=0&#10;B={}&#10;function onTick()&#10;    int=string.unpack(&quot;I4&quot;,string.pack(&quot;f&quot;,gn(32)))&#10;&#09;for i=0,31 do B[1+i]=(int&amp;(1&lt;&lt;i))&gt;0 end&#10;&#10;&#09;tgtfound=(gn(1)~=0)&#10;&#09;MASTER=B[3]&#10;    SEAT=B[4]&#10;&#09;MANTRI=B[5]&#10;    SAFETY=B[6]&#10;    &#10;&#09;&#10;&#09;TGX=gn(1)&#10;&#09;TGY=gn(3)&#10;&#09;TGZ=gn(2)&#10;&#09;vX=gn(4)/60 &#10;&#09;vY=gn(6)/60&#10;&#09;vZ=gn(5)/60&#10;&#10;&#10;&#10;&#10;&#10;&#10;&#09;aX,aY,aZ=gn(7)/60,gn(9)/60,gn(8)/60&#10;&#09;GunX=gn(16)&#10;&#09;GunY=gn(17)&#10;&#09;GunZ=gn(18)&#10;&#09;dx=gn(19)&#10;&#09;dy=gn(20)&#10;&#09;dz=gn(21)&#10;&#09;GPIn=gn(22)&#10;&#09;GYIn=gn(23)&#10;&#09;EX=gn(24)--X&#10;&#09;EY=gn(25)--Z&#10;&#09;EZ=gn(26)--Y&#10;&#09;&#10;&#09;V=D3(vX,vY,vZ)*60&#10;&#10;&#09;RotP=gn(27)/60&#10;&#09;LookX=gn(28)&#10;&#09;LookY=gn(29)&#10;&#09;&#10;&#09;psP=gn(30)&#10;&#09;psY=gn(31)&#10;&#10;    delay=delayremote&#10;&#09;GYOut,GPOut=0,0.01/2&#10;&#09;Sready,Aready,inrange,Trigger=false,false,false,false&#10;&#09;DD=0&#10;&#09;Stab=false&#10;&#09;&#10;&#09;local gunElv,time,dist,t1&#10;&#09;&#10;&#09;&#10;&#09;if MASTER and SEAT then&#10;&#09;&#09;Trigger=MANTRI&#10;&#09;&#09;GYOut,GPOut=LookX,LookY&#10;&#09;&#09;Stab=true&#10;&#09;elseif tgtfound and MASTER then&#10;&#09;&#09;&#10;&#09;&#09;TGRX,TGRY,TGRZ=TGX-GunX+(vX-dx)*delay,TGY-GunY+(vY-dy)*delay,TGZ-GunZ+(vZ-dz)*delay&#10;&#09;&#09;DD=D3(TGRX,TGRY,TGRZ)&#10;&#09;&#09;RelVel=Dot3(TGRX/DD,TGRY/DD,TGRZ/DD,vX,vY,vZ)&#10;&#09;&#09;sn(30,DD/(vel/60+RelVel))&#10;&#09;&#09;&#10;        -- c no syokichi ha chanto settei suruto yoi yo&#10;        -- soushinaito shatei gai dato omoi komu kara&#10;        -- dekireba DD/(vel + soutai sokudo) dato yoi ne&#10;&#09;&#09;local time,c=0,(DD/(vel/60+RelVel))*1.5&#10;        if c~=c then c=0 end&#10;&#09;&#09;ddx,ddy,ddz,wx,wy=dx,dy,dz,0,0&#10;&#09;&#09;winX,winY=0,0&#10;&#10;&#10;        -- koko no double loop ha jitsu ha sake rareru&#10;&#09;&#09;for i=1,20 do&#10;&#09;&#09;&#09;local CC=(R^c)/m.log(R)+C&#10;&#09;&#09;&#09;if CC~=CC then CC=0 end&#10;&#09;&#09;&#09;ddx,ddy,ddz,wx,wy=dx*CC,dy*CC,dz*CC,winX*(c-CC),winY*(c-CC)&#10;&#10;&#09;&#09;&#09;ETGX=TGRX+vX*c+(aX^2)/2*c-ddx+wx&#10;&#09;&#09;&#09;ETGY=TGRY+vY*c+(aY^2)/2*c-ddy+wy&#10;&#09;&#09;&#09;ETGZ=TGRZ+vZ*c+(aZ^2)/2*c-ddz&#10;&#09;&#09;&#09;dist=(ETGX^2+ETGY^2+ETGZ^2)^0.5&#10;&#09;&#09;&#09;elv=atan(ETGZ/(ETGX^2+ETGY^2)^0.5)&#10;&#10;&#09;&#09;&#09;gunElv,t1,inrange=calc(dist,elv)&#09;&#10;&#10;&#09;&#09;&#09;if inrange then time=t1*60 end&#10;&#09;&#09;&#09;c=time&#10;&#09;&#09;&#09;&#10;&#09;&#09;end&#10;&#10;&#09;&#09;sn(31,time)&#10;&#09;&#09;&#10;&#09;&#09;if inrange then ETGZ=tan(gunElv)*(ETGX^2+ETGY^2)^0.5 end&#10;&#10;&#09;&#09;rr=AT(Er,dist)/pi2&#10;&#09;&#09;rrx,rry=rr*cos(cc*pi2),rr*sin(cc*pi2)&#10;&#09;&#09;cc=cc+dcc&#10;&#10;&#09;&#09;if MASTER then&#10;&#09;&#09;&#09;GYOut,GPOut=GtoDir(ETGX+GunX,ETGY+GunY,m.max(ETGZ+GunZ,-10))&#10;&#09;&#09;&#09;GYOut,GPOut=GYOut+rrx,GPOut+rry&#10;&#09;&#09;end&#10;&#10;&#09;&#09;GYOut=GYOut/pi2&#10;&#09;&#09;GPOut=GPOut/pi2-RotP*5&#10;&#09;&#09;&#10;&#09;&#09;if inrange and Timer&gt;CalcTime then Sready=true end&#10;&#09;&#09;if Sready then Trigger=true end&#10;&#09;&#09;&#10;&#09;&#09;Stab=true&#10;&#09;&#09;Timer=Timer+1&#10;&#09;else&#10;&#09;&#09;Timer=0&#10;&#09;end&#10;&#09;if inrange and DD&lt;500 then sb(3,true) else sb(3,false) end&#10;&#09;local lim,A,B,C,D=GYOut-GYIn,false,false,false,false&#10;&#10;&#09;lim=m.max(lim^2*100,0.02)&#10;&#09;GYOut,A=clamp(GYOut,YMIN,YMAX)&#10;&#09;GYOut2=CLMP((GYOut-GYIn)*100,2)&#10;&#09;GYOut=clamp(GYOut,GYIn-lim,GYIn+lim)&#10;&#09;&#10;&#09;psY,C=clamp(psY,YMIN,YMAX)&#10;&#10;    YawPID:state(tgtfound and Trigger)&#10;    if tgtfound and Trigger then &#10;        GYOut2=YawPID:update((GYOut-GYIn), 1/60)&#10;    end&#10;&#10;&#09;GPOut,B=clamp(GPOut,EMIN,EMAX)&#10;&#09;&#10;&#09;psP,D=clamp(psP,EMIN,EMAX)&#10;&#09;tri=true&#10;&#09;if abs(GYOut)&gt;0.40 then GPOut,tri=clamp(GPOut,0.25/3,EMAX)&#10;&#09;elseif abs(GYOut)&gt;0.45 then GPOut,tri=clamp(GPOut,2/3/4,EMAX) end&#10;&#10;    -- koko ha Tritter=A and B and tri de yoi desu ne&#10;&#09;if C==false or D==false or tri==false then Trigger=false end&#10;&#10;&#09;sb(1,Trigger and SAFETY)&#10;&#09;sb(2,Stab)&#10;&#09;sn(1,GYOut2)&#10;&#09;sn(2,GYIn)&#10;&#09;sn(3,GPOut*4)&#10;&#09;sn(4,GPIn)&#10;&#09;sn(5,RotY or 0)&#10;&#09;sn(6,RotP)&#10;&#09;-- Debug-only numeric channels 7..20 feed vehicle tooltips.&#10;&#09;sn(7,MASTER and 1 or 0)&#10;&#09;sn(8,SEAT and 1 or 0)&#10;&#09;sn(9,SAFETY and 1 or 0)&#10;&#09;sn(10,Trigger and 1 or 0)&#10;&#09;sn(11,(Trigger and SAFETY) and 1 or 0)&#10;&#09;sn(12,tgtfound and 1 or 0)&#10;&#09;sn(13,inrange and 1 or 0)&#10;&#09;sn(14,(tgtfound and DD) or 0)&#10;&#09;sn(15,TGX)&#10;&#09;sn(16,TGZ)&#10;&#09;sn(17,TGY)&#10;&#09;sn(18,vX*60)&#10;&#09;sn(19,vZ*60)&#10;&#09;sn(20,vY*60)&#10;&#10;end&#10;&#10;function onDraw()&#10;    if DBGCIWS&gt;0 then&#10;        screen.setColor(255,255,255)&#10;        sdt(0,0,&quot;MA &quot;..(MASTER and 1 or 0)..&quot; SE &quot;..(SEAT and 1 or 0)..&quot; SA &quot;..(SAFETY and 1 or 0)..&quot; TR &quot;..(Trigger and 1 or 0))&#10;        sdt(0,10,&quot;TGX &quot;..((TGX or 0)//1)..&quot; D &quot;..((DD or 0)//1)..&quot; INR &quot;..(inrange and 1 or 0))&#10;        sdt(0,20,&quot;VX &quot;..((vX or 0)*60//1)..&quot; VZ &quot;..((vZ or 0)*60//1)..&quot; VY &quot;..((vY or 0)*60//1))&#10;    end&#10;end&#10;&#10;function GtoDir(x,y,z)&#10;&#09;x,y,z=x-GunX,y-GunY,z-GunZ&#10;&#09;x,y,z=rotZ(x,y,z,-EZ)&#10;&#09;x,y,z=rotY(x,y,z,-EY)&#10;&#09;x,y,z=rotX(x,y,z,-EX)&#10;&#09;x,y,z=x,y,z-0.25&#10;&#09;yaw,pitch=AT(x,y),AT(z/(x^2+y^2)^0.5)&#10;&#09;return yaw,pitch&#10;end&#10;function rotX(x,y,z,EX) x,y,z=x,y*cos(-EX)-z*sin(-EX),y*sin(-EX)+z*cos(-EX) return x,y,z end&#10;function rotY(x,y,z,EY) x,y,z=x*cos(-EY)-y*sin(-EY),x*sin(-EY)+y*cos(-EY),z return x,y,z end&#10;function rotZ(x,y,z,EZ) x,y,z=x*cos(EZ)-z*sin(EZ),y,x*sin(EZ)+z*cos(EZ) return x,y,z end&#10;function D3(x,y,z) return (x*x+y*y+z*z)^0.5 end&#10;function Dot3(x,y,z,a,b,c) return x*a+y*b+z*c end&#10;function getY(v,t) return -g*t/drag+(g/drag+v)*(1-m.exp(-drag*t))/drag end&#10;function getTime(v,x) return -m.log(1-drag*x/v)/drag end&#10;function calc(D,E)&#10;&#09;local t,a,w,h=0,E,D*cos(E),D*sin(E)&#10;&#09;for i=1,10 do&#10;&#09;&#09;local vx,vy=vel*cos(a),vel*sin(a)&#10;&#09;&#09;t=getTime(vx,w)&#10;&#09;&#09;if t&gt;lifeSpan then a=E return a,t,false end&#10;&#09;&#09;y=getY(vy,t)&#10;&#09;&#09;if y&gt;=h-error then return a,t,true end&#10;&#09;&#09;&#10;&#09;&#09;a=a+E-atan(y,w)&#10;&#09;end&#10;&#09;a=E&#10;&#09;return a,t,false&#10;end&#10;function clamp(a,mn,mx) tf=false if a&gt;=mn and a&lt;=mx then tf=true end return m.min(m.max(a,mn),mx),tf end &#10;function CLMP(a,b) return m.min(m.max(a,-b),b) end">
+											<pos x="4.75" y="0.25" />
+											<in1 component_id="293" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="634" i="6">
+											<pos x="6" y="-14" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="635" l="CIWS DBG MASTER">
+											<pos x="7.25" y="-14" />
+											<in1 component_id="634" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="636" i="7">
+											<pos x="6" y="-14.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="637" l="CIWS DBG SEAT">
+											<pos x="7.25" y="-14.5" />
+											<in1 component_id="636" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="638" i="8">
+											<pos x="6" y="-15" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="639" l="CIWS DBG SAFETY">
+											<pos x="7.25" y="-15" />
+											<in1 component_id="638" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="640" i="9">
+											<pos x="6" y="-15.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="641" l="CIWS DBG TRIGGER">
+											<pos x="7.25" y="-15.5" />
+											<in1 component_id="640" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="642" i="10">
+											<pos x="6" y="-16" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="643" l="CIWS DBG FIRE">
+											<pos x="7.25" y="-16" />
+											<in1 component_id="642" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="644" i="11">
+											<pos x="6" y="-16.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="645" l="CIWS DBG FOUND">
+											<pos x="7.25" y="-16.5" />
+											<in1 component_id="644" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="646" i="12">
+											<pos x="6" y="-17" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="647" l="CIWS DBG INRANGE">
+											<pos x="7.25" y="-17" />
+											<in1 component_id="646" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="648" i="13">
+											<pos x="6" y="-17.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="649" l="CIWS DBG DIST">
+											<pos x="7.25" y="-17.5" />
+											<in1 component_id="648" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="650" i="14">
+											<pos x="6" y="-18" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="651" l="CIWS DBG TGT_X">
+											<pos x="7.25" y="-18" />
+											<in1 component_id="650" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="652" i="15">
+											<pos x="6" y="-18.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="653" l="CIWS DBG TGT_Z">
+											<pos x="7.25" y="-18.5" />
+											<in1 component_id="652" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="654" i="16">
+											<pos x="6" y="-19" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="655" l="CIWS DBG TGT_Y">
+											<pos x="7.25" y="-19" />
+											<in1 component_id="654" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="656" i="17">
+											<pos x="6" y="-19.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="657" l="CIWS DBG VX">
+											<pos x="7.25" y="-19.5" />
+											<in1 component_id="656" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="658" i="18">
+											<pos x="6" y="-20" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="659" l="CIWS DBG VZ">
+											<pos x="7.25" y="-20" />
+											<in1 component_id="658" />
+										</object>
+									</c>
+									<c type="31">
+										<object id="660" i="19">
+											<pos x="6" y="-20.5" />
+											<in1 component_id="627" />
+										</object>
+									</c>
+									<c type="43">
+										<object id="661" l="CIWS DBG VY">
+											<pos x="7.25" y="-20.5" />
+											<in1 component_id="660" />
+										</object>
+									</c>
+								</components>
+								<components_bridge>
+									<c type="2">
+										<object id="115">
+											<pos x="-1.5" y="-4" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="121">
+											<pos x="-1.5" y="-3.75" />
+										</object>
+									</c>
+									<c type="3">
+										<object id="137">
+											<pos x="7.25" y="1.25" />
+											<in1 component_id="454" />
+										</object>
+									</c>
+									<c>
+										<object id="141">
+											<pos x="-0.25" y="-6.75" />
+										</object>
+									</c>
+									<c type="1">
+										<object id="157">
+											<pos x="8.5" y="-0.25" />
+											<in1 component_id="463" />
+										</object>
+									</c>
+									<c type="3">
+										<object id="161">
+											<pos x="7.25" y="0.75" />
+											<in1 component_id="453" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="360">
+											<pos x="1" y="-5" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="375">
+											<pos x="-0.25" y="-5.5" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="411">
+											<pos x="-4" y="-10.75" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="413">
+											<pos x="-0.25" y="-4" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="440">
+											<pos x="-4" y="-10" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="441">
+											<pos x="-4" y="-13" />
+										</object>
+									</c>
+									<c type="4">
+										<object id="488">
+											<pos x="1" y="8.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="492">
+											<pos x="-2.75" y="-5.75" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="628">
+											<pos x="-6.5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="629">
+											<pos x="-6" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="630">
+											<pos x="-5.5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="631">
+											<pos x="-5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="632">
+											<pos x="-4.5" y="-13.25" />
+										</object>
+									</c>
+									<c type="2">
+										<object id="633">
+											<pos x="-4" y="-13.25" />
+										</object>
+									</c>
+								</components_bridge>
+								<groups />
+							</group>
+						</microprocessor_definition>
+						<vp x="148" y="-15" z="-176" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-15" z="-175" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-15" z="-182" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-15" z="-182" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="144" y="-14" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="147" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="145" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="143" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-175" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-176" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-177" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" x="142" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-179" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-180" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-14" z="-182" x="142" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="141" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-177" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-13" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-13" x="142" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-13" z="-178" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="144" y="-13" z="-176" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-175" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-182" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="148" y="-15" z="-182" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_B_TGT_X">
+						<vp x="141" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_B_TGT_Z">
+						<vp y="-14" z="-181" x="142" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_B_TGT_Y">
+						<vp x="143" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_B_VX">
+						<vp x="144" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_B_VZ">
+						<vp x="145" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="button_keypad_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5" custom_name="CIWS_B_VY">
+						<vp x="146" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="-2000" />
+						<max_lever_value text="2000" value="2000" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="battery_small">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="2">
+						<vp x="148" y="-14" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="6">
+						<vp x="148" y="-15" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="6">
+						<vp x="147" y="-15" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-181" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-14" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-179" />
+					</o>
+				</c>
+				<c d="gate_bool_constant">
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="1" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp y="-15" z="-180" x="142" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="140" y="-15" z="-180" />
+					</o>
+				</c>
+				<c d="button_push">
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="5" hold_duration="1">
+						<vp x="141" y="-14" z="-180" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<min_lever_value text="0" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+			</components>
+		</body>
+		<body unique_id="2">
+			<components>
+				<c d="multibody_velocity_pivot_b">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5,x,x,454545,x,x" gear_ratio="2" input_velocity="1">
+						<vp x="-127" y="-13" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="multibody_compact_pivot_b" t="1">
+					<o r="0,0,-1,-1,0,0,0,1,0" sc="6" gear_ratio="2" input_velocity="1">
+						<vp y="-8" x="-129" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="1,0,0,0,0,-1,0,1,0" sc="6">
+						<vp y="-11" x="-129" z="-178" />
+					</o>
+				</c>
+				<c t="1">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="6">
+						<vp x="-125" y="-11" z="-178" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="9">
+						<vp x="-125" y="-9" z="-177" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="-1,0,0,0,0,-1,0,-1,0" sc="9">
+						<vp x="-125" y="-9" z="-179" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="-1,0,0,0,0,-1,0,-1,0" sc="9">
+						<vp y="-9" z="-179" x="-129" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="9">
+						<vp y="-9" z="-177" x="-129" />
+					</o>
+				</c>
+				<c d="04_invpyramid">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="7">
+						<vp y="-11" z="-179" x="-129" />
+					</o>
+				</c>
+				<c d="04_invpyramid" t="1">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="7">
+						<vp x="-125" y="-11" z="-179" />
+					</o>
+				</c>
+				<c d="04_invpyramid">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="7">
+						<vp y="-11" z="-177" x="-129" />
+					</o>
+				</c>
+				<c d="04_invpyramid" t="1">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="7">
+						<vp x="-125" y="-11" z="-177" />
+					</o>
+				</c>
+				<c d="handle">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="5">
+						<vp y="-10" z="-179" x="-129" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="handle" t="1">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="5">
+						<vp x="-125" y="-10" z="-179" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="handle">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="5">
+						<vp y="-10" z="-177" x="-129" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="handle" t="1">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="5">
+						<vp x="-125" y="-10" z="-177" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="-125" y="-10" z="-178" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-10" x="-129" z="-178" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="0,-1,0,-1,0,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp y="-9" x="-129" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="-125" y="-8" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="angular_speed_sensor">
+					<o r="0,1,0,1,0,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="-125" y="-9" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+			</components>
+		</body>
+		<body unique_id="3">
+			<components>
+				<c d="door_panel_corner">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-128" y="-8" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="2">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-126" y="-8" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="1,0,0,0,0,1,0,-1,0" sc="6">
+						<vp x="-126" y="-8" z="-178" />
+					</o>
+				</c>
+				<c d="motor_small">
+					<o r="0,2,0,0,0,-2,-2,0,0" sc="6">
+						<vp x="-127" y="-10" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="03_pyramid">
+					<o sc="4">
+						<vp x="-127" y="-10" z="-179" />
+					</o>
+				</c>
+				<c d="gun_belt_corner_l">
+					<o r="1,0,0,0,1,0,0,0,1" sc="8" property_ammo_damage="5">
+						<vp x="-126" y="-10" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="door_panel_corner">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-128" y="-8" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="2">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-126" y="-8" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="0,0,1,0,-1,0,1,0,0" sc="5">
+						<vp x="-128" y="-9" z="-178" />
+					</o>
+				</c>
+				<c d="door_panel_corner">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-128" y="-7" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="1">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-126" y="-7" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-128" y="-7" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="1">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-126" y="-7" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="0,0,-1,1,0,0,0,-1,0" sc="6">
+						<vp x="-126" y="-7" z="-178" />
+					</o>
+				</c>
+				<c d="gun_xs">
+					<o r="0,0,0,0,0,-2,0,0,0" sc="4" property_ammo_damage="5">
+						<vp x="-128" y="-9" z="-179" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="gun_xs">
+					<o r="0,0,0,0,0,-2,0,0,0" sc="4" property_ammo_damage="5">
+						<vp x="-126" y="-9" z="-179" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,1" sc="6,x,x,6F634A,x,x,x">
+						<vp x="-128" y="-9" z="-182" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,1" sc="6,x,x,6F634A,x,x,x">
+						<vp x="-128" y="-9" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-127" y="-5" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-127" y="-4" z="-180" />
+					</o>
+				</c>
+				<c t="2">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-127" y="-3" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-128" y="-5" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-128" y="-4" z="-179" />
+					</o>
+				</c>
+				<c t="2">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-128" y="-3" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-126" y="-4" z="-179" />
+					</o>
+				</c>
+				<c t="2">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-126" y="-3" z="-179" />
+					</o>
+				</c>
+				<c d="distance_sensor">
+					<o r="0,0,0,0,0,-1,0,0,0" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="-127" y="-7" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="gun_xs">
+					<o r="0,0,0,0,0,-2,0,0,0" sc="4" property_ammo_damage="5">
+						<vp x="-126" y="-9" z="-178" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="door_panel_straight">
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="6">
+						<vp x="-127" y="-7" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="gun_xs" t="1">
+					<o r="0,2,0,0,0,-2,-2,0,0" sc="4" custom_name="M61 Vulcan/Mk.15 Phalanx Block 1B" property_ammo_damage="5">
+						<vp x="-127" y="-8" z="-179" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="gun_xs" t="1">
+					<o r="0,2,0,0,0,-2,-2,0,0" sc="4" custom_name="M61 Vulcan/Mk.15 Phalanx Block 1B" property_ammo_damage="5">
+						<vp x="-127" y="-8" z="-178" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="door_panel_straight">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="-127" y="-7" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-127" y="-5" z="-179" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="-127" y="-7" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-128" y="-6" z="-179" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-127" y="-10" z="-177" />
+					</o>
+				</c>
+				<c d="gun_l_barrel">
+					<o r="0,0,0,0,0,1,0,0,0" sc="2" property_ammo_damage="5">
+						<vp x="-128" y="-10" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-127" y="-6" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="-126" y="-5" z="-179" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6,x,x,6F634A,x,x,x">
+						<vp x="-126" y="-6" z="-179" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="0,-1,0,-1,0,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="-128" y="-7" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="multibody_compact_pivot_robotic_a" t="1">
+					<o r="0,0,-1,-1,0,0,0,1,0" sc="5" gear_ratio="1" input_velocity="5">
+						<vp x="-128" y="-8" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="gun_drum_xsmall">
+					<o r="0,0,-1,0,-1,0,-1,0,0" sc="6" property_ammo_type="6" property_ammo_damage="3">
+						<vp x="-127" y="-9" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="fish_finder">
+					<o r="-2,0,0,0,5,0,0,0,-2" sc="6" current_tick="1">
+						<vp x="-127" y="-5" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+			</components>
+		</body>
+		<body unique_id="4">
+			<components>
+				<c d="multibody_velocity_pivot_b">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="5,x,x,454545,x,x" gear_ratio="2" input_velocity="1">
+						<vp x="144" y="-13" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="multibody_compact_pivot_b" t="1">
+					<o r="0,0,-1,-1,0,0,0,1,0" sc="6" gear_ratio="2" input_velocity="1">
+						<vp y="-8" x="142" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="1,0,0,0,0,-1,0,1,0" sc="6">
+						<vp y="-11" x="142" z="-178" />
+					</o>
+				</c>
+				<c t="1">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="6">
+						<vp x="146" y="-11" z="-178" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="9">
+						<vp x="146" y="-9" z="-177" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="-1,0,0,0,0,-1,0,-1,0" sc="9">
+						<vp x="146" y="-9" z="-179" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="-1,0,0,0,0,-1,0,-1,0" sc="9">
+						<vp y="-9" z="-179" x="142" />
+					</o>
+				</c>
+				<c d="05_wedge_2" t="1">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="9">
+						<vp y="-9" z="-177" x="142" />
+					</o>
+				</c>
+				<c d="04_invpyramid">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="7">
+						<vp y="-11" z="-179" x="142" />
+					</o>
+				</c>
+				<c d="04_invpyramid" t="1">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="7">
+						<vp x="146" y="-11" z="-179" />
+					</o>
+				</c>
+				<c d="04_invpyramid">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="7">
+						<vp y="-11" z="-177" x="142" />
+					</o>
+				</c>
+				<c d="04_invpyramid" t="1">
+					<o r="1,0,0,0,-1,0,0,0,-1" sc="7">
+						<vp x="146" y="-11" z="-177" />
+					</o>
+				</c>
+				<c d="handle">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="5">
+						<vp y="-10" z="-179" x="142" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="handle" t="1">
+					<o r="1,0,0,0,0,-1,0,1,0" sc="5">
+						<vp x="146" y="-10" z="-179" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="handle">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="5">
+						<vp y="-10" z="-177" x="142" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="handle" t="1">
+					<o r="1,0,0,0,0,1,0,-1,0" sc="5">
+						<vp x="146" y="-10" z="-177" />
+						<logic_slots>
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp x="146" y="-10" z="-178" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="6">
+						<vp y="-10" x="142" z="-178" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="0,-1,0,-1,0,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp y="-9" x="142" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="146" y="-8" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="angular_speed_sensor">
+					<o r="0,1,0,1,0,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="146" y="-9" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+			</components>
+		</body>
+		<body unique_id="5">
+			<components>
+				<c d="door_panel_corner">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="143" y="-8" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="2">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="145" y="-8" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="1,0,0,0,0,1,0,-1,0" sc="6">
+						<vp x="145" y="-8" z="-178" />
+					</o>
+				</c>
+				<c d="motor_small">
+					<o r="0,2,0,0,0,-2,-2,0,0" sc="6">
+						<vp x="144" y="-10" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="03_pyramid">
+					<o sc="4">
+						<vp x="144" y="-10" z="-179" />
+					</o>
+				</c>
+				<c d="gun_belt_corner_l">
+					<o r="1,0,0,0,1,0,0,0,1" sc="8" property_ammo_damage="5">
+						<vp x="145" y="-10" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="door_panel_corner">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="143" y="-8" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="2">
+					<o r="0,-1,0,1,0,0,0,0,1" bc3="454545" sc="6">
+						<vp x="145" y="-8" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="02_wedge">
+					<o r="0,0,1,0,-1,0,1,0,0" sc="5">
+						<vp x="143" y="-9" z="-178" />
+					</o>
+				</c>
+				<c d="door_panel_corner">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="143" y="-7" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="1">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="145" y="-7" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="143" y="-7" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="door_panel_corner" t="1">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="145" y="-7" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="0,0,-1,1,0,0,0,-1,0" sc="6">
+						<vp x="145" y="-7" z="-178" />
+					</o>
+				</c>
+				<c d="gun_xs">
+					<o r="0,0,0,0,0,-2,0,0,0" sc="4" property_ammo_damage="5">
+						<vp x="143" y="-9" z="-179" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="gun_xs">
+					<o r="0,0,0,0,0,-2,0,0,0" sc="4" property_ammo_damage="5">
+						<vp x="145" y="-9" z="-179" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,1" sc="6,x,x,6F634A,x,x,x">
+						<vp x="143" y="-9" z="-182" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,1" sc="6,x,x,6F634A,x,x,x">
+						<vp x="143" y="-9" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="144" y="-5" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="144" y="-4" z="-180" />
+					</o>
+				</c>
+				<c t="2">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="144" y="-3" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="143" y="-5" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="143" y="-4" z="-179" />
+					</o>
+				</c>
+				<c t="2">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="143" y="-3" z="-179" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="145" y="-4" z="-179" />
+					</o>
+				</c>
+				<c t="2">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="145" y="-3" z="-179" />
+					</o>
+				</c>
+				<c d="distance_sensor">
+					<o r="0,0,0,0,0,-1,0,0,0" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="144" y="-7" z="-181" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="gun_xs">
+					<o r="0,0,0,0,0,-2,0,0,0" sc="4" property_ammo_damage="5">
+						<vp x="145" y="-9" z="-178" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="door_panel_straight">
+					<o r="-1,0,0,0,-1,0,0,0,1" sc="6">
+						<vp x="144" y="-7" z="-177" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="gun_xs" t="1">
+					<o r="0,2,0,0,0,-2,-2,0,0" sc="4" custom_name="M61 Vulcan/Mk.15 Phalanx Block 1B" property_ammo_damage="5">
+						<vp x="144" y="-8" z="-179" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="gun_xs" t="1">
+					<o r="0,2,0,0,0,-2,-2,0,0" sc="4" custom_name="M61 Vulcan/Mk.15 Phalanx Block 1B" property_ammo_damage="5">
+						<vp x="144" y="-8" z="-178" />
+						<logic_slots>
+							<slot editor_connected="1" />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="door_panel_straight">
+					<o r="-1,0,0,0,-1,0,0,0,1" bc3="454545" sc="6">
+						<vp x="144" y="-7" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="144" y="-5" z="-179" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="-1,0,0,0,1,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="144" y="-7" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="143" y="-6" z="-179" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="144" y="-10" z="-177" />
+					</o>
+				</c>
+				<c d="gun_l_barrel">
+					<o r="0,0,0,0,0,1,0,0,0" sc="2" property_ammo_damage="5">
+						<vp x="143" y="-10" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="144" y="-6" z="-180" />
+					</o>
+				</c>
+				<c>
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6">
+						<vp x="145" y="-5" z="-179" />
+					</o>
+				</c>
+				<c d="01_block_weight">
+					<o r="0,0,0,0,0,0,0,0,-1" sc="6,x,x,6F634A,x,x,x">
+						<vp x="145" y="-6" z="-179" />
+					</o>
+				</c>
+				<c d="physics_sensor">
+					<o r="0,-1,0,-1,0,0,0,0,-1" sc="5" timer_scalar_1="0.183" timer_scalar_2="0.183">
+						<vp x="143" y="-7" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<property_output_float_val text="0" />
+						<min_threshold text="0" />
+						<max_threshold text="0" />
+						<pid_controller_ki text="1" value="1" />
+						<pid_controller_kp text="1" value="1" />
+						<pid_controller_kd text="1" value="1" />
+						<pid_controller_max_error text="0" />
+						<exp text="2" value="2" />
+						<min_lever_value text="-1" value="-1" />
+						<max_lever_value text="1" value="1" />
+						<starting_lever_value text="0" />
+					</o>
+				</c>
+				<c d="multibody_compact_pivot_robotic_a" t="1">
+					<o r="0,0,-1,-1,0,0,0,1,0" sc="5" gear_ratio="1" input_velocity="5">
+						<vp x="143" y="-8" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="gun_drum_xsmall">
+					<o r="0,0,-1,0,-1,0,-1,0,0" sc="6" property_ammo_type="6" property_ammo_damage="3">
+						<vp x="144" y="-9" z="-179" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+						<impact_sensor_threshold text="0" />
+					</o>
+				</c>
+				<c d="fish_finder">
+					<o r="-2,0,0,0,5,0,0,0,-2" sc="6" current_tick="1">
+						<vp x="144" y="-5" z="-178" />
+						<logic_slots>
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+			</components>
+		</body>
+	</bodies>
+	<logic_node_links>
+		<logic_node_link type="4">
+			<voxel_pos_0 y="-9" x="-129" z="-178" />
+			<voxel_pos_1 x="-127" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-127" y="-7" z="-178" />
+			<voxel_pos_1 x="-125" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-127" y="-7" z="-178" />
+			<voxel_pos_1 x="-128" y="-7" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-128" y="-7" z="-178" />
+			<voxel_pos_1 x="-128" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-128" y="-8" z="-178" />
+			<voxel_pos_1 y="-9" x="-129" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-127" y="-10" z="-178" />
+			<voxel_pos_1 x="-127" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-127" y="-7" z="-181" />
+			<voxel_pos_1 x="-127" y="-10" z="-178" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-127" y="-15" z="-177" />
+			<voxel_pos_1 x="-123" y="-15" z="-180" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-127" y="-15" z="-180" />
+			<voxel_pos_1 x="-128" y="-9" z="-179" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-125" y="-15" z="-180" />
+			<voxel_pos_1 x="-126" y="-9" z="-179" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-127" y="-15" z="-180" />
+			<voxel_pos_1 x="-126" y="-9" z="-178" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-124" y="-15" z="-180" />
+			<voxel_pos_1 x="-127" y="-8" z="-179" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-126" y="-15" z="-180" />
+			<voxel_pos_1 x="-127" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-128" y="-15" z="-176" />
+			<voxel_pos_1 x="-127" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-127" y="-7" z="-181" />
+			<voxel_pos_1 x="-127" y="-15" z="-179" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="-127" y="-7" z="-178" />
+			<voxel_pos_1 x="-126" y="-15" z="-179" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="-128" y="-7" z="-178" />
+			<voxel_pos_1 x="-124" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-127" y="-15" z="-176" />
+			<voxel_pos_1 x="-128" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 y="-9" x="-129" z="-178" />
+			<voxel_pos_1 x="-126" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="-125" y="-8" z="-178" />
+			<voxel_pos_1 x="-125" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-125" y="-9" z="-178" />
+			<voxel_pos_1 x="-128" y="-15" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-128" y="-12" z="-178" />
+			<voxel_pos_1 x="-127" y="-15" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="-127" y="-14" z="-178" />
+			<voxel_pos_1 x="-123" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-127" y="-14" z="-178" />
+			<voxel_pos_1 x="-127" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-123" y="-14" z="-181" />
+			<voxel_pos_1 x="-125" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-125" y="-14" z="-181" />
+			<voxel_pos_1 x="-126" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-126" y="-14" z="-181" />
+			<voxel_pos_1 x="-127" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-127" y="-14" z="-181" />
+			<voxel_pos_1 x="-128" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-128" y="-14" z="-181" />
+			<voxel_pos_1 y="-14" z="-181" x="-129" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 y="-14" z="-181" x="-129" />
+			<voxel_pos_1 x="-130" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-130" y="-14" z="-181" />
+			<voxel_pos_1 x="-125" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 y="-14" z="-181" x="-129" />
+			<voxel_pos_1 x="-126" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-128" y="-14" z="-181" />
+			<voxel_pos_1 y="-15" z="-176" x="-129" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-127" y="-14" z="-181" />
+			<voxel_pos_1 x="-130" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-126" y="-14" z="-181" />
+			<voxel_pos_1 x="-130" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="-125" y="-14" z="-181" />
+			<voxel_pos_1 y="-15" x="-129" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-123" y="-14" z="-181" />
+			<voxel_pos_1 x="-127" y="-14" z="-178" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 y="-15" z="-180" x="-129" />
+			<voxel_pos_1 x="-123" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="-124" y="-15" z="-180" />
+			<voxel_pos_1 x="-130" y="-15" z="-180" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="-130" y="-14" z="-180" />
+			<voxel_pos_1 x="-130" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 y="-9" x="142" z="-178" />
+			<voxel_pos_1 x="144" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="144" y="-7" z="-178" />
+			<voxel_pos_1 x="146" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="144" y="-7" z="-178" />
+			<voxel_pos_1 x="143" y="-7" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="143" y="-7" z="-178" />
+			<voxel_pos_1 x="143" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="143" y="-8" z="-178" />
+			<voxel_pos_1 y="-9" x="142" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="144" y="-10" z="-178" />
+			<voxel_pos_1 x="144" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="144" y="-7" z="-181" />
+			<voxel_pos_1 x="144" y="-10" z="-178" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="144" y="-15" z="-177" />
+			<voxel_pos_1 x="148" y="-15" z="-180" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="144" y="-15" z="-180" />
+			<voxel_pos_1 x="143" y="-9" z="-179" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="146" y="-15" z="-180" />
+			<voxel_pos_1 x="145" y="-9" z="-179" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="144" y="-15" z="-180" />
+			<voxel_pos_1 x="145" y="-9" z="-178" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="147" y="-15" z="-180" />
+			<voxel_pos_1 x="144" y="-8" z="-179" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="145" y="-15" z="-180" />
+			<voxel_pos_1 x="144" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="143" y="-15" z="-176" />
+			<voxel_pos_1 x="144" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="144" y="-7" z="-181" />
+			<voxel_pos_1 x="144" y="-15" z="-179" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="144" y="-7" z="-178" />
+			<voxel_pos_1 x="145" y="-15" z="-179" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="143" y="-7" z="-178" />
+			<voxel_pos_1 x="147" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="144" y="-15" z="-176" />
+			<voxel_pos_1 x="143" y="-8" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 y="-9" x="142" z="-178" />
+			<voxel_pos_1 x="145" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="146" y="-8" z="-178" />
+			<voxel_pos_1 x="146" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="146" y="-9" z="-178" />
+			<voxel_pos_1 x="143" y="-15" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="143" y="-12" z="-178" />
+			<voxel_pos_1 x="144" y="-15" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="5">
+			<voxel_pos_0 x="144" y="-14" z="-178" />
+			<voxel_pos_1 x="148" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="144" y="-14" z="-178" />
+			<voxel_pos_1 x="144" y="-12" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="148" y="-14" z="-181" />
+			<voxel_pos_1 x="146" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="146" y="-14" z="-181" />
+			<voxel_pos_1 x="145" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="145" y="-14" z="-181" />
+			<voxel_pos_1 x="144" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="144" y="-14" z="-181" />
+			<voxel_pos_1 x="143" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="143" y="-14" z="-181" />
+			<voxel_pos_1 y="-14" z="-181" x="142" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 y="-14" z="-181" x="142" />
+			<voxel_pos_1 x="141" y="-14" z="-181" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="141" y="-14" z="-181" />
+			<voxel_pos_1 x="146" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 y="-14" z="-181" x="142" />
+			<voxel_pos_1 x="145" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="143" y="-14" z="-181" />
+			<voxel_pos_1 y="-15" z="-176" x="142" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="144" y="-14" z="-181" />
+			<voxel_pos_1 x="141" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="145" y="-14" z="-181" />
+			<voxel_pos_1 x="141" y="-15" z="-177" />
+		</logic_node_link>
+		<logic_node_link type="1">
+			<voxel_pos_0 x="146" y="-14" z="-181" />
+			<voxel_pos_1 y="-15" x="142" z="-178" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="148" y="-14" z="-181" />
+			<voxel_pos_1 x="144" y="-14" z="-178" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 y="-15" z="-180" x="142" />
+			<voxel_pos_1 x="148" y="-15" z="-176" />
+		</logic_node_link>
+		<logic_node_link>
+			<voxel_pos_0 x="147" y="-15" z="-180" />
+			<voxel_pos_1 x="141" y="-15" z="-180" />
+		</logic_node_link>
+		<logic_node_link type="4">
+			<voxel_pos_0 x="141" y="-14" z="-180" />
+			<voxel_pos_1 x="141" y="-14" z="-181" />
+		</logic_node_link>
+	</logic_node_links>
+</vehicle>

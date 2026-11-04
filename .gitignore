@@ -1,0 +1,8 @@
+# Local validation session token and runtime logs (never commit).
+.tmp_ciws/validation/
+analysis/ciws-bridge-test-*/
+analysis/ciws-check-*/
+
+# Local IDE settings and agent working notes.
+.idea/
+.agents/
