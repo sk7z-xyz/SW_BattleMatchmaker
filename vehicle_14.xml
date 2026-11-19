@@ -8,171 +8,6 @@
 						<vp x="0" y="1" z="0" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-147" y="0" z="-239" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-20" y="0" z="-239" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_33x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="107" y="0" z="-239" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-100" y="0" z="-175" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_73x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="27" y="0" z="-175" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-77" y="0" z="-111" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_31x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="50" y="0" z="-111" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-77" y="0" z="-47" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_31x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="50" y="0" z="-47" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_127x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-68" y="0" z="17" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_12x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="59" y="0" z="17" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_120x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-58" y="0" z="81" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_120x64x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-58" y="0" z="145" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_18x45x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-165" y="0" z="-239" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_9x61x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="140" y="0" z="-239" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_11x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-158" y="0" z="-194" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_40x13x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="100" y="0" z="-175" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_47x13x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-147" y="0" z="-175" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_30x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="100" y="0" z="-162" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_35x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-135" y="0" z="-162" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_20x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="100" y="0" z="-146" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_24x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-124" y="0" z="-146" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_12x15x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-112" y="0" z="-130" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_10x15x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="100" y="0" z="-130" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_23x12x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-100" y="0" z="-111" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_19x12x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="81" y="0" z="-111" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_10x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="81" y="0" z="-99" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_12x16x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-89" y="0" z="-99" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_8x7x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-76" y="0" z="17" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_10x7x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="71" y="0" z="17" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_9x51x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="62" y="0" z="81" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_10x51x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-68" y="0" z="81" />
-					</o>
-				</c>
-				<c d="sk_cvn78_voxel_panel_120x30x2_weapons_v10">
-					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-58" y="0" z="209" />
-					</o>
-				</c>
 				<c d="sk_cvn78_voxel_panel_36x50x1_weapons_v10">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="92" y="-16" z="-64" />
@@ -183,139 +18,899 @@
 						<vp x="-100" y="-16" z="2" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x91_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-2" z="-239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x91_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-2" z="-175" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x28x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x28x91_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-2" z="-111" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-17" z="-83" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-17" z="-19" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-17" z="45" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-17" z="109" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-17" z="173" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x3x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x3x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
 						<vp x="-82" y="-17" z="237" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x91_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-2" z="-239" />
+						<vp x="82" y="-2" z="-239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x91_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-2" z="-175" />
+						<vp x="82" y="-2" z="-175" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x28x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x28x91_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-2" z="-111" />
+						<vp x="82" y="-2" z="-111" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_2x64x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-2" z="-83" />
+						<vp x="82" y="-17" z="-83" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_2x43x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-2" z="-19" />
+						<vp x="82" y="-17" z="-19" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_2x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="81" y="-17" z="-83" />
+						<vp x="82" y="-17" z="45" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_2x43x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="81" y="-17" z="-19" />
+						<vp x="82" y="-17" z="109" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x64x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-17" z="24" />
+						<vp x="82" y="-17" z="173" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_1x3x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-17" z="88" />
+						<vp x="82" y="-17" z="237" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x64x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_64x1x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-17" z="152" />
+						<vp x="-81" y="-17" z="239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_4x24x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_64x1x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="79" y="-17" z="216" />
+						<vp x="-17" y="-17" z="239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_64x3x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_35x1x76_hull_v14">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-58" y="-2" z="236" />
+						<vp x="47" y="-17" z="239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_56x3x91_hull_v13">
+				<c d="sk_cvn78_voxel_panel_48x24x2_deck_v15">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="6" y="-2" z="236" />
+						<vp x="-165" y="0" z="-239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_17x3x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="62" y="-17" z="236" />
+						<vp x="-165" y="0" z="-215" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_20x3x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-78" y="-17" z="236" />
+						<vp x="-165" y="0" z="-199" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_64x1x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-78" y="-17" z="239" />
+						<vp x="-165" y="0" z="-195" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_64x1x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_48x24x2_deck_v15">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="-14" y="-17" z="239" />
+						<vp x="-117" y="0" z="-239" />
 					</o>
 				</c>
-				<c d="sk_cvn78_voxel_panel_29x1x76_hull_v13">
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
 					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
-						<vp x="50" y="-17" z="239" />
+						<vp x="-117" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-117" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-117" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x24x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-69" y="0" z="-239" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-69" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-69" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-69" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x24x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-21" y="0" z="-239" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-21" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-21" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-21" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x24x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="27" y="0" z="-239" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="27" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="27" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="27" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x24x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="75" y="0" z="-239" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="75" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="75" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="75" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x24x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="123" y="0" z="-239" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="123" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="123" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="123" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x24x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="147" y="0" z="-239" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="147" y="0" z="-215" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="147" y="0" z="-199" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="147" y="0" z="-195" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-158" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-110" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-62" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-14" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="34" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="82" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_16x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="130" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="146" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="148" y="0" z="-194" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-147" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-99" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-51" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-3" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="45" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="93" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_16x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="117" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="133" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="137" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="139" y="0" z="-178" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-135" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-87" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-39" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="9" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="57" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="105" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="129" y="0" z="-162" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-124" y="0" z="-146" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-76" y="0" z="-146" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-28" y="0" z="-146" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="20" y="0" z="-146" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="-146" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="116" y="0" z="-146" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-112" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-112" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-112" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-64" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-64" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-64" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-16" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-16" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-16" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="32" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="32" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="32" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="80" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="80" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="80" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="104" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="104" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_4x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="104" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="108" y="0" z="-130" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="108" y="0" z="-118" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="108" y="0" z="-116" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-100" y="0" z="-115" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-52" y="0" z="-115" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-4" y="0" z="-115" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="44" y="0" z="-115" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_8x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="92" y="0" z="-115" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-89" y="0" z="-99" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-41" y="0" z="-99" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="7" y="0" z="-99" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="55" y="0" z="-99" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x16x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="0" z="-99" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-77" y="0" z="-83" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-77" y="0" z="-35" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-77" y="0" z="13" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-29" y="0" z="-83" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-29" y="0" z="-35" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-29" y="0" z="13" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="19" y="0" z="-83" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="19" y="0" z="-35" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="19" y="0" z="13" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="67" y="0" z="-83" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="67" y="0" z="-35" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="67" y="0" z="13" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="0" z="-83" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="0" z="-35" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="79" y="0" z="13" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-76" y="0" z="17" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-76" y="0" z="21" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-76" y="0" z="23" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-28" y="0" z="17" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-28" y="0" z="21" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-28" y="0" z="23" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="20" y="0" z="17" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="20" y="0" z="21" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="20" y="0" z="23" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="17" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="21" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_12x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="23" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x4x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="80" y="0" z="17" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="80" y="0" z="21" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="80" y="0" z="23" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-68" y="0" z="24" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-68" y="0" z="72" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-68" y="0" z="120" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-20" y="0" z="24" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-20" y="0" z="72" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-20" y="0" z="120" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="28" y="0" z="24" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="28" y="0" z="72" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="28" y="0" z="120" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_16x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="52" y="0" z="24" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_16x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="52" y="0" z="72" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_16x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="52" y="0" z="120" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="24" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="72" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_2x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="68" y="0" z="120" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="70" y="0" z="24" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="70" y="0" z="72" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_1x12x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="70" y="0" z="120" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-58" y="0" z="132" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-58" y="0" z="180" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x8x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-58" y="0" z="228" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-58" y="0" z="236" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-58" y="0" z="238" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-10" y="0" z="132" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-10" y="0" z="180" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x8x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-10" y="0" z="228" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-10" y="0" z="236" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_48x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="-10" y="0" z="238" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="38" y="0" z="132" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x48x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="38" y="0" z="180" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x8x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="38" y="0" z="228" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x2x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="38" y="0" z="236" />
+					</o>
+				</c>
+				<c d="sk_cvn78_voxel_panel_24x1x2_deck_v15">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="0">
+						<vp x="38" y="0" z="238" />
 					</o>
 				</c>
 				<c d="multibody_velocity_pivot_a">
