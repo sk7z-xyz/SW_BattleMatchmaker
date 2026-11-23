@@ -1,4 +1,4 @@
-<vehicle data_version="3" bodies_id="3">
+<vehicle data_version="3" bodies_id="5">
 	<authors />
 	<bodies>
 		<body unique_id="1">
@@ -2205,6 +2205,28 @@
 						<starting_lever_value text="0" />
 					</o>
 				</c>
+				<c d="multibody_velocity_pivot_a">
+					<o r="0,1,0,-1,0,0,0,0,1" sc="21" gear_ratio="1" input_velocity="1">
+						<vp x="-83" y="-40" z="0" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="multibody_velocity_pivot_a">
+					<o r="0,-1,0,1,0,0,0,0,1" sc="21" gear_ratio="1" input_velocity="1">
+						<vp x="83" y="-40" z="0" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
 			</components>
 		</body>
 		<body unique_id="2">
@@ -2855,6 +2877,46 @@
 							<slot />
 							<slot />
 						</logic_slots>
+					</o>
+				</c>
+			</components>
+		</body>
+		<body unique_id="4">
+			<components>
+				<c d="multibody_velocity_pivot_b">
+					<o r="0,1,0,-1,0,0,0,0,1" sc="5" gear_ratio="1" input_velocity="1">
+						<vp x="-84" y="-40" z="0" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="sk_cvn78_radar_mass_v1">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="6">
+						<vp x="-85" y="-40" z="0" />
+					</o>
+				</c>
+			</components>
+		</body>
+		<body unique_id="5">
+			<components>
+				<c d="multibody_velocity_pivot_b">
+					<o r="0,-1,0,1,0,0,0,0,1" sc="5" gear_ratio="1" input_velocity="1">
+						<vp x="84" y="-40" z="0" />
+						<logic_slots>
+							<slot />
+							<slot />
+							<slot />
+							<slot />
+						</logic_slots>
+					</o>
+				</c>
+				<c d="sk_cvn78_radar_mass_v1">
+					<o r="1,0,0,0,1,0,0,0,1" bc="515456" ac="515456" sc="6">
+						<vp x="85" y="-40" z="0" />
 					</o>
 				</c>
 			</components>
