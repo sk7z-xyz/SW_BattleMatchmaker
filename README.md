@@ -171,13 +171,31 @@ SGAC + CENTER では、マップの `BattleArea` 円内に留まってくださ�
 
 #### 空母 HP
 
-空母はダメージを受けます（出現時に無敵を解除）。耐久はアドオン側の空母 HP で管理し、最大値は `carrier_hp`（初期値 3000）です。
+空母はダメージを受けます（出現時に無敵を解除）。耐久はアドオン側の空母 HP で管理し、最大値は `carrier_hp`（初期値 60000）です。`?mm set carrier_hp <値>` で変えた最大値は、次の試合開始時（または空母の出し直し時）から使われます。
 
-- 試合中の被弾だけを数えます。1 tick に減る量は `max_damage` が上限です（登録車両と同じ）。
+- 試合中の被弾だけを数えます。
+- 空母 HP は登録車両の 60 倍の単位です。受けたダメージを 60 倍して減らします（HP 60000 は素のダメージ 1000 に相当）。
+- CIWS（台座と旋回部）へのダメージは 1/10 で数えます。CIWS は部品が多く、同じ 1 発でも厚さ 1 ブロックの船体の約 10 倍のダメージが出るためです。端数は次の tick へ持ち越します。
+- 1 tick に減る量の上限は `max_damage` の 60 倍です（`max_damage` は素のダメージに対する上限のため）。
+- 被弾すると、当たった区画の上に `ダメージ|残HP%` のポップアップを表示します（`damage_popup` が有効なとき。表示距離と最小値は登録車両と同じ設定、120 tick 蓄積・表示）。
 - 出現時と試合開始時に最大値へ戻ります。
+- 旧単位の初期値 3000 が保存されたワールドは、読み込み時に一度だけ 60000 へ変換します。以後、意図して 3000 を設定した場合はそのまま使います。
 - 壊れた船体と CIWS は、`swap_flag` の実行時に `server.resetVehicleState` で修復します。対象は空母 HP が最大値より減っている空母の 3 区画で、修復と同時に HP も最大値へ戻します。HP が満タンの空母はリセットしません。リセット中は船体が一瞬消えるため、甲板上の車両は水没することがあります。試合開始時には修復しません。
 - 0 になると撃沈扱いになり、その空母の CIWS が止まります。次の試合開始時または `swap_flag` の修復時に HP と CIWS が戻ります。
+- 試合中に RED / BLUE の連動空母が撃沈されると、そのチームは生存者がいても敗北します（VIP 撃破と同じ扱い）。両チームの空母が同じ tick に沈んだ場合は引き分けです。手動の `?mm carrier` 空母はチームを持たないため勝敗に影響しません。
 - 左上のチーム表示（RED / BLUE）に、そのチームの空母があるあいだ `Carrier HP:…` の行を追加します。
+
+#### 空母に刺さったミサイルの削除
+
+空母に当たって船体に刺さったミサイルは、次の tick に削除します。ダメージの原因は API から分からず、報告される被弾位置は部品の原点（大きな船体パネルでは角）のため、次の条件で判定します。
+
+- 被弾位置から 40 m 以内にある、座席のない車両が候補です。空母の区画、登録車両、旗（旗と同じグループの車両を含む）は対象外です。
+- 航空機の折りたたみ翼や脚のように、座席のある車両または登録車両と同じグループで、その 50 m 以内にある部品も対象外です。ミサイルも発射した機体と同じグループですが、発射後は機体から離れているため候補になります。
+- 1 tick の移動が 0.5 m 未満の候補（刺さって止まったもの）を削除します。動いている候補（後続の弾など）は最大 300 tick 見張り、止まれば削除し、40 m の外へ出れば対象から外します。
+
+#### レーダーへの反応
+
+空母は静的車両のため、そのままではレーダーに映りません。中央区画 `vehicle_15` の左右舷側 2 か所に、ピボットの先へ質量 10 万の MOD ブロック（`sk_cvn78_radar_mass_v1`）を取り付けており、これがレーダーに反応します。
 
 #### Admin コマンドでの操作
 
@@ -246,7 +264,7 @@ RED / BLUE 旗を手動または自動配置する際、配置先のタイル名
 
 試合中は、プレイヤー自身の死亡、`die`、登録車両の HP 0、水没、デスポーンで死亡状態になります。同じ車両に複数の生存者が紐付く場合、1 人の `die` だけでは車両を撃破しません。車両自体が撃破された場合は紐付く全員を死亡扱いにします。
 
-勝敗判定では、接続中かつ `alive=true` のプレイヤーだけを生存者として数えます。生存チームが 1 チームなら勝利、0 チームなら引き分けです。参加者情報が 0 件なら中断します。時間切れは `TimeUp` で終了し、勝利チームを再計算しません。
+勝敗判定では、接続中かつ `alive=true` のプレイヤーだけを生存者として数えます。VIP が撃破されたチームと、連動空母が撃沈された（空母 HP 0）チームは生存者 0 として扱います。生存チームが 1 チームなら勝利、0 チームなら引き分けです。参加者情報が 0 件なら中断します。時間切れは `TimeUp` で終了し、勝利チームを再計算しません。
 
 試合中のログアウトではチーム、Alive、車両 ID、車両 HP を SteamID64 キーで保持します。Logout は勝敗判定の生存者に含めませんが、登録車両のダメージと水没は処理します。同じ SteamID64 で戻ると新しい `peer_id` へ状態を移します。試合外のログアウトは `leave` と同じで、試合終了時に残った Logout 情報は削除します。
 
@@ -649,7 +667,7 @@ WebMap の `finish_SJAC` / `finish_SGAC` は生存チーム判定による勝利
 | `hp_per_voxel` | number, 0以上 | 4 | 1 ボクセルあたりの推定 HP。 |
 | `hp_step` | integer, 0以上 | 500 | 推定 HP の切り捨て単位。0 なら切り捨てなし。 |
 | `max_damage` | integer, 0以上 | 1000 | 1 tick に HP へ反映する最大ダメージ。 |
-| `carrier_hp` | integer, 1以上 | 3000 | 空母（CVN-78）の最大 HP。出現時と試合開始時にこの値へ戻る。 |
+| `carrier_hp` | integer, 1以上 | 60000 | 空母（CVN-78）の最大 HP（登録車両の 60 倍の単位）。出現時と試合開始時にこの値へ戻る。変更は次の試合開始時から反映。 |
 | `sunk_depth` | integer, 0以上 | 1 | Y `< -sunk_depth` を撃破扱い。0 で無効。 |
 | `gc_vehicle` | boolean | `true` | 撃破車両グループを 60 tick 後に自動削除。 |
 | `auto_link_on_spawn` | boolean | `true` | 自分がスポーンした親車両をロード後に自動登録。コードには旧キー `auto_sit_on_spawn` の移行分岐がありますが、現行順序では先に新キーが既定値補完されるため、通常は旧値で上書きされません。 |
@@ -753,7 +771,7 @@ README の各仕様は、主に次の [`script.lua`](./script.lua) の定義・�
 | IFF | `g_iff_spawn_positions`、`generateIffFreqs`、`createIffSender`、`encodeCoords`、`buildNameTokens`、`onTick` 内 IFF 更新 |
 | WebMap | `requestWebMapVehicleCache`、`requestWebMapVehicleRestore`、`handleWebMapCacheEvent`、`bindVehicleTeamToWebMap`、`getWebMapBattleAreaPayload`、`sendWebMapBattleArea` |
 | 自動バトル | `scheduleAutoBattle`、`processAutoBattle` |
-| 空母・旗連動・空母 HP | `g_aircraft_carrier_parts`、`spawnAircraftCarrier`、`deleteAircraftCarrier`、`requestTeamFlagPlacement`、`spawnCarrierFlag`、`updateAircraftCarrierHp` |
+| 空母・旗連動・空母 HP | `g_aircraft_carrier_parts`、`spawnAircraftCarrier`、`deleteAircraftCarrier`、`requestTeamFlagPlacement`、`spawnCarrierFlag`、`updateAircraftCarrierHp`、`addAircraftCarrierDamage`、`classifyCarrierDamage`、`isAircraftCarrierDestroyed`、`updateCarrierMissileCleanup` |
 | CIWS | `g_carrier_ciws_mounts`、`ciwsUpdateCarrierDefence`、`ciwsAssignCarrierTargets`、`ciwsCarrierEligibility`、`ciwsCarrierAircraftShot`、`updateCiwsTargetLink` |
 
 ### 空母連動のローカルテスト

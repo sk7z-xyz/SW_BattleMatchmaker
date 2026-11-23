@@ -6331,6 +6331,44 @@ local function isCarrierFlagVehicle(id,flag_groups)
 	return contact and contact.group_id and flag_groups[contact.group_id] or false
 end
 
+local function vehicleHasSeats(id)
+	local data,has_data=server.getVehicleComponents(id)
+	local seats=has_data and data and data.components and data.components.seats
+	return type(seats)=='table' and next(seats)~=nil
+end
+
+-- An aircraft's moving parts (folding wings, gear) are separate seatless vehicles in its
+-- group, and only the seated body is registered. Its missiles are in the same group too
+-- (they spawn with it), so the group alone cannot tell them apart: a seatless vehicle is
+-- kept while it is within g_carrier_missile_parent_keep of a seated or registered vehicle
+-- of its group. A fired missile is away from its launcher.
+g_carrier_missile_parent_keep=50
+local function carrierGroupAnchors(group_id,cache)
+	local anchors=cache[group_id]
+	if anchors then return anchors end
+	anchors={}
+	for id,contact in pairs(g_ciws_contacts) do
+		if contact.group_id==group_id and (findVehicle(id) or vehicleHasSeats(id)) then
+			local position,found=server.getVehiclePos(id)
+			if found and position then
+				local x,y,z=matrix.position(position)
+				table.insert(anchors,{x=x,y=y,z=z})
+			end
+		end
+	end
+	cache[group_id]=anchors
+	return anchors
+end
+
+local function isNearGroupAnchor(group_id,x,y,z,cache)
+	if not group_id then return false end
+	local keep2=g_carrier_missile_parent_keep^2
+	for _,a in ipairs(carrierGroupAnchors(group_id,cache)) do
+		if (x-a.x)^2+(y-a.y)^2+(z-a.z)^2<=keep2 then return true end
+	end
+	return false
+end
+
 function updateCarrierMissileCleanup()
 	local queued=g_carrier_missile_despawns
 	g_carrier_missile_despawns={}
@@ -6356,21 +6394,20 @@ function updateCarrierMissileCleanup()
 	g_carrier_hit_points={}
 	local radius2=radius^2
 	local flag_groups=carrierFlagGroups()
+	local anchors={} -- [group_id]={positions}, built on first need
 	for carrier_id,hit in pairs(hits) do
 		local transform,ok=server.getVehiclePos(carrier_id,hit.x,hit.y,hit.z)
 		if ok and transform then
 			local hx,hy,hz=matrix.position(transform)
-			for id in pairs(g_ciws_contacts) do
-				if not g_carrier_missile_despawns[id] and not isAircraftCarrierVehicle(id) and not findVehicle(id) and not isCarrierFlagVehicle(id,flag_groups) then
+			for id,contact in pairs(g_ciws_contacts) do
+				if not g_carrier_missile_despawns[id] and not isAircraftCarrierVehicle(id) and not findVehicle(id)
+					and not isCarrierFlagVehicle(id,flag_groups) then
 					local position,found=server.getVehiclePos(id)
 					if found and position then
 						local x,y,z=matrix.position(position)
-						if (x-hx)^2+(y-hy)^2+(z-hz)^2<=radius2 then
-							local data,has_data=server.getVehicleComponents(id)
-							local seats=has_data and data and data.components and data.components.seats
-							if not (type(seats)=='table' and next(seats)) then
-								g_carrier_missile_despawns[id]={x=x,y=y,z=z,hx=hx,hy=hy,hz=hz,ticks=0}
-							end
+						if (x-hx)^2+(y-hy)^2+(z-hz)^2<=radius2 and not vehicleHasSeats(id)
+							and not isNearGroupAnchor(contact.group_id,x,y,z,anchors) then
+							g_carrier_missile_despawns[id]={x=x,y=y,z=z,hx=hx,hy=hy,hz=hz,ticks=0}
 						end
 					end
 				end
