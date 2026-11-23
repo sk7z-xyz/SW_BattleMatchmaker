@@ -489,7 +489,7 @@ g_default_savedata={
 	hp_per_voxel		=property.slider("HP Per Voxel", 0, 10, 0.1, 4),
 	hp_step				=property.slider("HP Step", 10, 1000, 10, 500),
 	max_damage			=1000,
-	carrier_hp			=3000,
+	carrier_hp			=60000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
 	ammo_mg				=-1,
 	ammo_la				=-1,
@@ -2009,6 +2009,13 @@ function onCreate(is_world_create)
 			g_savedata[k]=v
 		end
 	end
+	-- Carrier HP moved to a 60x unit (g_carrier_damage_multiplier). 旧単位（3000）のセーブを
+	-- 一度だけ移す（印は既定値に入れない: 上の取り込みで先に立ち、移行が飛ばされるため）。
+	-- 以後は ?mm set carrier_hp 3000 も有効。
+	if not g_savedata.carrier_hp_x60 then
+		if g_savedata.carrier_hp==3000 then g_savedata.carrier_hp=60000 end
+		g_savedata.carrier_hp_x60=true
+	end
 
 	-- 互換性維持: 旧キー `auto_sit_on_spawn` を新キー `auto_link_on_spawn` に移行
 	if g_savedata.auto_sit_on_spawn~=nil and g_savedata.auto_link_on_spawn==nil then
@@ -3144,6 +3151,7 @@ end
 
 
 function onTick()
+	updateCarrierMissileCleanup()
 	updateAircraftCarrierSpawnCheck()
 	updateAircraftCarrierHp()
 	processPendingVehicleDespawns()
@@ -3661,7 +3669,7 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, 
 	if damage_amount<=0 then return end
 
 	damage_amount=damage_amount//1|0
-	if addAircraftCarrierDamage(vehicle_id, damage_amount) then return end
+	if addAircraftCarrierDamage(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z) then return end
 
 	local vehicle=findVehicle(vehicle_id)
 	if not vehicle then return end
@@ -4820,9 +4828,10 @@ function checkFinish()
 	local any=false
 	for _,player in pairs(g_players) do
 		-- Logout は車両HP表示のために状態を保持するが、勝敗判定上は生存者ではない。
-		-- VIP が撃破されたチームも、生存者数 0 として敗北扱いにする。
+		-- VIP が撃破されたチーム、空母が撃沈された（HP 0）チームも、生存者数 0 として敗北扱いにする。
 		local defeated_by_vip=g_vip.defeated_teams[player.team]
-		local add=player.alive and not player.logged_out and not defeated_by_vip and 1 or 0
+		local defeated=defeated_by_vip or isAircraftCarrierDestroyed(player.team)
+		local add=player.alive and not player.logged_out and not defeated and 1 or 0
 		local count=team_aliver_counts[player.team]
 		team_aliver_counts[player.team]=count and (count+add) or add
 		any=true
@@ -6270,30 +6279,178 @@ function repairAircraftCarrier(state)
 end
 
 function resetAircraftCarrierHp(state)
-	state.max_hp=math.max((g_savedata.carrier_hp or 3000)//1|0,1)
+	state.max_hp=math.max((g_savedata.carrier_hp or 60000)//1|0,1)
 	state.hp=state.max_hp
 	state.damage_in_frame=0
+	state.damage_carry=0
 	-- 撃沈で止めた CIWS は、次の試合、修復、再出現で戻す。
 	if state.destroyed then state.destroyed=nil;state.ciws_enabled=state.ciws_resume;state.ciws_assignments={} end
 	g_team_status_dirty=true
 	g_player_status_dirty=true
 end
 
-function addAircraftCarrierDamage(vehicle_id,damage_amount)
+-- A missile on a CIWS (many small parts) fires ~10x the damage events of one on the
+-- 1-block hull (measured), so CIWS damage counts at this rate.
+g_carrier_ciws_damage_scale=0.1
+-- Carrier HP and damage are both in this larger unit (HP 60000 = 1000 raw damage);
+-- the per-tick cap max_damage applies to raw damage, so it is scaled too.
+g_carrier_damage_multiplier=60
+-- Damage popup over the hit section, like registered vehicles (shows multiplied damage).
+g_carrier_damage_popups={}
+g_carrier_damage_popup_height=20
+
+-- Missiles that hit the carrier are removed on the next tick. The API does not say what
+-- caused damage, and the reported voxel is the damaged component's origin: a hull panel
+-- reports its corner, up to ~28 m from where it was hit. So candidates are tracked
+-- contacts (missiles are vehicles) within a wide radius of that voxel: not the carrier,
+-- not a registered vehicle, not a flag, and without seats. The carrier is static, so a
+-- missile stuck in it does not move; one in flight (a salvo, a near miss) does. A
+-- candidate is removed once it moved less than g_carrier_missile_still in one tick,
+-- watched while it moves, and dropped when it leaves the radius.
+g_carrier_missile_cleanup_radius=40
+g_carrier_missile_still=0.5   -- m per tick
+g_carrier_missile_watch_ticks=300
+g_carrier_hit_points={}       -- [carrier vehicle_id]={x,y,z,amount}: largest event this tick
+g_carrier_missile_despawns={} -- [vehicle_id]={x,y,z,hx,hy,hz,ticks}: last position, hit point, ticks watched
+
+-- Flags stand on the carrier and have no seats. Their moving bodies share the group.
+local function carrierFlagGroups()
+	local groups={}
+	for _,flag in pairs(g_savedata.flag_vehicles or {}) do
+		local contact=flag.vehicle_id and g_ciws_contacts[flag.vehicle_id]
+		if contact and contact.group_id then groups[contact.group_id]=true end
+	end
+	return groups
+end
+
+local function isCarrierFlagVehicle(id,flag_groups)
+	for _,flag in pairs(g_savedata.flag_vehicles or {}) do
+		if flag.vehicle_id==id then return true end
+	end
+	local contact=g_ciws_contacts[id]
+	return contact and contact.group_id and flag_groups[contact.group_id] or false
+end
+
+function updateCarrierMissileCleanup()
+	local queued=g_carrier_missile_despawns
+	g_carrier_missile_despawns={}
+	local radius=g_carrier_missile_cleanup_radius
+	for id,candidate in pairs(queued) do
+		local position,found=server.getVehiclePos(id)
+		if found and position then
+			local x,y,z=matrix.position(position)
+			local moved=math.sqrt((x-candidate.x)^2+(y-candidate.y)^2+(z-candidate.z)^2)
+			local distance=math.sqrt((x-candidate.hx)^2+(y-candidate.hy)^2+(z-candidate.hz)^2)
+			if distance>radius then
+				-- left the radius: a near miss, kept
+			elseif moved<g_carrier_missile_still then
+				server.despawnVehicle(id,true)
+			elseif candidate.ticks<g_carrier_missile_watch_ticks then
+				candidate.x,candidate.y,candidate.z,candidate.ticks=x,y,z,candidate.ticks+1
+				g_carrier_missile_despawns[id]=candidate
+			end
+		end
+	end
+	local hits=g_carrier_hit_points
+	if next(hits)==nil then return end
+	g_carrier_hit_points={}
+	local radius2=radius^2
+	local flag_groups=carrierFlagGroups()
+	for carrier_id,hit in pairs(hits) do
+		local transform,ok=server.getVehiclePos(carrier_id,hit.x,hit.y,hit.z)
+		if ok and transform then
+			local hx,hy,hz=matrix.position(transform)
+			for id in pairs(g_ciws_contacts) do
+				if not g_carrier_missile_despawns[id] and not isAircraftCarrierVehicle(id) and not findVehicle(id) and not isCarrierFlagVehicle(id,flag_groups) then
+					local position,found=server.getVehiclePos(id)
+					if found and position then
+						local x,y,z=matrix.position(position)
+						if (x-hx)^2+(y-hy)^2+(z-hz)^2<=radius2 then
+							local data,has_data=server.getVehicleComponents(id)
+							local seats=has_data and data and data.components and data.components.seats
+							if not (type(seats)=='table' and next(seats)) then
+								g_carrier_missile_despawns[id]={x=x,y=y,z=z,hx=hx,hy=hy,hz=hz,ticks=0}
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+function addAircraftCarrierDamage(vehicle_id,damage_amount,voxel_x,voxel_y,voxel_z)
 	local _,state=findAircraftCarrierOwner(vehicle_id)
 	if not state then return false end
-	if g_in_game then state.damage_in_frame=(state.damage_in_frame or 0)+damage_amount end
+	local hit=g_carrier_hit_points[vehicle_id]
+	if not hit or damage_amount>hit.amount then
+		g_carrier_hit_points[vehicle_id]={x=voxel_x or 0,y=voxel_y or 0,z=voxel_z or 0,amount=damage_amount}
+	end
+	if g_in_game then
+		local kind=classifyCarrierDamage(state.sections and state.sections[vehicle_id],voxel_x or 0,voxel_y or 0,voxel_z or 0)
+		if kind=='ciws_base' or kind=='ciws_turret' then damage_amount=damage_amount*g_carrier_ciws_damage_scale end
+		state.damage_in_frame=(state.damage_in_frame or 0)+damage_amount*g_carrier_damage_multiplier
+		state.damage_vehicle_id=vehicle_id
+	end
 	return true
+end
+
+function removeAircraftCarrierPopup(label)
+	local popup=g_carrier_damage_popups[label]
+	if not popup then return end
+	for peer_id,map_id in pairs(popup.ids) do server.removeMapID(peer_id,map_id) end
+	g_carrier_damage_popups[label]=nil
+end
+
+-- Same timing as a registered vehicle's popup for other teams: values add up while shown.
+function updateAircraftCarrierPopup(label,state,applied)
+	local popup=g_carrier_damage_popups[label]
+	if applied>0 and g_savedata.damage_popup then
+		if not popup then popup={value=0,time=0,ids={}};g_carrier_damage_popups[label]=popup end
+		if popup.time<=0 then popup.value=0 end
+		popup.value=popup.value+applied
+		popup.time=120
+		popup.vehicle_id=state.damage_vehicle_id or state.vehicle_ids[1]
+	end
+	if not popup or popup.time<=0 then return end
+	popup.time=popup.time-1
+	local is_show=popup.time>0 and popup.value>=(g_savedata.min_damage_popup or 0)
+	local hp_percent=state.hp and state.max_hp and math.floor(state.hp/state.max_hp*100) or 0
+	local text=tostring(popup.value//1|0)..'|'..hp_percent..'%'
+	for _,player in ipairs(server.getPlayers()) do
+		local map_id=popup.ids[player.id]
+		if not map_id then map_id=server.getMapID();popup.ids[player.id]=map_id end
+		server.setPopup(player.id,map_id,text,is_show,text,0,g_carrier_damage_popup_height,0,g_savedata.damage_popup_distance,popup.vehicle_id)
+	end
+end
+
+-- Where on the carrier a damage event is (CIWS damage is scaled down).
+-- Voxel coordinates are assumed to be the section's editor grid (0.25 m, section origin).
+function classifyCarrierDamage(section,x,y,z)
+	if not section then return 'unknown' end
+	local cx,cy,cz=x/4,y/4,z/4+section.z
+	if section.component_id==15 and math.abs(x)>=83 and math.abs(y+40)<=2 then return 'radar' end
+	for _,m in ipairs(g_carrier_ciws_mounts or {}) do
+		if m.component_id==section.component_id and (cx-m.x)^2+(cz-m.z)^2<=9 and cy>=-5 then
+			return section.main and 'ciws_base' or 'ciws_turret'
+		end
+	end
+	return section.main and 'hull' or 'moving_other'
 end
 
 function updateAircraftCarrierHp()
 	for label,state in pairs(getAircraftCarrierStates()) do
 		if #state.vehicle_ids>0 and not state.hp then resetAircraftCarrierHp(state) end
-		local damage=state.damage_in_frame or 0
+		-- Scaled CIWS damage is fractional: apply whole points, carry the rest.
+		local damage=(state.damage_in_frame or 0)+(state.damage_carry or 0)
+		state.damage_in_frame=0
+		state.damage_carry=damage-damage//1
+		damage=damage//1
+		local applied=0
 		if damage>0 then
-			state.damage_in_frame=0
 			if state.hp and state.hp>0 then
-				state.hp=math.max(state.hp-math.min(damage,g_savedata.max_damage or damage),0)//1|0
+				applied=math.min(damage,(g_savedata.max_damage or damage)*g_carrier_damage_multiplier,state.hp)
+				state.hp=math.max(state.hp-applied,0)//1|0
 				g_team_status_dirty=true
 				g_player_status_dirty=true
 				if state.hp==0 then
@@ -6301,10 +6458,19 @@ function updateAircraftCarrierHp()
 					ciwsStopCarrier(state)
 					state.destroyed=true
 					announce('CVN-78 '..label..' destroyed.',-1)
+					g_finish_dirty=true
 				end
 			end
 		end
+		updateAircraftCarrierPopup(label,state,applied)
 	end
+end
+
+-- 試合中に HP が 0 になったチームの空母。checkFinish でそのチームを敗北にする。
+function isAircraftCarrierDestroyed(team)
+	local root=g_savedata.aircraft_carrier
+	local state=team and root and root.flags and root.flags[team]
+	return state and state.destroyed and true or false
 end
 
 -- 左上のチーム表示に、そのチームの空母 HP を 1 行加える。
@@ -6454,6 +6620,7 @@ end
 
 function deleteAircraftCarrier(peer_id, silent, owner)
 	g_aircraft_carrier_checks[owner or 'MANUAL']=nil
+	removeAircraftCarrierPopup(owner or 'MANUAL')
 	local state=getAircraftCarrierState(owner)
 	ciwsStopCarrier(state)
 	local ids=state.vehicle_ids
@@ -6481,7 +6648,7 @@ function deleteAircraftCarrier(peer_id, silent, owner)
 			announce('Carrier removed ('..removed..' sections).',peer_id)
 		end
 	end
-	if remaining==0 then state.hp,state.max_hp,state.damage_in_frame,state.destroyed=nil,nil,nil,nil end
+	if remaining==0 then state.hp,state.max_hp,state.damage_in_frame,state.damage_carry,state.destroyed,state.sections=nil,nil,nil,nil,nil,nil end
 	g_team_status_dirty=true
 	g_player_status_dirty=true
 	sendWebMapBattleArea(true)
@@ -6527,6 +6694,7 @@ function spawnAircraftCarrier(peer_id, x, z, heading, y, owner)
 	y=y or g_aircraft_carrier_default_y -- Deck at y + 0.127 m.
 	local base=matrix.multiply(matrix.translation(x,y,z),matrix.rotationY(math.rad(heading)))
 	state.ciws_components={}
+	state.sections={}
 	state.ciws_team=owner or (g_players[peer_id] and g_players[peer_id].team)
 	for _,part in ipairs(g_aircraft_carrier_parts) do
 		local transform=matrix.multiply(base,matrix.translation(0,0,part.z))
@@ -6540,6 +6708,8 @@ function spawnAircraftCarrier(peer_id, x, z, heading, y, owner)
 		local vehicle_ids=component and component.vehicle_ids
 		if is_success and component and component.type=='vehicle' and type(vehicle_ids)=='table' and #vehicle_ids>0 then
 			state.ciws_components[tostring(part.component_id)]=vehicle_ids[1]
+			-- Section and body of each vehicle ID, for classifyCarrierDamage. [1] is the hull body.
+			for index,vehicle_id in ipairs(vehicle_ids) do state.sections[vehicle_id]={name=part.name,z=part.z,component_id=part.component_id,main=index==1} end
 			for _,vehicle_id in ipairs(vehicle_ids) do
 				table.insert(state.vehicle_ids,vehicle_id)
 				state.transforms[vehicle_id]=transform
