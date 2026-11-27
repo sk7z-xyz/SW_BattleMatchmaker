@@ -63,6 +63,10 @@ g_boundary_warning_popup_ids = {}
 g_center_popup_warning_distance = 75
 g_auto_battle_state=nil -- {phase='wait_shuffle'|'wait_teleport', timer=ticks}
 g_vehicle_owners={} -- {[vehicle_id]=peer_id}
+-- チーム未参加（観戦者）の ?mm order 用。自分でスポーンした（または復元した）最新の親ビークルだけを記録する。
+-- 着席では更新しないので、観戦中に乗った他人の車両は対象にならない。
+g_spawned_vehicle_by_steam={} -- {[steamid64]={vehicle_id=parent_vehicle_id, name=string|nil}}
+g_spectator_cache_requests={} -- {[parent_vehicle_id]=peer_id} onVehicleLoad で観戦者の車両を WebMap に登録するための保留
 g_webmap_battle_area_last_signature=nil
 g_webmap_battle_area_visible=false
 
@@ -164,6 +168,164 @@ function requestWebMapVehicleRestore(peer_id)
 	return true
 end
 
+function requestWebMapVehicleRestoreWithAnnounce(peer_id)
+	local restore_requested,restore_reason=requestWebMapVehicleRestore(peer_id)
+	if restore_requested then
+		announce('Vehicle restore requested.', peer_id)
+	elseif restore_reason=='pending' then
+		announce('Vehicle restore is already in progress.', peer_id)
+	else
+		announce('Vehicle not found.', peer_id)
+	end
+end
+
+-- 1台の車両を持てるのは1人だけにする（復元時のスポーン通知で別の人に記録された場合も上書きする）。
+function setSpawnedVehicleOwner(steam_id, vehicle_id, name)
+	if not steam_id or not vehicle_id then return end
+	for other_steam_id,record in pairs(g_spawned_vehicle_by_steam) do
+		if record.vehicle_id==vehicle_id then
+			g_spawned_vehicle_by_steam[other_steam_id]=nil
+		end
+	end
+	g_spawned_vehicle_by_steam[steam_id]={vehicle_id=vehicle_id, name=name}
+end
+
+function forgetSpawnedVehicle(vehicle_id)
+	for steam_id,record in pairs(g_spawned_vehicle_by_steam) do
+		if record.vehicle_id==vehicle_id then
+			g_spawned_vehicle_by_steam[steam_id]=nil
+		end
+	end
+	g_spectator_cache_requests[vehicle_id]=nil
+end
+
+function getVehicleDisplayName(data)
+	return (data and data.name and data.name~='') and data.name or 'Vehicle'
+end
+
+-- 観戦者（チーム未参加）が自分でスポーンした車両を、消したあと ?mm order で復元できるように WebMap へ登録する。
+-- チーム参加者は従来どおり linkSpawnedVehicle 側で登録する。
+function cacheSpectatorSpawnedVehicle(peer_id, vehicle_id)
+	if not g_has_webmap then return end
+	if g_players[peer_id] then return end
+	local steam_id=getPlayerSteamId(peer_id)
+	local record=steam_id and g_spawned_vehicle_by_steam[steam_id] or nil
+	if not record or record.vehicle_id~=vehicle_id then return end
+	local data,is_success=server.getVehicleData(vehicle_id)
+	if not is_success or not data then return end
+	record.name=getVehicleDisplayName(data)
+	requestWebMapVehicleCache(peer_id, {vehicle_id=vehicle_id, group_id=data.group_id, name=record.name})
+end
+
+-- 現在も g_players に登録されている（ログアウト中を含む）プレイヤーか。
+-- leave 後も vehicle.player に古いプレイヤーが残るため、それを「使用中」と誤判定しないために使う。
+function isRegisteredPlayer(player)
+	for _,registered_player in pairs(g_players) do
+		if registered_player==player then return true end
+	end
+	return false
+end
+
+-- 自分以外の、現在も登録されているプレイヤーか。SteamID64 が同じなら本人とみなす（再接続で peer_id が変わるため）。
+function isOtherRegisteredPlayer(player, peer_id, steam_id)
+	if not player or player.id==peer_id then return false end
+	if not isRegisteredPlayer(player) then return false end
+	local player_steam_id=getPlayerSteamIdFromPlayer(player)
+	if steam_id and player_steam_id==steam_id then return false end
+	return true
+end
+
+-- 観戦者の車両グループを、他のプレイヤー（チーム参加者・debug1 の擬似プレイヤー・着席中の人）が使っていないか調べる。
+function isVehicleGroupUsedByOtherPlayer(group_id, vehicle_id, peer_id)
+	local steam_id=getPlayerSteamId(peer_id)
+	local vehicle_ids={}
+	local group_vehicle_ids,is_success=server.getVehicleGroup(group_id)
+	if is_success and group_vehicle_ids then
+		for _,id in ipairs(group_vehicle_ids) do vehicle_ids[#vehicle_ids+1]=id end
+	end
+	if #vehicle_ids==0 then vehicle_ids[1]=vehicle_id end
+
+	for _,id in ipairs(vehicle_ids) do
+		if g_debug_vehicle_ids[id] then return true end
+		for _,player in pairs(g_players) do
+			if player.vehicle_id==id and isOtherRegisteredPlayer(player, peer_id, steam_id) then return true end
+		end
+		local vehicle=findVehicle(id)
+		if vehicle and isOtherRegisteredPlayer(vehicle.player, peer_id, steam_id) then return true end
+		local component_data,components_ok=server.getVehicleComponents(id)
+		if components_ok and component_data then
+			for _,character_id in ipairs(component_data.characters or {}) do
+				local seated_peer_id=findPeerIdByCharacterId(character_id)
+				if seated_peer_id and seated_peer_id~=peer_id then return true end
+			end
+		end
+	end
+	return false
+end
+
+-- チーム未参加のプレイヤー用の ?mm order。自分でスポーン（または復元）した車両だけを対象にする。
+function orderSpectatorVehicle(peer_id)
+	local steam_id=getPlayerSteamId(peer_id)
+	if not steam_id then
+		announce('Cannot order: SteamID64 not found.', peer_id)
+		return
+	end
+
+	local record=g_spawned_vehicle_by_steam[steam_id]
+	local data,is_success
+	if record then data,is_success=server.getVehicleData(record.vehicle_id) end
+	if not record or not is_success or not data then
+		if record then g_spawned_vehicle_by_steam[steam_id]=nil end
+		requestWebMapVehicleRestoreWithAnnounce(peer_id)
+		return
+	end
+
+	if isVehicleGroupUsedByOtherPlayer(data.group_id, record.vehicle_id, peer_id) then
+		announce('Cannot order: your vehicle is being used by another player.', peer_id)
+		return
+	end
+
+	local order_target=getOrderTargetMatrix(peer_id)
+	if not order_target then
+		announce('Failed to get player position.', peer_id)
+		return
+	end
+	server.setGroupPos(data.group_id, order_target)
+	requestWebMapVehicleCache(peer_id, {
+		vehicle_id=record.vehicle_id,
+		group_id=data.group_id,
+		name=record.name or getVehicleDisplayName(data),
+	})
+	announce('Vehicle ordered.', peer_id)
+end
+
+-- チーム未参加のプレイヤー用の ?mm remove。order と同じく自分でスポーン（または復元）した車両だけを対象にする。
+-- WebMap キャッシュは残すので、消したあとも ?mm order で復元できる。
+function removeSpectatorVehicle(peer_id)
+	local steam_id=getPlayerSteamId(peer_id)
+	if not steam_id then
+		announce('Cannot remove: SteamID64 not found.', peer_id)
+		return
+	end
+
+	local record=g_spawned_vehicle_by_steam[steam_id]
+	local data,is_success
+	if record then data,is_success=server.getVehicleData(record.vehicle_id) end
+	if not record or not is_success or not data then
+		if record then g_spawned_vehicle_by_steam[steam_id]=nil end
+		announce('Vehicle not found.', peer_id)
+		return
+	end
+
+	if isVehicleGroupUsedByOtherPlayer(data.group_id, record.vehicle_id, peer_id) then
+		announce('Cannot remove: your vehicle is being used by another player.', peer_id)
+		return
+	end
+
+	server.despawnVehicleGroup(data.group_id, true)
+	announce('Your vehicle group has been removed.', peer_id)
+end
+
 function tryLinkRestoredVehicle(parent_vehicle_id)
 	-- debug1 で明示的に割り当てた車両は、復元リンクで上書きしない。
 	if g_debug_vehicle_ids[parent_vehicle_id] then
@@ -174,9 +336,19 @@ function tryLinkRestoredVehicle(parent_vehicle_id)
 	if not request then return false end
 
 	local peer_id=request.peer_id or findPeerIdBySteamId(request.steam_id)
-	local player=peer_id and g_players[peer_id] or nil
-	if not player then return false end
+	if not peer_id then return false end
 	request.peer_id=peer_id
+	local player=g_players[peer_id]
+	if not player then
+		-- 観戦者（チーム未参加）の復元。試合管理には登録せず、所有者だけを記録する。
+		-- 登録しないので onVehicleLoad を待つ必要はない。
+		setSpawnedVehicleOwner(request.steam_id, parent_vehicle_id, request.vehicle_name)
+		g_spectator_cache_requests[parent_vehicle_id]=nil
+		g_vehicle_owners[parent_vehicle_id]=peer_id
+		g_webmap_restore_link_requests[parent_vehicle_id]=nil
+		announce('Vehicle restored.', peer_id)
+		return true
+	end
 
 	-- 親ビークルは必ず操作席を持つため、親ビークルだけを登録対象にする。
 	-- onVehicleLoad 前はコンポーネントを取得できず登録に失敗するため、次の通知／tick で再試行する。
@@ -189,6 +361,8 @@ function tryLinkRestoredVehicle(parent_vehicle_id)
 		end
 		player.vehicle_id=parent_vehicle_id
 		g_vehicle_owners[parent_vehicle_id]=peer_id
+		setSpawnedVehicleOwner(request.steam_id, parent_vehicle_id, vehicle.name)
+		g_spectator_cache_requests[parent_vehicle_id]=nil
 		if g_has_webmap then bindVehicleTeamToWebMap(parent_vehicle_id, player.team) end
 		g_webmap_restore_link_requests[parent_vehicle_id]=nil
 		g_player_status_dirty=true
@@ -914,7 +1088,8 @@ g_commands={
 			end
 			local player=g_players[peer_id]
 			if not player then
-				announce('Joined player not found. peer_id:'..tostring(peer_id), peer_id)
+				-- チーム未参加（観戦者）は、自分でスポーンした車両だけを呼び寄せられる。
+				orderSpectatorVehicle(peer_id)
 				return
 			end
 			if not player.alive then
@@ -923,14 +1098,7 @@ g_commands={
 			end
 			local vehicle=findVehicle(player.vehicle_id)
 			if not vehicle then
-				local restore_requested,restore_reason=requestWebMapVehicleRestore(peer_id)
-				if restore_requested then
-					announce('Vehicle restore requested.', peer_id)
-				elseif restore_reason=='pending' then
-					announce('Vehicle restore is already in progress.', peer_id)
-				else
-					announce('Vehicle not found.', peer_id)
-				end
+				requestWebMapVehicleRestoreWithAnnounce(peer_id)
 				return
 			end
 
@@ -951,7 +1119,8 @@ g_commands={
 		action=function(peer_id, is_admin, is_auth)
 			local player=g_players[peer_id]
 			if not player then
-				announce('Joined player not found. peer_id:'..tostring(peer_id), peer_id)
+				-- チーム未参加（観戦者）は、自分でスポーンした車両だけを消せる。
+				removeSpectatorVehicle(peer_id)
 				return
 			end
 
@@ -3603,6 +3772,7 @@ function processPendingVehicleDespawns()
 			end
 		end
 		g_vehicle_owners[vehicle_id]=nil
+		forgetSpawnedVehicle(vehicle_id)
 		g_pending_link_requests[vehicle_id]=nil
 		g_webmap_restore_link_requests[vehicle_id]=nil
 		clearDebugVehicle(vehicle_id)
@@ -3630,6 +3800,15 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost, group_id)
 		enqueueVehicleLinkRequest(peer_id, vehicle_id)
 	end
 	g_vehicle_owners[vehicle_id] = peer_id
+	-- 観戦者の ?mm order 用に、プレイヤーが自分でスポーンした親ビークルを SteamID で記録する。
+	-- アドオン等のスポーン（peer_id<0）は対象外。WebMap への登録はコンポーネント取得後の onVehicleLoad で行う。
+	if vehicle_id==parent_id and peer_id>=0 then
+		local steam_id=getPlayerSteamId(peer_id)
+		if steam_id then
+			setSpawnedVehicleOwner(steam_id, vehicle_id, nil)
+			g_spectator_cache_requests[vehicle_id]=peer_id
+		end
+	end
 	-- cache restore 成功イベントで保留した親ビークルなら、スポーン完了を契機に所有者を再紐付けする。
 	tryLinkRestoredVehicle(vehicle_id)
 end
@@ -3658,10 +3837,13 @@ function onVehicleLoad(vehicle_id)
 
 	-- registerVehicleでコンポーネントを取得したいのでロードしてから登録
 	local peer_id=g_pending_link_requests[vehicle_id]
-	if not peer_id then return end
-
-	linkSpawnedVehicle(peer_id, vehicle_id)
 	g_pending_link_requests[vehicle_id]=nil
+	local spectator_peer_id=g_spectator_cache_requests[vehicle_id]
+	g_spectator_cache_requests[vehicle_id]=nil
+
+	if peer_id and linkSpawnedVehicle(peer_id, vehicle_id) then return end
+	-- チーム未参加でスポーンした車両は、試合管理に登録せず WebMap キャッシュだけ登録する。
+	if spectator_peer_id then cacheSpectatorSpawnedVehicle(spectator_peer_id, vehicle_id) end
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
