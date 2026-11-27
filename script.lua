@@ -217,8 +217,27 @@ function cacheSpectatorSpawnedVehicle(peer_id, vehicle_id)
 	requestWebMapVehicleCache(peer_id, {vehicle_id=vehicle_id, group_id=data.group_id, name=record.name})
 end
 
+-- 現在も g_players に登録されている（ログアウト中を含む）プレイヤーか。
+-- leave 後も vehicle.player に古いプレイヤーが残るため、それを「使用中」と誤判定しないために使う。
+function isRegisteredPlayer(player)
+	for _,registered_player in pairs(g_players) do
+		if registered_player==player then return true end
+	end
+	return false
+end
+
+-- 自分以外の、現在も登録されているプレイヤーか。SteamID64 が同じなら本人とみなす（再接続で peer_id が変わるため）。
+function isOtherRegisteredPlayer(player, peer_id, steam_id)
+	if not player or player.id==peer_id then return false end
+	if not isRegisteredPlayer(player) then return false end
+	local player_steam_id=getPlayerSteamIdFromPlayer(player)
+	if steam_id and player_steam_id==steam_id then return false end
+	return true
+end
+
 -- 観戦者の車両グループを、他のプレイヤー（チーム参加者・debug1 の擬似プレイヤー・着席中の人）が使っていないか調べる。
 function isVehicleGroupUsedByOtherPlayer(group_id, vehicle_id, peer_id)
+	local steam_id=getPlayerSteamId(peer_id)
 	local vehicle_ids={}
 	local group_vehicle_ids,is_success=server.getVehicleGroup(group_id)
 	if is_success and group_vehicle_ids then
@@ -229,10 +248,10 @@ function isVehicleGroupUsedByOtherPlayer(group_id, vehicle_id, peer_id)
 	for _,id in ipairs(vehicle_ids) do
 		if g_debug_vehicle_ids[id] then return true end
 		for _,player in pairs(g_players) do
-			if player.vehicle_id==id and player.id~=peer_id then return true end
+			if player.vehicle_id==id and isOtherRegisteredPlayer(player, peer_id, steam_id) then return true end
 		end
 		local vehicle=findVehicle(id)
-		if vehicle and vehicle.player and vehicle.player.id~=peer_id then return true end
+		if vehicle and isOtherRegisteredPlayer(vehicle.player, peer_id, steam_id) then return true end
 		local component_data,components_ok=server.getVehicleComponents(id)
 		if components_ok and component_data then
 			for _,character_id in ipairs(component_data.characters or {}) do
